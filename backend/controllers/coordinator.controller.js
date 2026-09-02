@@ -24,6 +24,57 @@ export const getAdmins = asyncHandler(async (req, res) => {
     });
 });
 
+export const getCoordinatorClasses = asyncHandler(async (req, res) => {
+    if (!req.user || !req.user.id) {
+        return res.status(401).json({
+            success: false,
+            message: 'Authentication required.'
+        });
+    }
+
+    const conditions = [{ userId: req.user.id }];
+    if (req.user.username) {
+        conditions.push({ email: req.user.username });
+    }
+
+    const coordinators = await Coordinator.findAll({
+        where: {
+            [Op.or]: conditions,
+            role: 'coordinator'
+        },
+        order: [
+            ['school', 'ASC'],
+            ['department', 'ASC'],
+            ['program', 'ASC'],
+            ['batch', 'ASC'],
+            ['specialization', 'ASC']
+        ]
+    });
+
+    const unique = new Map();
+    coordinators.forEach((item) => {
+        const key = [item.school, item.department, item.program, item.batch, item.specialization]
+            .map((value) => String(value || '').trim().toLowerCase())
+            .join('::');
+        if (!unique.has(key)) {
+            unique.set(key, item);
+        }
+    });
+
+    return res.status(200).json({
+        success: true,
+        count: unique.size,
+        classes: [...unique.values()].map((item) => ({
+            id: item.id,
+            school: item.school,
+            department: item.department,
+            program: item.program,
+            batch: item.batch,
+            specialization: item.specialization
+        }))
+    });
+});
+
 export const getAdminDetails = asyncHandler(async (req, res) => {
     if (req.user.role === 'chairperson') {
         const chairperson = await Chairperson.findOne({ where: { [Op.or]: [{ userId: req.user.id }, { email: req.user.username }] } });
