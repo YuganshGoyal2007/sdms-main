@@ -1,8 +1,10 @@
 import { Op } from 'sequelize';
+import sequelize from '../lib/db.js';
 import Chairperson from '../models/chairperson.model.js';
 import ChairpersonClass from '../models/chairpersonClass.model.js';
 import Coordinator from '../models/coordinator.model.js';
 import ChangeLog from '../models/changeLog.model.js';
+import Notification from '../models/notification.model.js';
 import Message from '../models/message.model.js';
 import User from '../models/user.model.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
@@ -16,13 +18,112 @@ const classMatches = (assignment, target) => classFields.every((field) =>
 
 const validClass = (item) => classFields.every((field) => item?.[field]?.trim());
 
+const normalize = (value) =>
+  String(value ?? '')
+    .trim()
+    .toLowerCase();
+
+const classKey = (item) =>
+  [item.school, item.department, item.program, item.batch, item.specialization]
+    .map(normalize)
+    .join('::');
+
+/**
+ * Rich chairperson assignments resolver (port from main).
+ * Tries userId, then email, then username. Returns deduped, sorted classes.
+ * Falls back to direct class fields on the chairperson record if no ChairpersonClass rows.
+ */
 export const getChairpersonAssignments = async (user) => {
-  const chairperson = await Chairperson.findOne({
-    where: { [Op.or]: [{ userId: user.id }, { email: user.username }] }
+  if (!user || user.role !== 'chairperson') {
+    return { chairperson: null, assignments: [] };
+  }
+
+  const conditions = [];
+  if (user.id !== undefined && user.id !== null) {
+    conditions.push({ userId: user.id });
+  }
+  if (user.username) {
+    conditions.push({ email: user.username });
+  }
+  if (user.email) {
+    conditions.push({ email: user.email });
+  }
+
+  if (conditions.length === 0) {
+    return { chairperson: null, assignments: [] };
+  }
+
+  const chairpersonRecord = await Chairperson.findOne({
+    where: { [Op.or]: conditions },
+    order: [['createdAt', 'DESC']],
   });
-  if (!chairperson) return { chairperson: null, assignments: [] };
-  const assignments = await ChairpersonClass.findAll({ where: { chairpersonId: chairperson.id } });
-  return { chairperson, assignments };
+
+  if (!chairpersonRecord) {
+    return { chairperson: null, assignments: [] };
+  }
+
+  let classRows = [];
+  if (chairpersonRecord.id) {
+    classRows = await ChairpersonClass.findAll({
+      where: { chairpersonId: chairpersonRecord.id },
+      order: [
+        ['school', 'ASC'],
+        ['department', 'ASC'],
+        ['program', 'ASC'],
+        ['batch', 'ASC'],
+        ['specialization', 'ASC'],
+      ],
+    });
+  }
+
+  const classAssignments = classRows.length
+    ? classRows.map((record) => {
+        const item = typeof record.toJSON === 'function' ? record.toJSON() : record;
+        return {
+          id: item.id,
+          school: item.school,
+          department: item.department,
+          program: item.program,
+          batch: item.batch,
+          specialization: item.specialization,
+          userId: chairpersonRecord.userId,
+          chairpersonId: item.chairpersonId,
+          name: chairpersonRecord.name,
+          email: chairpersonRecord.email,
+          phone: chairpersonRecord.phone,
+        };
+      })
+    : [];
+
+  if (classAssignments.length) {
+    const unique = new Map();
+    classAssignments.forEach((item) => {
+      const key = classKey(item);
+      if (!unique.has(key)) unique.set(key, item);
+    });
+    return { chairperson: chairpersonRecord, assignments: [...unique.values()] };
+  }
+
+  const item = typeof chairpersonRecord.toJSON === 'function' ? chairpersonRecord.toJSON() : chairpersonRecord;
+  const directClass = {
+    id: item.id,
+    school: item.school,
+    department: item.department,
+    program: item.program,
+    batch: item.batch,
+    specialization: item.specialization,
+    userId: item.userId,
+    chairpersonId: item.chairpersonId,
+    name: item.name,
+    email: item.email,
+    phone: item.phone,
+  };
+  const directAssignment = classKey(directClass) ? [directClass] : [];
+
+  return {
+    chairperson: chairpersonRecord,
+    assignments: directAssignment.filter((item) => item.school || item.department || item.program || item.batch || item.specialization),
+  };
 };
 
 const coordinatorUsersForAssignments = async (assignments) => {
