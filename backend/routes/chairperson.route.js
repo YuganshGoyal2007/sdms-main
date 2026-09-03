@@ -9,7 +9,7 @@ router.post('/', isAuthenticated, allowRoles('admin'), addChairperson);
 router.get('/', isAuthenticated, allowRoles('admin'), getChairpersons);
 router.delete('/:id', isAuthenticated, allowRoles('admin'), deleteChairperson);
 router.get('/get-admin-details', isAuthenticated, allowRoles('chairperson'), getAdminDetails);
-router.get('/classes', isAuthenticated, allowRoles('chairperson', 'admin'), getChairpersonClasses);
+router.get('/classes', isAuthenticated, allowRoles('chairperson'), getChairpersonClasses);
 router.get('/logs', isAuthenticated, allowRoles('chairperson'), getChairpersonLogs);
 router.get('/messages', isAuthenticated, allowRoles('chairperson', 'coordinator'), getMessages);
 router.post('/messages', isAuthenticated, allowRoles('chairperson', 'coordinator'), sendMessage);
