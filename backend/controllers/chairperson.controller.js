@@ -183,18 +183,16 @@ export const getChairpersonClasses = asyncHandler(async (req, res) => {
 });
 
 export const getChairpersonLogs = asyncHandler(async (req, res) => {
-  const { assignments } = await getChairpersonAssignments(req.user);
-  const coordinators = await coordinatorUsersForAssignments(assignments);
-  const userIds = coordinators.map((item) => item.userId).filter(Boolean);
-  if (!userIds.length) return res.json({ success: true, count: 0, logs: [] });
-  const logs = await ChangeLog.findAll({ where: { userId: userIds }, order: [['createdAt', 'DESC']] });
-  const users = await User.findAll({ where: { id: userIds }, attributes: ['id', 'name', 'username'] });
-  const userNames = new Map(users.map((user) => [user.id, user.name || user.username]));
-  const visibleLogs = logs.filter((log) => {
-    const details = log.details?.after || log.details?.student || log.details?.before || log.details;
-    return assignments.some((assignment) => classMatches(assignment, details));
-  }).map((log) => ({ ...log.toJSON(), actorName: userNames.get(log.userId) || 'Coordinator' }));
-  return res.json({ success: true, count: visibleLogs.length, logs: visibleLogs });
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: 'Authentication required.' });
+  }
+  const logs = await ChangeLog.findAll({
+    where: { userId: req.user.id },
+    attributes: ['id', 'userId', 'action', 'entity', 'entityId', 'createdAt'],
+    order: [['createdAt', 'DESC']],
+    limit: 200,
+  });
+  return res.status(200).json({ success: true, logs });
 });
 
 export const getMessages = asyncHandler(async (req, res) => {
