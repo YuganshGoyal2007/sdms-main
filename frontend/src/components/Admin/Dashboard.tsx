@@ -451,11 +451,13 @@ const Dashboard: React.FC = () => {
                     setTotalAdmins(data.count)
                 }
             } catch (error: any) {
-                alert(error.message)
+                console.log(error.message)
             }
         }
 
-        getAdminCount();
+        if (user?.role === 'admin' || user?.role === 'coordinator') {
+            getAdminCount();
+        }
         getStudentCount();
         getSpecializationCount();
     }, [changeTracker]);

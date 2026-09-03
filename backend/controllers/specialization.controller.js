@@ -2,6 +2,23 @@ import { Specialization } from "../models/specialization.model.js";
 import Student from "../models/student.model.js";
 import sequelize from "../lib/db.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
+import { Op } from "sequelize";
+
+const buildClassWhereClause = (assignments) => {
+  if (!Array.isArray(assignments) || assignments.length === 0) {
+    return { id: null };
+  }
+  const ors = assignments.map((cls) => ({
+    [Op.and]: [
+      { school: cls.school },
+      { department: cls.department },
+      { program: cls.program },
+      { batch: cls.batch },
+      { name: cls.specialization },
+    ],
+  }));
+  return { [Op.or]: ors };
+};
 
 export const addSpecialization = asyncHandler(async (req, res) => {
   const { name, school, department, program, batch } = req.body;
@@ -30,7 +47,13 @@ export const addSpecialization = asyncHandler(async (req, res) => {
 });
 
 export const countSpecializations = asyncHandler(async (req, res) => {
-  const total = await Specialization.count();
+  let where = {};
+  if (req.user && req.user.role === 'chairperson') {
+    const { getChairpersonAssignments } = await import('./chairperson.controller.js');
+    const { assignments } = await getChairpersonAssignments(req.user);
+    where = buildClassWhereClause(assignments);
+  }
+  const total = await Specialization.count({ where });
   return res.status(200).json({ total });
 });
 

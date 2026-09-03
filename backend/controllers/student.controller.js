@@ -429,6 +429,10 @@ export const getStudentCount = asyncHandler(async (req, res) => {
       const assignedClasses = await getCoordinatorAssignedClasses(req.user);
       const coordWhere = buildCoordinatorWhereClause(assignedClasses);
       count = await Student.count({ where: coordWhere });
+    } else if (req.user && req.user.role === 'chairperson') {
+      const { assignments } = await getChairpersonAssignments(req.user);
+      const chairWhere = buildCoordinatorWhereClause(assignments);
+      count = await Student.count({ where: chairWhere });
     } else {
       count = await Student.count();
     }

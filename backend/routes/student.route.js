@@ -50,7 +50,7 @@ router.post('/reformat-excel', isAuthenticated, allowRoles('admin', 'coordinator
 router.post('/upload-photos', isAuthenticated, allowRoles('admin', 'coordinator'), uploadLarge.single("file"), uploadStudentPhotosController);
 router.get('/export-students', isAuthenticated, allowRoles('admin', 'coordinator', 'chairperson'), exportStudentsToExcel);
 router.put('/update-student-photo/:rollNo', isAuthenticated, allowRoles('admin', 'coordinator', 'chairperson'), updateStudentPhoto);
-router.get('/count-students', isAuthenticated, allowRoles('admin', 'coordinator'), getStudentCount);
+router.get('/count-students', isAuthenticated, allowRoles('admin', 'coordinator', 'chairperson'), getStudentCount);
 router.get('/search-students', isAuthenticated, allowRoles('admin', 'coordinator', 'student'), searchStudents);
 router.get('/get-student-profile/:rollNo', isAuthenticated, allowRoles('admin', 'coordinator', 'chairperson'), getStudentProfile);
 router.get('/get-student-details', isAuthenticated, allowRoles('student'), getStudentDetails);

@@ -6,7 +6,7 @@ import { allowRoles } from '../middlewares/role.middleware.js';
 const router = express.Router();
 
 router.post('/add-specialization', isAuthenticated, allowRoles('admin'), addSpecialization);
-router.get('/count-specialization', isAuthenticated, allowRoles('admin', 'coordinator'), countSpecializations);
+router.get('/count-specialization', isAuthenticated, allowRoles('admin', 'coordinator', 'chairperson'), countSpecializations);
 router.get('/view-specializations', isAuthenticated, allowRoles('admin', 'coordinator'), viewSpecializations);
 router.delete('/delete-specialization', isAuthenticated, allowRoles('admin'), deleteSpecialization);
 router.get('/search-batches', isAuthenticated, allowRoles('admin', 'coordinator'), searchBatches);

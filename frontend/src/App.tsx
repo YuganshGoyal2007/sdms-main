@@ -17,6 +17,7 @@ import DeveloperPage from "./pages/Landing/DeveloperPage";
 import Roles from "./pages/Admin/Roles";
 import Classes from "./pages/Admin/Classes";
 import Chairpersons from "./pages/Admin/Chairpersons";
+import ChairpersonDashboard from "./pages/Admin/ChairpersonDashboard";
 
 const App = () => {
   return (
@@ -40,6 +41,7 @@ const App = () => {
           <Route path="/admin/records/:rollNo" element={<StudentDetail />}/>
           <Route path="/admin/roles" element={<Roles />} />
           <Route path="/admin/chairpersons" element={<Chairpersons />} />
+          <Route path="/chairperson/dashboard" element={<ChairpersonDashboard />} />
 
           {/* Student */}
           <Route path="/student" element={<StudentDashboard />} />
