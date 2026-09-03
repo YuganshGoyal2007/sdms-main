@@ -90,7 +90,7 @@ const ChairpersonDashboard = () => {
                                 <StatCard
                                     label="Assigned Classes"
                                     value={loading ? "…" : classesCount}
-                                    onClick={() => navigate("/admin/classes")}
+                                    onClick={() => navigate("/chairperson/classes")}
                                 />
                                 <StatCard
                                     label="Unread Messages"
@@ -109,17 +109,22 @@ const ChairpersonDashboard = () => {
                                 <QuickAction
                                     title="My Classes"
                                     description="View classes assigned to you"
-                                    onClick={() => navigate("/admin/classes")}
+                                    onClick={() => navigate("/chairperson/classes")}
                                 />
                                 <QuickAction
                                     title="Browse Student Records"
                                     description="Search and view student profiles"
-                                    onClick={() => navigate("/admin/records")}
+                                    onClick={() => navigate("/chairperson/records")}
                                 />
                                 <QuickAction
-                                    title="Change Logs"
+                                    title="Messages"
+                                    description="View and send messages"
+                                    onClick={() => navigate("/chairperson/messages")}
+                                />
+                                <QuickAction
+                                    title="Activity Log"
                                     description="Review your activity history"
-                                    onClick={() => navigate("/admin/records")}
+                                    onClick={() => navigate("/chairperson/logs")}
                                 />
                             </div>
                         </section>

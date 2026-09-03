@@ -16,6 +16,15 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
         navigate('/login');
     }
 
+    const displayName = user?.name || user?.username || "User";
+    const initial = displayName.charAt(0).toUpperCase();
+
+    const isChair = user?.role === 'chairperson';
+    const basePath = isChair ? '/chairperson' : '/admin';
+    const dashboardPath = `${basePath}/dashboard`;
+    const classesPath = `${basePath}/classes`;
+    const recordsPath = `${basePath}/records`;
+
     return (
         <>
             {/* For Mobile */}
@@ -33,7 +42,7 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
 
                 {/* Top Menu Nav Links */}
                 <div className="h-[80vh] sm:h-[75vh] w-full p-5">
-                    <Link to={'/admin/dashboard'}>
+                    <Link to={dashboardPath}>
                         <button className={`w-full flex justify-center cursor-pointer`}>
                             {!menu ?
                                 <LayoutDashboard />
@@ -43,7 +52,7 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                                 </div>}
                         </button>
                     </Link>
-                    <Link to={'/admin/records'}>
+                    <Link to={recordsPath}>
                         <button className={`w-full flex justify-center mt-5 cursor-pointer`}>
                             {!menu ?
                                 <Table2 />
@@ -53,7 +62,7 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                                 </div>}
                         </button>
                     </Link>
-                    {(user.role === 'admin' || user.role === 'coordinator' || user.role === 'chairperson') && <Link to={'/admin/classes'}>
+                    {(user.role === 'admin' || user.role === 'coordinator' || user.role === 'chairperson') && <Link to={classesPath}>
                         <button className={`w-full flex justify-center mt-5 cursor-pointer`}>
                             {!menu ?
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
@@ -80,6 +89,16 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                             {!menu ? <UsersRound /> : <div className="w-full flex justify-center items-center gap-3"><h1 className={activeTab === 'chairpersons' ? 'text-black font-bold' : ''}>Chairpersons</h1></div>}
                         </button>
                     </Link>}
+                    {isChair && <Link to={'/chairperson/messages'}>
+                        <button className="w-full flex justify-center mt-5 cursor-pointer">
+                            {!menu ? <UsersRound /> : <div className="w-full flex justify-center items-center gap-3"><h1 className={activeTab === 'messages' ? 'text-black font-bold' : ''}>Messages</h1></div>}
+                        </button>
+                    </Link>}
+                    {isChair && <Link to={'/chairperson/logs'}>
+                        <button className="w-full flex justify-center mt-5 cursor-pointer">
+                            {!menu ? <UserCog /> : <div className="w-full flex justify-center items-center gap-3"><h1 className={activeTab === 'logs' ? 'text-black font-bold' : ''}>Activity</h1></div>}
+                        </button>
+                    </Link>}
                 </div>
 
                 {/* Bottom Menu Nav Links */}
@@ -88,10 +107,10 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                         ? <div className="flex items-center justify-between mt-2 bg-white border border-[#d9d9d9] w-full px-3 py-2 rounded-lg">
                             <div className="flex w-full items-center justify-between gap-2">
                                 <div className="flex gap-2 items-center justify-center">
-                                    <div className="bg-[#d9d9d9] text-black border rounded-full w-7 h-7 flex items-center justify-center font-bold text-lg"> {user?.name.charAt(0)} </div>
+                                    <div className="bg-[#d9d9d9] text-black border rounded-full w-7 h-7 flex items-center justify-center font-bold text-lg"> {initial} </div>
                                     <div>
-                                        <p className="sm:text-sm text-xs font-semibold">{user?.name}</p>
-                                        <p className="sm:text-xs text-[8px]">{user?.email}</p>
+                                        <p className="sm:text-sm text-xs font-semibold">{displayName}</p>
+                                        <p className="sm:text-xs text-[8px]">{user?.email || user?.username}</p>
                                     </div>
                                 </div>
                                 <button onClick={handleLogout} className='rounded hover:bg-[#f8f9fa] transition-all batch-300 '>
@@ -119,7 +138,7 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
 
                 {/* Top Menu Nav Links */}
                 <div className="h-[75vh] w-full p-5">
-                    <Link to={'/admin/dashboard'}>
+                    <Link to={dashboardPath}>
                         <button className={`w-full flex justify-center cursor-pointer`}>
                             {menu ?
                                 <LayoutDashboard />
@@ -129,7 +148,7 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                                 </div>}
                         </button>
                     </Link>
-                    <Link to={'/admin/records'}>
+                    <Link to={recordsPath}>
                         <button className={`w-full flex justify-center mt-5 cursor-pointer`}>
                             {menu ?
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
@@ -156,9 +175,19 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                             {menu ? <UsersRound /> : <div className="w-full flex justify-center items-center gap-3"><h1 className={activeTab === 'chairpersons' ? 'text-black font-bold' : ''}>Chairpersons</h1></div>}
                         </button>
                     </Link>}
-                    {(user.role === 'admin' || user.role === 'coordinator' || user.role === 'chairperson') && <Link to={'/admin/classes'}>
+                    {(user.role === 'admin' || user.role === 'coordinator' || user.role === 'chairperson') && <Link to={classesPath}>
                         <button className="w-full flex justify-center mt-5 cursor-pointer">
                             {menu ? <Table2 /> : <div className="w-full flex justify-center items-center gap-3"><h1 className={activeTab === 'classes' ? 'text-black font-bold' : ''}>Classes</h1></div>}
+                        </button>
+                    </Link>}
+                    {isChair && <Link to={'/chairperson/messages'}>
+                        <button className="w-full flex justify-center mt-5 cursor-pointer">
+                            {menu ? <UsersRound /> : <div className="w-full flex justify-center items-center gap-3"><h1 className={activeTab === 'messages' ? 'text-black font-bold' : ''}>Messages</h1></div>}
+                        </button>
+                    </Link>}
+                    {isChair && <Link to={'/chairperson/logs'}>
+                        <button className="w-full flex justify-center mt-5 cursor-pointer">
+                            {menu ? <UserCog /> : <div className="w-full flex justify-center items-center gap-3"><h1 className={activeTab === 'logs' ? 'text-black font-bold' : ''}>Activity</h1></div>}
                         </button>
                     </Link>}
                 </div>

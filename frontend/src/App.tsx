@@ -18,6 +18,12 @@ import Roles from "./pages/Admin/Roles";
 import Classes from "./pages/Admin/Classes";
 import Chairpersons from "./pages/Admin/Chairpersons";
 import ChairpersonDashboard from "./pages/Admin/ChairpersonDashboard";
+import ChairpersonClasses from "./pages/Chairperson/ChairpersonClasses";
+import ChairpersonRecords from "./pages/Chairperson/ChairpersonRecords";
+import ChairpersonCategoryView from "./pages/Chairperson/ChairpersonCategoryView";
+import ChairpersonStudentDetail from "./pages/Chairperson/ChairpersonStudentDetail";
+import ChairpersonMessages from "./pages/Chairperson/ChairpersonMessages";
+import ChairpersonLogs from "./pages/Chairperson/ChairpersonLogs";
 
 const App = () => {
   return (
@@ -42,6 +48,12 @@ const App = () => {
           <Route path="/admin/roles" element={<Roles />} />
           <Route path="/admin/chairpersons" element={<Chairpersons />} />
           <Route path="/chairperson/dashboard" element={<ChairpersonDashboard />} />
+          <Route path="/chairperson/classes" element={<ChairpersonClasses />} />
+          <Route path="/chairperson/records" element={<ChairpersonRecords />} />
+          <Route path="/chairperson/logs" element={<ChairpersonLogs />} />
+          <Route path="/chairperson/messages" element={<ChairpersonMessages />} />
+          <Route path="/chairperson/records/:school/:department/:program/:batch/:specialization" element={<ChairpersonCategoryView />} />
+          <Route path="/chairperson/records/:rollNo" element={<ChairpersonStudentDetail />} />
 
           {/* Student */}
           <Route path="/student" element={<StudentDashboard />} />
