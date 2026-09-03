@@ -131,16 +131,54 @@ export const addChairperson = asyncHandler(async (req, res) => {
   if (!chairpersonId?.trim() || !name?.trim() || !normalizedEmail || !phone?.trim() || !Array.isArray(classes) || !classes.length || !classes.every(validClass)) {
     return res.status(400).json({ success: false, message: 'Chairperson details and at least one complete class assignment are required.' });
   }
-  const exists = await Chairperson.findOne({ where: { [Op.or]: [{ chairpersonId: chairpersonId.trim() }, { email: normalizedEmail }] } });
-  if (exists) return res.status(409).json({ success: false, message: 'Chairperson ID or email already exists.' });
 
-  const chairperson = await Chairperson.create({ chairpersonId: chairpersonId.trim(), name: name.trim(), email: normalizedEmail, phone: phone.trim(), createdBy: req.user.id });
-  await ChairpersonClass.bulkCreate(classes.map((item) => ({
-    chairpersonId: chairperson.id,
-    school: item.school.trim(), department: item.department.trim(), program: item.program.trim(), batch: item.batch.trim(), specialization: item.specialization.trim(),
-  })));
-  logger.info({ chairpersonId: chairperson.id, classesCount: classes.length, createdBy: req.user.id }, 'Chairperson added');
-  return res.status(201).json({ success: true, message: 'Chairperson added successfully.', chairperson });
+  const transaction = await sequelize.transaction();
+  try {
+    const exists = await Chairperson.findOne({
+      where: { [Op.or]: [{ chairpersonId: chairpersonId.trim() }, { email: normalizedEmail }] },
+      transaction,
+    });
+    if (exists) {
+      await transaction.rollback();
+      return res.status(409).json({ success: false, message: 'Chairperson ID or email already exists.' });
+    }
+
+    const chairperson = await Chairperson.create({
+      chairpersonId: chairpersonId.trim(),
+      name: name.trim(),
+      email: normalizedEmail,
+      phone: phone.trim(),
+      createdBy: req.user.id,
+    }, { transaction });
+
+    const uniqueClasses = new Map();
+    classes.forEach((item) => {
+      const key = [item.school, item.department, item.program, item.batch, item.specialization]
+        .map((v) => String(v ?? '').trim().toLowerCase())
+        .join('::');
+      if (key && !uniqueClasses.has(key)) {
+        uniqueClasses.set(key, {
+          school: item.school.trim(),
+          department: item.department.trim(),
+          program: item.program.trim(),
+          batch: item.batch.trim(),
+          specialization: item.specialization.trim(),
+        });
+      }
+    });
+
+    await ChairpersonClass.bulkCreate([...uniqueClasses.values()].map((item) => ({
+      chairpersonId: chairperson.id,
+      ...item,
+    })), { transaction });
+
+    await transaction.commit();
+    logger.info({ chairpersonId: chairperson.id, classesCount: classes.length, createdBy: req.user.id }, 'Chairperson added');
+    return res.status(201).json({ success: true, message: 'Chairperson added successfully.', chairperson });
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
+  }
 });
 
 export const getChairpersons = asyncHandler(async (_req, res) => {
@@ -226,21 +264,29 @@ export const sendMessage = asyncHandler(async (req, res) => {
 
 export const deleteChairperson = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const chairperson = await Chairperson.findByPk(id);
-  if (!chairperson) {
-    return res.status(404).json({ success: false, message: 'Chairperson not found.' });
+  const transaction = await sequelize.transaction();
+  try {
+    const chairperson = await Chairperson.findByPk(id, { transaction });
+    if (!chairperson) {
+      await transaction.rollback();
+      return res.status(404).json({ success: false, message: 'Chairperson not found.' });
+    }
+
+    await ChairpersonClass.destroy({ where: { chairpersonId: chairperson.id }, transaction });
+
+    if (chairperson.userId) {
+      await User.destroy({ where: { id: chairperson.userId }, transaction });
+    }
+
+    await chairperson.destroy({ transaction });
+    await transaction.commit();
+
+    logger.info({ chairpersonId: id, deletedBy: req.user.id }, 'Chairperson deleted');
+    return res.json({ success: true, message: 'Chairperson deleted successfully.' });
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
   }
-
-  await ChairpersonClass.destroy({ where: { chairpersonId: chairperson.id } });
-
-  if (chairperson.userId) {
-    await User.destroy({ where: { id: chairperson.userId } });
-  }
-
-  await chairperson.destroy();
-
-  logger.info({ chairpersonId: id, deletedBy: req.user.id }, 'Chairperson deleted');
-  return res.json({ success: true, message: 'Chairperson deleted successfully.' });
 });
 
 export const getAdminDetails = asyncHandler(async (req, res) => {
