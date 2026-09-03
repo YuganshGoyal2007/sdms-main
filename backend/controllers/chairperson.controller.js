@@ -131,3 +131,35 @@ export const deleteChairperson = asyncHandler(async (req, res) => {
   logger.info({ chairpersonId: id, deletedBy: req.user.id }, 'Chairperson deleted');
   return res.json({ success: true, message: 'Chairperson deleted successfully.' });
 });
+
+export const getAdminDetails = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: 'Authentication required.',
+    });
+  }
+
+  if (req.user.role === 'chairperson') {
+    const { chairperson, assignments } = await getChairpersonAssignments(req.user);
+
+    if (!chairperson) {
+      return res.status(404).json({
+        success: false,
+        message: 'Chairperson not found.',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Chairperson details found successfully.',
+      user: chairperson,
+      assignments,
+    });
+  }
+
+  return res.status(403).json({
+    success: false,
+    message: 'This endpoint is only available for chairperson details.',
+  });
+});
