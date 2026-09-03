@@ -269,9 +269,10 @@ export const getNotifications = asyncHandler(async (req, res) => {
 
     const notifications = await Notification.findAll({
         where,
-        attributes: ['id', 'toRole', 'message', 'data', 'read', 'createdAt', 'updatedAt'],
+        attributes: ['id', 'toRole', 'message', 'read', 'createdAt'],
         order: [['createdAt', 'DESC']],
         limit: 50,
+        raw: true,
     });
     return res.status(200).json({ success: true, count: notifications.length, notifications });
 });

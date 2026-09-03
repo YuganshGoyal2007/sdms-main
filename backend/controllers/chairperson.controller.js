@@ -237,9 +237,10 @@ export const getMessages = asyncHandler(async (req, res) => {
         { toRole: 'admin' },
       ],
     },
-    attributes: ['id', 'toRole', 'message', 'data', 'read', 'createdAt', 'updatedAt'],
+    attributes: ['id', 'toRole', 'message', 'read', 'createdAt'],
     order: [['createdAt', 'DESC']],
     limit: 50,
+    raw: true,
   });
   return res.status(200).json({ success: true, messages });
 });
