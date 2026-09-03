@@ -355,10 +355,26 @@ Remote: `https://github.com/YuganshGoyal2007/sdms-main`
 ## 8. Current commit history
 
 ```
-e990fc4  snapshot from production
-1225bff  Phase 2.1: port exportStudentsToExcel (admin/coordinator/chairperson, role-based, class-filter)
+6e3fe9f  Add AI-HANDOFF.md (detailed step-by-step plan for remaining work)
 9936dc2  Phase 2.2: port getCoordinatorClasses + add /admin/classes route (coordinator role)
+1225bff  Phase 2.1: port exportStudentsToExcel (admin/coordinator/chairperson, role-based, class-filter)
+e990fc4  snapshot from production
 ```
+
+---
+
+## 9. Critical bug fix (after AI-HANDOFF was created)
+
+**Root cause of "yesterday's crash"**: The `GET /admin/changes` (Change Logs page) was returning HTTP 500 because MySQL ran out of `sort_buffer_size` when trying to `ORDER BY createdAt DESC` on a table with a large JSON `details` column. 10 errors in production `error.log` between 2026-09-02 10:10 and 10:11.
+
+**Fixes applied (commits will be added next):**
+- `lib/db.js` — Added `SET SESSION sort_buffer_size=4MB, tmp_table_size=64MB, max_heap_table_size=64MB` on connect
+- `controllers/coordinator.controller.js` — `getChangeLogs` now selects only 6 small columns (no `details` JSON), `raw: true`, `LIMIT 200`
+- `lib/logger.js` — 12-hour human-readable time (`03 Sept 2026 02:02:18 pm`), AsyncLocalStorage + pino `mixin` for per-request context (`who`, `from`, `in`, `out`, `warn`)
+- `lib/requestLogger.js` — Uses `runWithRequestContext` wrapper; renamed `responseTime` → `took_ms`
+- `lib/errorHandler.js` — Stack traces trimmed to 8 lines max in production
+
+**Verified in debug**: `/admin/changes` returns 200, all log lines are human-readable, no duplicates, no errors.
 
 ---
 

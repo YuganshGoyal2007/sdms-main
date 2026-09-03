@@ -60,6 +60,17 @@ export const connectDB = async () => {
       `Database connected using ${dialect}`
     );
 
+    if (dialect === 'mysql') {
+      try {
+        await sequelize.query("SET SESSION sort_buffer_size = 4 * 1024 * 1024;");
+        await sequelize.query("SET SESSION tmp_table_size = 64 * 1024 * 1024;");
+        await sequelize.query("SET SESSION max_heap_table_size = 64 * 1024 * 1024;");
+        logger.info('MySQL session tuned: sort_buffer_size=4MB, tmp_table_size=64MB, max_heap_table_size=64MB');
+      } catch (tuneErr) {
+        logger.warn({ err: tuneErr.message }, 'Could not tune MySQL session vars (non-super user)');
+      }
+    }
+
     if (process.env.ALLOW_SYNC === 'true') {
       logger.warn('ALLOW_SYNC=true - running sequelize.sync() (dev only)');
       await sequelize.sync();

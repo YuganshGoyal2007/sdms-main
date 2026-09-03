@@ -1,6 +1,7 @@
 import { pino } from 'pino';
 import path from 'path';
 import fs from 'fs';
+import { AsyncLocalStorage } from 'async_hooks';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -45,19 +46,46 @@ const REDACT_PATHS = [
   '*.otp',
 ];
 
+const format12h = () => {
+  const d = new Date();
+  const date = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  const time = d.toLocaleTimeString('en-IN', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  return `${date} ${time}`;
+};
+
+export const requestContext = new AsyncLocalStorage();
+
+export const runWithRequestContext = (req, res, fn) =>
+  requestContext.run({ req, res }, fn);
+
 const baseOptions = {
   level: process.env.LOG_LEVEL || (isProd ? 'info' : 'debug'),
   redact: { paths: REDACT_PATHS, censor: '[REDACTED]', remove: false },
   base: {
     pid: process.pid,
-    service: 'gbu-sdsm-backend',
-    env: process.env.NODE_ENV || 'development',
+    service: 'gbu-sdsm',
   },
-  timestamp: pino.stdTimeFunctions.isoTime,
+  timestamp: false,
   formatters: {
     level(label) {
       return { level: label };
     },
+  },
+  mixin() {
+    const ctx = requestContext.getStore();
+    if (!ctx) return { when: format12h() };
+    const { req, res } = ctx;
+    const props = { when: format12h() };
+    if (req) {
+      if (req.user) props.who = `${req.user.id}/${req.user.role}`;
+      if (req.ip) props.from = req.ip;
+      const reqSize = Number(req.headers['content-length'] || 0);
+      const resSize = Number((res && res.getHeader('content-length')) || 0);
+      if (reqSize > 0) props.in = `${(reqSize / 1024).toFixed(1)}KB`;
+      if (resSize > 0) props.out = `${(resSize / 1024).toFixed(1)}KB`;
+      if (reqSize > 5 * 1024 * 1024) props.warn = `large body ${(reqSize / 1024 / 1024).toFixed(1)}MB`;
+    }
+    return props;
   },
 };
 

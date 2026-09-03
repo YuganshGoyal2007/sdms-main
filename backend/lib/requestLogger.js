@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import pinoHttp from 'pino-http';
-import logger from './logger.js';
+import logger, { runWithRequestContext } from './logger.js';
 
 const requestLogger = pinoHttp({
   logger,
@@ -15,32 +15,40 @@ const requestLogger = pinoHttp({
     if (res.statusCode >= 400) return 'warn';
     return 'info';
   },
-  customSuccessMessage: (req, res) => `${req.method} ${req.url} -> ${res.statusCode}`,
-  customErrorMessage: (req, res, err) => `${req.method} ${req.url} -> ${res.statusCode} (${err.message})`,
-  customProps: (req, res) => ({
-    requestId: req.id,
-    userId: req.user?.id,
-    userRole: req.user?.role,
-    contentLength: res.getHeader('content-length'),
-    userAgent: req.headers['user-agent'],
-  }),
+  customSuccessMessage: (req, res) => {
+    const time = new Date().toLocaleTimeString('en-IN', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return `${time} ${req.method} ${req.originalUrl || req.url} -> ${res.statusCode}`;
+  },
+  customErrorMessage: (req, res, err) => {
+    const time = new Date().toLocaleTimeString('en-IN', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return `${time} ${req.method} ${req.originalUrl || req.url} -> ${res.statusCode} ERROR: ${err.message}`;
+  },
   serializers: {
     req: (req) => ({
-      id: req.id,
       method: req.method,
-      url: req.url,
-      remoteAddress: req.remoteAddress,
+      url: req.originalUrl || req.url,
     }),
     res: (res) => ({
       statusCode: res.statusCode,
     }),
   },
+  customAttributeKeys: {
+    req: 'req',
+    res: 'res',
+    responseTime: 'took_ms',
+    reqId: 'id',
+  },
   autoLogging: {
     ignore: (req) => {
-      const url = req.url || '';
+      const url = req.originalUrl || req.url || '';
       return url === '/health' || url === '/favicon.ico' || url.startsWith('/static/');
     },
   },
+  wrapSerializers: false,
 });
 
-export default requestLogger;
+const wrapped = (req, res, next) => {
+  runWithRequestContext(req, res, () => requestLogger(req, res, next));
+};
+
+export default wrapped;

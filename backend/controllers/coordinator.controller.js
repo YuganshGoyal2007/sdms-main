@@ -215,13 +215,20 @@ export const viewCoordinator = asyncHandler(async (req, res) => {
 export const getChangeLogs = asyncHandler(async (req, res) => {
     if (req.user.role === 'chairperson') return getChairpersonLogs(req, res);
     const where = req.user.role === 'admin' ? {} : { userId: req.user.id };
-    const logs = await ChangeLog.findAll({ where, order: [['createdAt', 'DESC']] });
+    const LIMIT = 200;
+    const logs = await ChangeLog.findAll({
+      where,
+      attributes: ['id', 'userId', 'action', 'entity', 'entityId', 'createdAt'],
+      order: [['createdAt', 'DESC']],
+      limit: LIMIT,
+      raw: true,
+    });
     const userIds = [...new Set(logs.map((log) => log.userId).filter(Boolean))];
     const users = userIds.length ? await User.findAll({ where: { id: userIds }, attributes: ['id', 'name', 'username'] }) : [];
     const names = new Map(users.map((user) => [user.id, user.name || user.username]));
     const roles = new Map(users.map((user) => [user.id, user.role]));
     const visibleLogs = req.user.role === 'admin' ? logs.filter((log) => roles.get(log.userId) === 'coordinator') : logs;
-    res.status(200).json({ success: true, count: visibleLogs.length, logs: visibleLogs.map((log) => ({ ...log.toJSON(), actorName: names.get(log.userId) || 'System' })) });
+    res.status(200).json({ success: true, count: visibleLogs.length, limit: LIMIT, logs: visibleLogs.map((log) => ({ ...log, actorName: names.get(log.userId) || 'System' })) });
 });
 
 export const getNotifications = asyncHandler(async (req, res) => {

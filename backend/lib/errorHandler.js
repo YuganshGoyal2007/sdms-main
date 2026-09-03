@@ -63,27 +63,34 @@ const notFoundHandler = (req, res) => {
   });
 };
 
+const shortenStack = (stack, maxLines = 8) => {
+  if (!stack) return undefined;
+  const lines = stack.split('\n');
+  const trimmed = lines.slice(0, maxLines).join('\n');
+  return trimmed;
+};
+
 const errorHandler = (err, req, res, _next) => {
   const { status, code, message } = classifyError(err);
   const requestId = req.id || req.headers['x-request-id'];
+  const isServerError = status >= 500;
   const logMeta = {
     requestId,
     err: {
       name: err.name,
       message: err.message,
       code: err.code,
-      stack: err.stack,
+      stack: isServerError ? shortenStack(err.stack) : undefined,
     },
     method: req.method,
     url: req.originalUrl,
     ip: req.ip,
-    userId: req.user?.id,
-    userRole: req.user?.role,
+    user: req.user ? `${req.user.id}/${req.user.role}` : 'anon',
     status,
     code,
   };
 
-  if (status >= 500) {
+  if (isServerError) {
     logger.error(logMeta, `Unhandled error: ${message}`);
   } else {
     logger.warn({ ...logMeta, err: { name: err.name, message: err.message, code: err.code } }, `Request failed: ${message}`);
@@ -96,7 +103,7 @@ const errorHandler = (err, req, res, _next) => {
   };
   if (requestId) body.requestId = requestId;
 
-  if (!isProd && status >= 500) {
+  if (!isProd && isServerError) {
     body.debug = { stack: err.stack };
   }
 
