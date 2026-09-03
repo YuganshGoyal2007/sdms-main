@@ -253,6 +253,25 @@ export const getChangeLogs = asyncHandler(async (req, res) => {
 });
 
 export const getNotifications = asyncHandler(async (req, res) => {
-    const notifications = await Notification.findAll({ order: [['createdAt', 'DESC']] });
-    res.status(200).json({ success: true, count: notifications.length, notifications });
+    const role = req.user?.role;
+    const where = role === 'admin'
+        ? {}
+        : role === 'chairperson'
+            ? {
+                [Op.or]: [
+                    { toRole: 'chairperson' },
+                    { toRole: 'admin' },
+                ],
+            }
+            : {
+                toRole: 'coordinator',
+            };
+
+    const notifications = await Notification.findAll({
+        where,
+        attributes: ['id', 'toRole', 'message', 'data', 'read', 'createdAt', 'updatedAt'],
+        order: [['createdAt', 'DESC']],
+        limit: 50,
+    });
+    return res.status(200).json({ success: true, count: notifications.length, notifications });
 });
