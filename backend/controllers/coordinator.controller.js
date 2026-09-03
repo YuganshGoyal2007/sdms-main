@@ -76,25 +76,50 @@ export const getCoordinatorClasses = asyncHandler(async (req, res) => {
 });
 
 export const getAdminDetails = asyncHandler(async (req, res) => {
-    if (req.user.role === 'chairperson') {
-        const chairperson = await Chairperson.findOne({ where: { [Op.or]: [{ userId: req.user.id }, { email: req.user.username }] } });
-        if (!chairperson) return res.status(404).json({ success: false, message: 'Chairperson not found' });
-        return res.status(200).json({ success: true, message: 'User details found successfully', user: chairperson });
+    if (req.user.role === 'admin') {
+        return res.status(200).json({
+            success: true,
+            message: 'User details found successfully',
+            user: {
+                id: req.user.id,
+                username: req.user.username,
+                email: req.user.username,
+                role: req.user.role,
+            },
+        });
     }
+
+    if (req.user.role === 'chairperson') {
+        const chairperson = await Chairperson.findOne({
+            where: {
+                [Op.or]: [
+                    { userId: req.user.id },
+                    { email: req.user.username },
+                ],
+            },
+        });
+        if (!chairperson) {
+            return res.status(404).json({ success: false, message: 'Chairperson not found' });
+        }
+        return res.status(200).json({
+            success: true,
+            message: 'User details found successfully',
+            user: chairperson,
+        });
+    }
+
     const userIdentifierConditions = [{ userId: req.user.id }];
     if (req.user.username) {
         userIdentifierConditions.push({ email: req.user.username });
     }
 
     const coordinators = await Coordinator.findAll({
-        where: {
-            [Op.or]: userIdentifierConditions
-        },
+        where: { [Op.or]: userIdentifierConditions },
         include: [
             { model: User, as: 'user' },
             { model: User, as: 'creator' },
             { model: User, as: 'updater' }
-        ]
+        ],
     });
 
     if (coordinators && coordinators.length > 0) {
@@ -102,14 +127,10 @@ export const getAdminDetails = asyncHandler(async (req, res) => {
             success: true,
             message: 'User details found successfully',
             user: coordinators[0],
-            coordinators: coordinators
-        });
-    } else {
-        return res.status(404).json({
-            success: false,
-            message: 'Coordinator not found'
+            coordinators: coordinators,
         });
     }
+    return res.status(404).json({ success: false, message: 'Coordinator not found' });
 });
 
 export const addCoordinator = asyncHandler(async (req, res) => {
