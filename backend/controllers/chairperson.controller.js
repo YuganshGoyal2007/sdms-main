@@ -6,6 +6,7 @@ import Coordinator from '../models/coordinator.model.js';
 import ChangeLog from '../models/changeLog.model.js';
 import Notification from '../models/notification.model.js';
 import User from '../models/user.model.js';
+import Student from '../models/student.model.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
 import logger from '../lib/logger.js';
 
@@ -195,21 +196,61 @@ export const getChairpersonClasses = asyncHandler(async (req, res) => {
   if (req.user.role !== 'chairperson') {
     return res.status(403).json({ success: false, message: 'Only chairpersons can access assigned classes.' });
   }
-  const { assignments } = await getChairpersonAssignments(req.user);
+  const { assignments, chairperson } = await getChairpersonAssignments(req.user);
   if (!assignments.length) {
-    return res.status(200).json({ success: true, count: 0, classes: [], message: 'No classes are assigned to this chairperson.' });
+    return res.status(200).json({
+      success: true,
+      count: 0,
+      classes: [],
+      chairperson: chairperson ? { id: chairperson.id, name: chairperson.name, email: chairperson.email } : null,
+      message: 'No classes are assigned to this chairperson.',
+    });
   }
-  return res.status(200).json({
-    success: true,
-    count: assignments.length,
-    classes: assignments.map((item) => ({
+
+  const enriched = await Promise.all(assignments.map(async (item) => {
+    const where = {
+      school: item.school,
+      department: item.department,
+      program: item.program,
+      batch: item.batch,
+      specialization: item.specialization,
+    };
+    const [studentCount, coordinators] = await Promise.all([
+      Student.count({ where }),
+      Coordinator.findAll({
+        where,
+        attributes: ['id', 'coordinatorId', 'name', 'email', 'phone', 'role', 'photo', 'userId'],
+      }),
+    ]);
+    return {
       id: item.id,
       school: item.school,
       department: item.department,
       program: item.program,
       batch: item.batch,
       specialization: item.specialization,
-    })),
+      studentCount,
+      coordinators: coordinators.map((c) => {
+        const raw = typeof c.toJSON === 'function' ? c.toJSON() : c;
+        return {
+          id: raw.id,
+          coordinatorId: raw.coordinatorId,
+          name: raw.name,
+          email: raw.email,
+          phone: raw.phone,
+          role: raw.role,
+          hasPhoto: Boolean(raw.photo),
+          hasAccount: Boolean(raw.userId),
+        };
+      }),
+    };
+  }));
+
+  return res.status(200).json({
+    success: true,
+    count: enriched.length,
+    classes: enriched,
+    chairperson: chairperson ? { id: chairperson.id, name: chairperson.name, email: chairperson.email } : null,
   });
 });
 
@@ -224,6 +265,101 @@ export const getChairpersonLogs = asyncHandler(async (req, res) => {
     limit: 200,
   });
   return res.status(200).json({ success: true, logs });
+});
+
+/**
+ * Returns change logs filtered by scope:
+ *  - scope=self           -> only the chairperson's own changes
+ *  - scope=coordinators   -> only changes made by coordinators in the chairperson's assigned classes
+ *  - scope=universal      -> self + all coordinators + admins operating in the chairperson's assigned classes
+ */
+export const getChairpersonScopedLogs = asyncHandler(async (req, res) => {
+  if (!req.user || req.user.role !== 'chairperson') {
+    return res.status(403).json({ success: false, message: 'Only chairpersons can access scoped logs.' });
+  }
+  const scope = String(req.query.scope || 'self').toLowerCase();
+  const { assignments } = await getChairpersonAssignments(req.user);
+  if (!assignments.length) {
+    return res.status(200).json({ success: true, scope, count: 0, logs: [] });
+  }
+
+  const classFilter = {
+    [Op.or]: assignments.map((a) => ({
+      school: a.school,
+      department: a.department,
+      program: a.program,
+      batch: a.batch,
+      specialization: a.specialization,
+    })),
+  };
+
+  const allowedUserIds = new Set([req.user.id]);
+  const coordinatorUserIds = new Set();
+
+  const matchingCoordinators = await Coordinator.findAll({
+    where: classFilter,
+    attributes: ['userId', 'email', 'name', 'coordinatorId'],
+  });
+  matchingCoordinators.forEach((c) => {
+    const raw = typeof c.toJSON === 'function' ? c.toJSON() : c;
+    if (raw.userId) {
+      allowedUserIds.add(raw.userId);
+      coordinatorUserIds.add(raw.userId);
+    }
+  });
+
+  if (scope === 'coordinators' || scope === 'universal') {
+    // universal also includes admins (any admin userId)
+    if (scope === 'universal') {
+      const admins = await User.findAll({ where: { role: 'admin' }, attributes: ['id'] });
+      admins.forEach((a) => allowedUserIds.add(a.id));
+    }
+  } else if (scope !== 'self') {
+    return res.status(400).json({ success: false, message: 'Invalid scope. Use self | coordinators | universal.' });
+  }
+
+  const userIdsArray = [...allowedUserIds];
+  const where = { userId: { [Op.in]: userIdsArray } };
+
+  const logs = await ChangeLog.findAll({
+    where,
+    attributes: ['id', 'userId', 'action', 'entity', 'entityId', 'createdAt'],
+    order: [['createdAt', 'DESC']],
+    limit: 200,
+    raw: true,
+  });
+
+  const userIdToMeta = new Map();
+  [...matchingCoordinators.map((c) => {
+    const r = typeof c.toJSON === 'function' ? c.toJSON() : c;
+    return { id: r.userId, name: r.name, email: r.email, role: 'coordinator' };
+  }), { id: req.user.id, name: req.user.name, email: req.user.username, role: 'chairperson' }].forEach((u) => {
+    if (u.id) userIdToMeta.set(u.id, u);
+  });
+
+  if (scope === 'universal') {
+    const admins = await User.findAll({ where: { role: 'admin' }, attributes: ['id', 'name', 'username'] });
+    admins.forEach((a) => {
+      const r = typeof a.toJSON === 'function' ? a.toJSON() : a;
+      userIdToMeta.set(r.id, { id: r.id, name: r.name, email: r.username, role: 'admin' });
+    });
+  }
+
+  const decorated = logs.map((l) => {
+    const meta = userIdToMeta.get(l.userId);
+    return {
+      ...l,
+      actorName: meta?.name || (meta?.email ? meta.email.split('@')[0] : 'Unknown'),
+      actorRole: meta?.role || (l.userId === req.user.id ? 'chairperson' : 'unknown'),
+    };
+  });
+
+  return res.status(200).json({
+    success: true,
+    scope,
+    count: decorated.length,
+    logs: decorated,
+  });
 });
 
 export const getMessages = asyncHandler(async (req, res) => {

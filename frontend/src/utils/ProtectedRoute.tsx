@@ -43,8 +43,14 @@ const ProtectedRoute = () => {
     if (role === "student" && location.pathname.startsWith("/admin")) {
         return <Navigate to="/student" replace />;
     }
-    if (role === "chairperson" && (location.pathname.startsWith("/admin"))) {
+    if (role === "chairperson" && (location.pathname.startsWith("/admin") || location.pathname.startsWith("/coordinator"))) {
         return <Navigate to="/chairperson/dashboard" replace />;
+    }
+    if (role === "coordinator" && location.pathname.startsWith("/admin") && !location.pathname.startsWith("/admin/me")) {
+        return <Navigate to="/coordinator/dashboard" replace />;
+    }
+    if (role === "admin" && location.pathname.startsWith("/coordinator")) {
+        return <Navigate to="/admin/dashboard" replace />;
     }
     if ((role === "admin" || role === "coordinator") && location.pathname.startsWith("/student")) {
         return <Navigate to="/admin/dashboard" replace />;

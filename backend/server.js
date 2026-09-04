@@ -8,6 +8,8 @@ import specializationRoute from "./routes/specialization.route.js";
 import studentRoute from './routes/student.route.js';
 import coordinatorRoute from './routes/coordinator.route.js'
 import chairpersonRoute from './routes/chairperson.route.js'
+import messagesRoute from './routes/messages.route.js';
+import timetableRoute from './routes/timetable.route.js';
 
 import requestLogger from './lib/requestLogger.js';
 import securityHeaders from './lib/security.js';
@@ -89,7 +91,10 @@ app.use('/auth', authRoute)
 app.use('/admin', specializationRoute);
 app.use('/admin', studentRoute)
 app.use('/admin', coordinatorRoute)
+app.use('/coordinator', coordinatorRoute)
 app.use('/chairperson', chairpersonRoute)
+app.use('/messages', messagesRoute)
+app.use('/timetable', timetableRoute)
 
 app.get("/", (req, res) => {
     res.send("GBU-SDSM server is working normally!");

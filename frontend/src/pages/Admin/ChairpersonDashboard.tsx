@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import AdminSideNav from "../../components/Admin/AdminSideNav";
 import Header from "../../components/Admin/Header";
 import Footer from "../../components/Admin/Footer";
-import { getChairpersonClasses, getMessages } from "../../lib/user.api";
+import { getChairpersonClasses, getUnreadCount } from "../../lib/user.api";
 
 const StatCard = ({ label, value, onClick }: { label: string; value: number | string; onClick?: () => void }) => (
     <button
@@ -39,24 +39,30 @@ const ChairpersonDashboard = () => {
     const navigate = useNavigate();
     const admin = useSelector((state: { admin: AdminState }) => state.admin);
     const [classesCount, setClassesCount] = useState<number>(0);
+    const [totalStudents, setTotalStudents] = useState<number>(0);
+    const [totalCoordinators, setTotalCoordinators] = useState<number>(0);
     const [unreadCount, setUnreadCount] = useState<number>(0);
     const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
         const load = async () => {
             try {
-                const [classesRes, messagesRes] = await Promise.allSettled([
+                const [classesRes, unreadRes] = await Promise.allSettled([
                     getChairpersonClasses(),
-                    getMessages(),
+                    getUnreadCount(),
                 ]);
                 if (classesRes.status === "fulfilled") {
-                    setClassesCount(classesRes.value?.count ?? 0);
-                }
-                if (messagesRes.status === "fulfilled") {
-                    const list: { read?: boolean }[] = Array.isArray(messagesRes.value?.messages)
-                        ? messagesRes.value.messages
+                    const list: { studentCount?: number; coordinators?: { id: number }[] }[] = Array.isArray(classesRes.value?.classes)
+                        ? classesRes.value.classes
                         : [];
-                    setUnreadCount(list.filter((m) => !m.read).length);
+                    setClassesCount(classesRes.value?.count ?? list.length);
+                    setTotalStudents(list.reduce((acc, c) => acc + (c.studentCount ?? 0), 0));
+                    const coordIds = new Set<number>();
+                    list.forEach((c) => (c.coordinators ?? []).forEach((cd) => coordIds.add(cd.id)));
+                    setTotalCoordinators(coordIds.size);
+                }
+                if (unreadRes.status === "fulfilled") {
+                    setUnreadCount(unreadRes.value?.count ?? 0);
                 }
             } finally {
                 setLoading(false);
@@ -86,19 +92,26 @@ const ChairpersonDashboard = () => {
 
                         <section className="mb-6">
                             <h2 className="text-lg font-semibold text-gray-900 mb-3">Overview</h2>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <StatCard
                                     label="Assigned Classes"
                                     value={loading ? "…" : classesCount}
                                     onClick={() => navigate("/chairperson/classes")}
                                 />
                                 <StatCard
-                                    label="Unread Messages"
-                                    value={loading ? "…" : unreadCount}
+                                    label="Total Students under me"
+                                    value={loading ? "…" : totalStudents}
+                                    onClick={() => navigate("/chairperson/classes")}
                                 />
                                 <StatCard
-                                    label="Role"
-                                    value="Chairperson"
+                                    label="Coordinators"
+                                    value={loading ? "…" : totalCoordinators}
+                                    onClick={() => navigate("/chairperson/classes")}
+                                />
+                                <StatCard
+                                    label="Unread Messages"
+                                    value={loading ? "…" : unreadCount}
+                                    onClick={() => navigate("/chairperson/messages")}
                                 />
                             </div>
                         </section>

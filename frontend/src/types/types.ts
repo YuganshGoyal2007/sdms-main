@@ -99,6 +99,7 @@ export interface AdminUserProps {
     batch: string;
     specialization: string;
     role?: string;
+    username?: string;
 }
 
 export interface StudentAuthProps {
@@ -197,4 +198,65 @@ export interface TeamCardProps {
   github: string,
   x: string,
   mail: string
+}
+
+export interface ClassCoordinator {
+  id: number;
+  coordinatorId: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  hasPhoto: boolean;
+  hasAccount: boolean;
+}
+
+export interface ChairpersonClassInfo {
+  id: number;
+  school: string;
+  department: string;
+  program: string;
+  batch: string;
+  specialization: string;
+  studentCount: number;
+  coordinators: ClassCoordinator[];
+}
+
+export interface ChairpersonInfo {
+  id: number;
+  name: string;
+  email: string;
+}
+
+export interface ChairpersonClassesResponse {
+  success: boolean;
+  count: number;
+  classes: ChairpersonClassInfo[];
+  chairperson?: ChairpersonInfo | null;
+  message?: string;
+}
+
+export interface ChairpersonLogScope {
+  scope: 'self' | 'coordinators' | 'universal';
+  count: number;
+  logs: ChairpersonLogEntry[];
+}
+
+export interface ChairpersonLogEntry {
+  id: number;
+  userId: number;
+  action: string;
+  entity: string;
+  entityId: string;
+  createdAt: string;
+  actorName?: string;
+  actorRole?: string;
+}
+
+export interface MessageNotification {
+  id: number;
+  toRole: string;
+  message: string;
+  read: number | boolean;
+  createdAt: string;
 }

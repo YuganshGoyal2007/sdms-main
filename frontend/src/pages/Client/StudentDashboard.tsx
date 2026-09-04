@@ -6,6 +6,8 @@ import { Sidebar } from "../../components/Client/Sidebar";
 import { ProfileView } from "../../components/Client/ProfileView";
 import { RegistrationView } from "../../components/Client/RegistrationView";
 import { ComingSoon } from "../../utils/ComingSoon";
+import StudentMessagesView from "../../components/Client/StudentMessagesView";
+import { TimetableView } from "../../components/Client/TimetableView";
 import Footer from "../../components/Client/Footer";
 import { getStudentDetails } from "../../lib/user.api";
 import { useDispatch } from "react-redux";
@@ -68,8 +70,9 @@ const StudentDashboard = () => {
                             {/* {activeView === "notices" && <ComingSoon feature={'Notices'} />} */}
                             {/* {activeView === "smartCards" && <ComingSoon feature={'Smart Cards'} />} */}
                             {/* {activeView === "syllabus" && <ComingSoon feature={'Syllabus'} />} */}
-                            {/* {activeView === "timetable" && <ComingSoon feature={'Timetable'} />} */}
+                            {activeView === "timetable" && <TimetableView />}
                             {activeView === "registration" && <RegistrationView />}
+                            {activeView === "messages" && <StudentMessagesView />}
                             {/* {activeView === "results" && <ComingSoon feature={'Results'} />} */}
                         </motion.div>
                     </AnimatePresence>

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { LayoutDashboard, Menu, Power, Table2, UserCog, UsersRound, X } from 'lucide-react';
+import { LayoutDashboard, Menu, Power, Table2, UserCog, UsersRound, X, CalendarDays } from 'lucide-react';
 import { Link, useNavigate, } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../context/app/store";
@@ -20,7 +20,8 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
     const initial = displayName.charAt(0).toUpperCase();
 
     const isChair = user?.role === 'chairperson';
-    const basePath = isChair ? '/chairperson' : '/admin';
+    const isCoord = user?.role === 'coordinator';
+    const basePath = isChair ? '/chairperson' : isCoord ? '/coordinator' : '/admin';
     const dashboardPath = `${basePath}/dashboard`;
     const classesPath = `${basePath}/classes`;
     const recordsPath = `${basePath}/records`;
@@ -89,7 +90,22 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                             {!menu ? <UsersRound /> : <div className="w-full flex justify-center items-center gap-3"><h1 className={activeTab === 'chairpersons' ? 'text-black font-bold' : ''}>Chairpersons</h1></div>}
                         </button>
                     </Link>}
+                    {user.role === 'admin' && <Link to={'/admin/timetable'}>
+                        <button className="w-full flex justify-center mt-5 cursor-pointer">
+                            {!menu ? <CalendarDays /> : <div className="w-full flex justify-center items-center gap-3"><h1 className={activeTab === 'timetable' ? 'text-black font-bold' : ''}>Timetable Mappings</h1></div>}
+                        </button>
+                    </Link>}
                     {isChair && <Link to={'/chairperson/messages'}>
+                        <button className="w-full flex justify-center mt-5 cursor-pointer">
+                            {!menu ? <UsersRound /> : <div className="w-full flex justify-center items-center gap-3"><h1 className={activeTab === 'messages' ? 'text-black font-bold' : ''}>Messages</h1></div>}
+                        </button>
+                    </Link>}
+                    {isCoord && <Link to={'/coordinator/messages'}>
+                        <button className="w-full flex justify-center mt-5 cursor-pointer">
+                            {!menu ? <UsersRound /> : <div className="w-full flex justify-center items-center gap-3"><h1 className={activeTab === 'messages' ? 'text-black font-bold' : ''}>Messages</h1></div>}
+                        </button>
+                    </Link>}
+                    {user.role === 'admin' && <Link to={'/admin/messages'}>
                         <button className="w-full flex justify-center mt-5 cursor-pointer">
                             {!menu ? <UsersRound /> : <div className="w-full flex justify-center items-center gap-3"><h1 className={activeTab === 'messages' ? 'text-black font-bold' : ''}>Messages</h1></div>}
                         </button>
@@ -118,7 +134,7 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                                 </button>
                             </div>
                         </div>
-                        : <div className="bg-[#d9d9d9] text-black border cursor-not-allowed rounded-full w-7 h-7 flex items-center justify-center font-bold text-lg">{user?.name.charAt(0)}</div>
+                        : <div className="bg-[#d9d9d9] text-black border cursor-not-allowed rounded-full w-7 h-7 flex items-center justify-center font-bold text-lg">{user?.name?.charAt(0) ?? (user?.email || user?.username || "?").charAt(0).toUpperCase()}</div>
                     }
                 </div>
             </div>
@@ -175,12 +191,27 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                             {menu ? <UsersRound /> : <div className="w-full flex justify-center items-center gap-3"><h1 className={activeTab === 'chairpersons' ? 'text-black font-bold' : ''}>Chairpersons</h1></div>}
                         </button>
                     </Link>}
+                    {user.role === 'admin' && <Link to={'/admin/timetable'}>
+                        <button className="w-full flex justify-center mt-5 cursor-pointer">
+                            {menu ? <CalendarDays /> : <div className="w-full flex justify-center items-center gap-3"><h1 className={activeTab === 'timetable' ? 'text-black font-bold' : ''}>Timetable Mappings</h1></div>}
+                        </button>
+                    </Link>}
                     {(user.role === 'admin' || user.role === 'coordinator' || user.role === 'chairperson') && <Link to={classesPath}>
                         <button className="w-full flex justify-center mt-5 cursor-pointer">
                             {menu ? <Table2 /> : <div className="w-full flex justify-center items-center gap-3"><h1 className={activeTab === 'classes' ? 'text-black font-bold' : ''}>Classes</h1></div>}
                         </button>
                     </Link>}
                     {isChair && <Link to={'/chairperson/messages'}>
+                        <button className="w-full flex justify-center mt-5 cursor-pointer">
+                            {menu ? <UsersRound /> : <div className="w-full flex justify-center items-center gap-3"><h1 className={activeTab === 'messages' ? 'text-black font-bold' : ''}>Messages</h1></div>}
+                        </button>
+                    </Link>}
+                    {isCoord && <Link to={'/coordinator/messages'}>
+                        <button className="w-full flex justify-center mt-5 cursor-pointer">
+                            {menu ? <UsersRound /> : <div className="w-full flex justify-center items-center gap-3"><h1 className={activeTab === 'messages' ? 'text-black font-bold' : ''}>Messages</h1></div>}
+                        </button>
+                    </Link>}
+                    {user.role === 'admin' && <Link to={'/admin/messages'}>
                         <button className="w-full flex justify-center mt-5 cursor-pointer">
                             {menu ? <UsersRound /> : <div className="w-full flex justify-center items-center gap-3"><h1 className={activeTab === 'messages' ? 'text-black font-bold' : ''}>Messages</h1></div>}
                         </button>
@@ -198,10 +229,10 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                         ? <div className="flex items-center justify-between mt-2 bg-white border border-[#d9d9d9] w-full px-3 py-2 rounded-lg">
                             <div className="flex w-full items-center justify-between gap-2">
                                 <div className="flex gap-2 items-center justify-center">
-                                    <div className="bg-[#d9d9d9] text-black border rounded-full w-7 h-7 flex items-center justify-center font-bold text-lg"> {user?.name.charAt(0)} </div>
+                                    <div className="bg-[#d9d9d9] text-black border rounded-full w-7 h-7 flex items-center justify-center font-bold text-lg"> {(user?.name?.charAt(0) ?? (user?.email || user?.username || "?").charAt(0)).toUpperCase()} </div>
                                     <div>
-                                        <p className="sm:text-sm text-xs font-semibold">{user?.name}</p>
-                                        <p className="sm:text-xs text-[8px]">{user.email}</p>
+                                        <p className="sm:text-sm text-xs font-semibold">{user?.name || user?.username || "User"}</p>
+                                        <p className="sm:text-xs text-[8px]">{user?.email || user?.username}</p>
                                     </div>
                                 </div>
                                 <button onClick={handleLogout} className='rounded hover:bg-[#f8f9fa] transition-all batch-300 '>
@@ -209,7 +240,7 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                                 </button>
                             </div>
                         </div>
-                        : <div className="bg-[#d9d9d9] text-black border cursor-not-allowed rounded-full w-7 h-7 flex items-center justify-center font-bold text-lg">{user?.name.charAt(0)}</div>
+                        : <div className="bg-[#d9d9d9] text-black border cursor-not-allowed rounded-full w-7 h-7 flex items-center justify-center font-bold text-lg">{(user?.name?.charAt(0) ?? (user?.email || user?.username || "?").charAt(0)).toUpperCase()}</div>
                     }
                 </div>
             </div>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Download } from "lucide-react";
 import AdminSideNav from "../../components/Admin/AdminSideNav";
 import Header from "../../components/Admin/Header";
 import Footer from "../../components/Admin/Footer";
@@ -7,7 +8,9 @@ import type { CategoryFormProps, UniqueForm } from "../../types/types";
 import { school, cse, soict } from "../../constants";
 import { searchBatches, searchSpecializations } from "../../lib/user.api";
 import { getChangeLogs } from "../../lib/user.api";
+import { downloadExcel } from "../../utils/excel";
 import { useSelector } from 'react-redux';
+import { toast } from 'sonner';
 import type { RootState } from '../../context/app/store';
 
 type Mode = "CATEGORY" | "UNIQUE";
@@ -252,14 +255,48 @@ const Records = () => {
                         {/* Coordinator History Table */}
                         {['coordinator', 'chairperson', 'admin'].includes(user?.role || '') && (
                             <div className="mt-6 bg-white border border-gray-200 rounded-xl p-6 shadow-xs">
-                                <div className="flex justify-between items-center mb-4">
+                                <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
                                     <div>
                                         <h2 className="text-xl font-bold text-gray-900">Coordinator Action & Audit Logs</h2>
                                         <p className="text-xs text-gray-500 mt-0.5">{user?.role === 'coordinator' ? 'Audit history of all changes made by you.' : user?.role === 'chairperson' ? 'Changes made by coordinators in your allowed classes.' : 'All coordinator changes.'}</p>
                                     </div>
-                                    <span className="text-xs font-medium px-3 py-1 bg-gray-100 rounded-full text-gray-700">
-                                        {logs.length} {logs.length === 1 ? 'Entry' : 'Entries'}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-medium px-3 py-1 bg-gray-100 rounded-full text-gray-700">
+                                            {logs.length} {logs.length === 1 ? 'Entry' : 'Entries'}
+                                        </span>
+                                        <button
+                                            onClick={async () => {
+                                                if (!logs.length) {
+                                                    toast.error("No logs to export");
+                                                    return;
+                                                }
+                                                const t = toast.loading("Preparing Excel export…");
+                                                try {
+                                                    const headers = ["Sr No", "Date & Time", "Actor", "Action", "Entity", "Target ID"];
+                                                    const rows = logs.map((l: any, idx: number) => [
+                                                        idx + 1,
+                                                        l.createdAt ? new Date(l.createdAt).toLocaleString() : "—",
+                                                        l.actorName || `User #${l.userId}`,
+                                                        l.action || "—",
+                                                        l.entity || "—",
+                                                        l.entityId || "—",
+                                                    ]);
+                                                    const today = new Date().toISOString().slice(0, 10);
+                                                    await downloadExcel(
+                                                        `audit-logs-${today}.xlsx`,
+                                                        [{ name: "Audit Logs", rows: [headers, ...rows] }]
+                                                    );
+                                                    toast.success("Excel downloaded", { id: t });
+                                                } catch (e: any) {
+                                                    toast.error(e?.message || "Failed to export", { id: t });
+                                                }
+                                            }}
+                                            disabled={!logs.length}
+                                            className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 border border-emerald-800 bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-50"
+                                        >
+                                            <Download size={14} /> Export Excel
+                                        </button>
+                                    </div>
                                 </div>
                                 {logs.length === 0 ? (
                                     <div className="py-8 text-center text-gray-500 border border-dashed border-gray-200 rounded-lg">

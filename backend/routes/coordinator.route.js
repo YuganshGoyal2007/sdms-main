@@ -5,7 +5,7 @@ import { addCoordinator, deleteCoordinator, getAdminDetails, getAdmins, getChang
 
 const router = express.Router();
 
-router.get('/get-admin-details',isAuthenticated, getAdminDetails);
+router.get('/get-admin-details', isAuthenticated, getAdminDetails);
 router.get('/get-admins', isAuthenticated, allowRoles('admin', 'coordinator', 'chairperson'), getAdmins);
 router.get('/classes', isAuthenticated, allowRoles('coordinator'), getCoordinatorClasses);
 router.get('/changes', isAuthenticated, allowRoles('coordinator', 'admin', 'chairperson'), getChangeLogs);

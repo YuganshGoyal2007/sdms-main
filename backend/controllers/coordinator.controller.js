@@ -3,6 +3,7 @@ import Coordinator from "../models/coordinator.model.js";
 import User from "../models/user.model.js";
 import ChangeLog from "../models/changeLog.model.js";
 import Notification from "../models/notification.model.js";
+import Student from "../models/student.model.js";
 import sequelize from "../lib/db.js";
 import { getChairpersonLogs } from './chairperson.controller.js';
 import Chairperson from '../models/chairperson.model.js';
@@ -12,9 +13,9 @@ import logger from "../lib/logger.js";
 export const getAdmins = asyncHandler(async (req, res) => {
     const admins = await Coordinator.findAll({
         include: [
-            { model: User, as: 'user' },
-            { model: User, as: 'creator' },
-            { model: User, as: 'updater' }
+            { model: User, as: 'user', attributes: { exclude: ['password'] } },
+            { model: User, as: 'creator', attributes: { exclude: ['password'] } },
+            { model: User, as: 'updater', attributes: { exclude: ['password'] } }
         ]
     });
     res.status(200).json({
@@ -61,17 +62,31 @@ export const getCoordinatorClasses = asyncHandler(async (req, res) => {
         }
     });
 
-    return res.status(200).json({
-        success: true,
-        count: unique.size,
-        classes: [...unique.values()].map((item) => ({
+    const enriched = await Promise.all([...unique.values()].map(async (item) => {
+        const studentCount = await Student.count({
+            where: {
+                school: item.school,
+                department: item.department,
+                program: item.program,
+                batch: item.batch,
+                specialization: item.specialization,
+            },
+        });
+        return {
             id: item.id,
             school: item.school,
             department: item.department,
             program: item.program,
             batch: item.batch,
-            specialization: item.specialization
-        }))
+            specialization: item.specialization,
+            studentCount,
+        };
+    }));
+
+    return res.status(200).json({
+        success: true,
+        count: enriched.length,
+        classes: enriched,
     });
 });
 
@@ -116,9 +131,9 @@ export const getAdminDetails = asyncHandler(async (req, res) => {
     const coordinators = await Coordinator.findAll({
         where: { [Op.or]: userIdentifierConditions },
         include: [
-            { model: User, as: 'user' },
-            { model: User, as: 'creator' },
-            { model: User, as: 'updater' }
+            { model: User, as: 'user', attributes: { exclude: ['password'] } },
+            { model: User, as: 'creator', attributes: { exclude: ['password'] } },
+            { model: User, as: 'updater', attributes: { exclude: ['password'] } }
         ],
     });
 
@@ -221,9 +236,9 @@ export const viewCoordinator = asyncHandler(async (req, res) => {
     const coordinators = await Coordinator.findAll({
         where,
         include: [
-            { model: User, as: 'user' },
-            { model: User, as: 'creator' },
-            { model: User, as: 'updater' }
+            { model: User, as: 'user', attributes: { exclude: ['password'] } },
+            { model: User, as: 'creator', attributes: { exclude: ['password'] } },
+            { model: User, as: 'updater', attributes: { exclude: ['password'] } }
         ]
     });
 
