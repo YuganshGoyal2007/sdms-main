@@ -15,6 +15,7 @@ import {
     Eraser,
 } from "lucide-react";
 import { toast } from "sonner";
+import { safeErrorMessage } from "../../utils/safeError";
 import {
     getInbox,
     getRecipients,
@@ -168,7 +169,7 @@ const MessagesCenter: React.FC<MessagesCenterProps> = ({ initialTab = "inbox" })
             await loadAll();
             setTab("inbox");
         } catch (e: any) {
-            toast.error(e?.response?.data?.message || "Failed to send message");
+            toast.error(safeErrorMessage(e, "Failed to send message"));
         } finally {
             setSending(false);
         }
@@ -191,7 +192,7 @@ const MessagesCenter: React.FC<MessagesCenterProps> = ({ initialTab = "inbox" })
             toast.success("Message deleted");
         } catch (e: any) {
             setInbox(prev);
-            toast.error(e?.response?.data?.message || "Failed to delete");
+            toast.error(safeErrorMessage(e, "Failed to delete"));
         }
     };
 
@@ -206,7 +207,7 @@ const MessagesCenter: React.FC<MessagesCenterProps> = ({ initialTab = "inbox" })
             setInbox((prev) => prev.map((m) => ({ ...m, read: true })));
             toast.success(`Marked ${res?.count ?? 0} message(s) as read`, { id: t });
         } catch (e: any) {
-            toast.error(e?.response?.data?.message || "Failed to mark all as read", { id: t });
+            toast.error(safeErrorMessage(e, "Failed to mark all as read"), { id: t });
         }
     };
 
@@ -228,7 +229,7 @@ const MessagesCenter: React.FC<MessagesCenterProps> = ({ initialTab = "inbox" })
             setInbox((prev) => prev.filter((m) => !m.read));
             toast.success(`Cleared ${res?.count ?? 0} read message(s) from your inbox`, { id: t });
         } catch (e: any) {
-            toast.error(e?.response?.data?.message || "Failed to clear inbox", { id: t });
+            toast.error(safeErrorMessage(e, "Failed to clear read messages"), { id: t });
         }
     };
 
@@ -240,7 +241,7 @@ const MessagesCenter: React.FC<MessagesCenterProps> = ({ initialTab = "inbox" })
             setInbox([]);
             toast.success(`Cleared ${res?.count ?? 0} message(s)`, { id: t });
         } catch (e: any) {
-            toast.error(e?.response?.data?.message || "Failed to clear inbox", { id: t });
+            toast.error(safeErrorMessage(e, "Failed to clear inbox"), { id: t });
         }
     };
 
@@ -256,7 +257,7 @@ const MessagesCenter: React.FC<MessagesCenterProps> = ({ initialTab = "inbox" })
             setSent([]);
             toast.success(`Cleared ${res?.count ?? 0} sent message(s)`, { id: t });
         } catch (e: any) {
-            toast.error(e?.response?.data?.message || "Failed to clear sent", { id: t });
+            toast.error(safeErrorMessage(e, "Failed to clear sent"), { id: t });
         }
     };
 

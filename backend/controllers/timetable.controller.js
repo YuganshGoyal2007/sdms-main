@@ -110,7 +110,7 @@ export const listSections = asyncHandler(async (req, res) => {
     if (!isAdmin(req.user)) {
         return res.status(403).json({ success: false, error: 'Admin only' });
     }
-    const sections = await TimetableSection.findAll({ order: [['school', 'ASC'], ['department', 'ASC'], ['program', 'ASC'], ['batch', 'ASC'], ['specialization', 'ASC']] });
+    const sections = await TimetableSection.findAll({ order: [['batch', 'DESC'], ['specialization', 'ASC']] });
     res.json({ success: true, sections });
 });
 

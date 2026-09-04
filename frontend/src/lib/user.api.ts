@@ -176,7 +176,7 @@ export const getChairpersonScopedLogs = async (scope: 'self' | 'coordinators' | 
     (await api.get('/chairperson/scoped-logs', { params: { scope } })).data;
 export const getMessages = async () => (await api.get('/chairperson/messages')).data;
 export const sendMessage = async (receiverRole: 'admin' | 'coordinator', content: string) =>
-    (await api.post('/chairperson/messages', { receiverRole, content })).data;
+    (await api.post('/messages', { recipientType: 'role', recipientRole: receiverRole, content })).data;
 
 /* ───────── Unified cross-role messaging system ───────── */
 

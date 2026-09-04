@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { RefreshCw, Printer, ExternalLink, AlertCircle, CheckCircle2, Calendar, MapPin, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
+import { safeErrorMessage } from "../../utils/safeError";
 import {
     getMyTimetable,
     refreshMyTimetable,
@@ -165,7 +166,7 @@ export function TimetableView() {
         try {
             const res = await refreshMyTimetable();
             if (!res.success) {
-                toast.error(res.error || "Refresh failed");
+                toast.error(safeErrorMessage(res, "Refresh failed"));
                 return;
             }
             if (res.changed) {
@@ -177,7 +178,7 @@ export function TimetableView() {
             }
             await load(false);
         } catch (e: any) {
-            toast.error(e?.response?.data?.error || e?.message || "Refresh failed");
+            toast.error(safeErrorMessage(e, "Refresh failed"));
         } finally {
             setRefreshing(false);
         }

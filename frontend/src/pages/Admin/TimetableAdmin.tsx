@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Plus, Trash2, ExternalLink, RefreshCw, Save, X, Upload, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { safeErrorMessage } from "../../utils/safeError";
 import AdminSideNav from "../../components/Admin/AdminSideNav";
 import Header from "../../components/Admin/Header";
 import Footer from "../../components/Admin/Footer";
@@ -40,7 +41,7 @@ const TimetableAdmin = () => {
             const r = await listTimetableSections();
             setSections(r.sections || []);
         } catch (e: any) {
-            toast.error(e?.response?.data?.error || "Failed to load sections");
+            toast.error(safeErrorMessage(e, "Failed to load sections"));
         } finally {
             setLoading(false);
         }
@@ -64,7 +65,7 @@ const TimetableAdmin = () => {
             setForm({ ...DEFAULT_FORM });
             await load();
         } catch (e: any) {
-            toast.error(e?.response?.data?.error || "Failed to create section");
+            toast.error(safeErrorMessage(e, "Failed to create section"));
         } finally {
             setSaving(false);
         }
@@ -77,7 +78,7 @@ const TimetableAdmin = () => {
             toast.success("Mapping deleted");
             await load();
         } catch (e: any) {
-            toast.error(e?.response?.data?.error || "Delete failed");
+            toast.error(safeErrorMessage(e, "Delete failed"));
         }
     };
 
@@ -90,7 +91,7 @@ const TimetableAdmin = () => {
             toast.success(`Refreshed ${success}/${total} sections, ${changed} updated`, { id: t });
             await load();
         } catch (e: any) {
-            toast.error(e?.response?.data?.error || "Refresh failed", { id: t });
+            toast.error(safeErrorMessage(e, "Refresh failed"), { id: t });
         } finally {
             setRefreshing(false);
         }
@@ -165,10 +166,10 @@ soict,cse,B.Tech,2026-30,AI,SOICT,CSE,1249,BAI-I-A,2026-27,Odd`;
                 toast.success(`Imported ${r.created} new mappings, ${r.skipped} skipped`);
                 await load();
             } else {
-                toast.error(r.error || "Import failed");
+                toast.error(safeErrorMessage(r, "Import failed"));
             }
         } catch (e: any) {
-            toast.error(e.message);
+            toast.error(safeErrorMessage(e, "Import request failed"));
         }
     };
 
@@ -212,6 +213,26 @@ soict,cse,B.Tech,2026-30,AI,SOICT,CSE,1249,BAI-I-A,2026-27,Odd`;
                                 >
                                     Browse mygbu.in sections <ExternalLink size={10} />
                                 </a>
+                                {sections.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
+                                        <span className="text-gray-500">By batch:</span>
+                                        {Object.entries(
+                                            sections.reduce((acc: Record<string, number>, s: any) => {
+                                                acc[s.batch] = (acc[s.batch] || 0) + 1;
+                                                return acc;
+                                            }, {})
+                                        )
+                                            .sort((a, b) => b[0].localeCompare(a[0]))
+                                            .map(([b, n]) => (
+                                                <span key={b} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
+                                                    <span className="font-mono">{b}</span>
+                                                    <span className="text-gray-400">·</span>
+                                                    <span className="font-semibold">{n}</span>
+                                                </span>
+                                            ))}
+                                        <span className="ml-1 text-gray-500">({sections.length} total)</span>
+                                    </div>
+                                )}
                             </div>
                             <div className="flex items-center gap-2 flex-wrap">
                                 <button
