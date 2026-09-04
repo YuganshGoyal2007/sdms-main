@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Header } from "../../components/Client/Header";
+import { ClientHeader } from "../../components/Client/ClientHeader";
 import { Sidebar } from "../../components/Client/Sidebar";
 // import { DashboardView } from "../../components/Client/DashboardView";
 import { ProfileView } from "../../components/Client/ProfileView";
@@ -13,12 +13,20 @@ import NotificationPermissionBanner from "../../components/Client/NotificationPe
 import { getStudentDetails } from "../../lib/user.api";
 import { useDispatch } from "react-redux";
 import { setUser } from "../../context/features/userSlice";
+import { useAuth } from "../../context/useAuth";
 
 const StudentDashboard = () => {
     const [activeView, setActiveView] = useState("profile");
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+    const auth = useAuth();
     const dispatch = useDispatch();
+
+    useEffect(() => {
+        if (!auth.isAuthenticated) {
+            window.location.href = "/login";
+        }
+    }, [auth.isAuthenticated]);
 
     useEffect(() => {
         const getStudent = async () => {
@@ -36,9 +44,10 @@ const StudentDashboard = () => {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Header
+            <ClientHeader
                 isSidebarOpen={isSidebarOpen}
                 setIsSidebarOpen={setIsSidebarOpen}
+                onMessagesClick={() => setActiveView("messages")}
             />
 
             <div className="flex">
