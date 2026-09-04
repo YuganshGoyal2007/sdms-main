@@ -332,8 +332,12 @@ export const refreshMyTimetable = async () =>
     (await api.post('/timetable/refresh')).data;
 
 export const hasTimetableChangesSince = async (lastSeenAt: string): Promise<{ changed: boolean; lastChangedAt: string | null }> => {
-    const res = await api.get('/timetable/changes-since', { params: { lastSeenAt } });
-    return res.data;
+    try {
+        const res = await api.get('/timetable/changes-since', { params: { lastSeenAt } });
+        return res.data;
+    } catch {
+        return { changed: false, lastChangedAt: null };
+    }
 };
 
 export const refreshAllTimetables = async () =>

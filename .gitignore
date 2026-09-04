@@ -1,0 +1,94 @@
+# =====================================================
+# GBU-SDMS .gitignore
+# =====================================================
+# This file lives at the repo root. Sub-folders (backend/, frontend/)
+# have their own .gitignore for language-specific stuff.
+
+# ─── Secrets / env ──────────────────────────────────
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+*.env
+!.env.example
+!.env.sample
+!.env.dist
+
+# ─── Database dumps / seed data ──────────────────────
+*.sql
+*.sql.gz
+*.sql.bak
+*.dump
+*.db
+*.sqlite
+*.sqlite3
+db_dumps/
+database/
+data/exports/
+data/dumps/
+scripts/seed-*.js
+scripts/seed-*.mjs
+!backend/scripts/migrate-*.js    # migrations are code, not data
+
+# ─── Database files at the repo root (NO DB EXPOSURE!) ─
+db-*.sql
+gbu_sdms_*.sql
+sdms_*.sql
+database_*.sql
+**/dump-*.sql
+**/backup-*.sql
+
+# ─── Backup / runtime artifacts ──────────────────────
+*.log
+logs/
+backend/logs/
+*.pid
+*.seed
+*.pid.lock
+
+# ─── Local dev / IDE noise ───────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+*.bak
+*.orig
+
+# ─── Node / build artifacts (also in sub-gitignores) ─
+node_modules/
+dist/
+build/
+.next/
+*.tsbuildinfo
+coverage/
+.nyc_output/
+
+# ─── OS-specific ─────────────────────────────────────
+.DS_Store
+desktop.ini
+ehthumbs.db
+ehthumbs_vista.db
+Thumbs.db
+$RECYCLE.BIN/
+*.lnk
+
+# ─── Frontend (Vite/React) extras ───────────────────
+.vite/
+.cache/
+.parcel-cache/
+
+# ─── Editor scratch ─────────────────────────────────
+.vscode-test/
+.idea_modules/
+*.iml
+
+# Database files (prevent any DB from being committed)
+*.sqlite
+*.sqlite3
+*.db
+backend/database.sqlite
+**/database.sqlite*
