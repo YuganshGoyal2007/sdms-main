@@ -9,6 +9,7 @@ import { ComingSoon } from "../../utils/ComingSoon";
 import StudentMessagesView from "../../components/Client/StudentMessagesView";
 import { TimetableView } from "../../components/Client/TimetableView";
 import Footer from "../../components/Client/Footer";
+import NotificationPermissionBanner from "../../components/Client/NotificationPermissionBanner";
 import { getStudentDetails } from "../../lib/user.api";
 import { useDispatch } from "react-redux";
 import { setUser } from "../../context/features/userSlice";
@@ -80,6 +81,8 @@ const StudentDashboard = () => {
 
                 <Footer />
             </div>
+
+            <NotificationPermissionBanner />
 
             {isSidebarOpen && (
                 <div

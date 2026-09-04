@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { RefreshCw, Printer, ExternalLink, AlertCircle, CheckCircle2, Calendar, MapPin, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { safeErrorMessage } from "../../utils/safeError";
+import { openPrintWindow } from "../../utils/printWindow";
 import {
     getMyTimetable,
     refreshMyTimetable,
@@ -184,7 +185,41 @@ export function TimetableView() {
         }
     };
 
-    const className = `${data?.program || ""} ${data?.batch || ""} — ${data?.specialization || ""}`.replace(/\s+/g, " ").trim();
+    const handlePrint = () => {
+        if (!data) return;
+        const slots = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI"];
+        const slotTimes = {
+            I: "8:30-9:30", II: "9:30-10:30", III: "10:30-11:00", IV: "11:30-12:30", V: "12:30-1:30",
+            VI: "1:30-2:30", VII: "2:30-3:30", VIII: "3:30-4:30", IX: "4:30-5:30", X: "5:30-6:30", XI: "6:30-7:30",
+        } as Record<string, string>;
+        const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+        const entryPills = (entries: TimetableEntry[] | undefined) => (entries || [])
+            .map((e: TimetableEntry) => `<div class="entry"><span class="code">${e.code ?? ""}</span>${e.faculty ? `<span class="fac"> ${e.faculty}</span>` : ""}${e.room ? `<div class="room">${e.room}${e.group ? " " + e.group : ""}</div>` : ""}</div>`)
+            .join("");
+        const gridHtml =
+            `<div class="section"><h2>Weekly Schedule</h2>` +
+            `<div class="grid"><div class="head">Day</div>` +
+            slots.map((s) => `<div class="head">${s}<br><span style="font-size:9px;color:#555;">${slotTimes[s]}</span></div>`).join("") +
+            `</div>` +
+            days.map((d) => {
+                const dayObj = (data.entries || {})[d] || {};
+                return `<div class="grid"><div class="head">${d}</div>` +
+                    slots.map((s) => `<div>${entryPills(dayObj[s])}</div>`).join("") +
+                    `</div>`;
+            }).join("") +
+            `</div>`;
+        const subjectsHtml = (data.subjects || []).length === 0 ? "" :
+            `<div class="section"><h2>Subject Details</h2>` +
+            `<table><thead><tr><th>Code</th><th>Subject Name</th><th>Credits</th><th>Faculty ABR</th><th>Faculty</th><th>Load</th></tr></thead><tbody>` +
+            data.subjects.map((s) =>
+                `<tr><td><strong>${s.code}</strong></td><td>${s.name}</td><td>${s.credits}</td><td>${s.facultyABR}</td><td>${s.facultyName}</td><td>${s.load}</td></tr>`
+            ).join("") +
+            `</tbody></table></div>`;
+        const title = `${data.program} ${data.batch} — ${data.specialization} (${sectionLabel ?? ""})`;
+        openPrintWindow(title, [gridHtml, subjectsHtml]);
+    };
+
+    const className = `${"$"}{data?.program || ""} ${"$"}{data?.batch || ""} — ${"$"}{data?.specialization || ""}`.replace(/\s+/g, " ").trim();
 
     return (
         <TimetableErrorBoundary>
@@ -243,7 +278,7 @@ export function TimetableView() {
                             {refreshing ? "Refreshing…" : "Refresh from mygbu.in"}
                         </button>
                         <button
-                            onClick={() => window.print()}
+                            onClick={handlePrint}
                             className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm text-[#7b3b5a] border border-[#e5d5df] rounded-lg hover:bg-[#faf7f9] transition"
                         >
                             <Printer size={14} /> Print
