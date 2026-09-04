@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { getUnreadCount, hasTimetableChangesSince } from "../../lib/user.api";
+import { getUnreadCount, hasTimetableChangesSince } from "../../lib/user.api.ts";
 
 /**
  * useNotifications - poll unread count + timetable changes
