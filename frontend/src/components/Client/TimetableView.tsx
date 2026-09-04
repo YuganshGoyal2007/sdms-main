@@ -101,6 +101,7 @@ export function TimetableView() {
     const [fetchStatus, setFetchStatus] = useState<string>("loading");
     const [isStale, setIsStale] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
+    const [studentClass, setStudentClass] = useState<{ program?: string; batch?: string; specialization?: string; school?: string; department?: string } | null>(null);
     const [showChangedFlash, setShowChangedFlash] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -122,6 +123,7 @@ export function TimetableView() {
             }
             setData(res.timetable);
             setSectionLabel(res.section?.label ?? null);
+            setStudentClass((res as any)?.studentClass ?? null);
             setSourceUrl(res.timetable.sourceUrl ?? null);
             setLastChangedAt(res.timetable.lastChangedAt ?? null);
             setLastFetchedAt(res.timetable.lastFetchedAt ?? null);
@@ -219,7 +221,14 @@ export function TimetableView() {
         openPrintWindow(title, [gridHtml, subjectsHtml]);
     };
 
-    const className = `${"$"}{data?.program || ""} ${"$"}{data?.batch || ""} — ${"$"}{data?.specialization || ""}`.replace(/\s+/g, " ").trim();
+    const displayProgram = data?.program || studentClass?.program || "";
+    const displayBatch = data?.batch || studentClass?.batch || "";
+    const displaySpec = data?.specialization || studentClass?.specialization || "";
+    const classHeading = [
+        displayProgram,
+        displayBatch,
+        displaySpec ? `— ${displaySpec}` : ""
+    ].filter(Boolean).join(" ").trim();
 
     return (
         <TimetableErrorBoundary>
@@ -233,7 +242,9 @@ export function TimetableView() {
                             Class Timetable
                         </h1>
                         <p className="text-xs md:text-sm text-gray-600 mt-1">
-                            {className || "Your class"} {data?.semester ? `• Semester ${data.semester}` : ""} {data?.academicYear ? `(${data.academicYear})` : ""}
+                            <span className="font-semibold text-gray-800">{classHeading || "Your Class"}</span>
+                            {data?.semester ? ` • Semester ${data.semester}` : ""}
+                            {data?.academicYear ? ` (${data.academicYear})` : ""}
                         </p>
                         {sectionLabel && (
                             <p className="text-xs text-gray-500 mt-0.5">
@@ -296,9 +307,9 @@ export function TimetableView() {
                         {error || "No mygbu.in section mapping exists for your class yet."}
                     </p>
                     <p className="text-xs text-gray-500 max-w-md mx-auto mb-4">
-                        {data === null && (
-                            <>Your class: <span className="font-mono font-semibold">
-                                {error?.match(/Your class: (.+)$/)?.[1] || 'unknown'}
+                        {error && error.includes("(") && (
+                            <>Your class: <span className="font-mono font-semibold text-gray-700">
+                                {error.match(/\(([^)]+)\)/)?.[1] || ""}
                             </span></>
                         )}
                     </p>

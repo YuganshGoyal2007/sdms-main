@@ -22,7 +22,7 @@ const StudentAttendance = () => {
     let alive = true;
     getMyAttendanceSummary()
       .then((d) => { if (alive) setSummary(d); })
-      .catch((e: Error) => { if (alive) setError(e.response?.data?.message ?? e.message ?? "Failed to load attendance"); });
+      .catch((e: any) => { if (alive) setError(e?.response?.data?.message ?? e?.message ?? "Failed to load attendance"); });
     return () => { alive = false; };
   }, []);
 
@@ -31,7 +31,7 @@ const StudentAttendance = () => {
     let alive = true;
     getMySubjectAttendance(summary.student.rollNo, Number(subjectId))
       .then((d) => { if (alive) setDrill(d); })
-      .catch((e: Error) => { if (alive) setError(e.response?.data?.message ?? e.message ?? "Failed to load subject attendance"); });
+      .catch((e: any) => { if (alive) setError(e?.response?.data?.message ?? e?.message ?? "Failed to load subject attendance"); });
     return () => { alive = false; };
   }, [subjectId, summary]);
 

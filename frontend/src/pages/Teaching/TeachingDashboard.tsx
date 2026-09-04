@@ -17,7 +17,7 @@ const TeachingDashboard = () => {
     let alive = true;
     getMyClasses()
       .then((d) => { if (alive) setClasses(d.classes); })
-      .catch((e: Error) => { if (alive) setError(e.response?.data?.message ?? e.message ?? "Failed to load classes"); });
+      .catch((e: any) => { if (alive) setError(e?.response?.data?.message ?? e?.message ?? "Failed to load classes"); });
     return () => { alive = false; };
   }, []);
 

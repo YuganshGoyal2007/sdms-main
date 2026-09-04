@@ -36,19 +36,21 @@ const StudentLogin = () => {
         }
       }
     } catch (error: any) {
-      switch (error.status) {
+      const status = error.response?.status || error.status;
+      const msg = error.response?.data?.message || error.response?.data?.error;
+      switch (status) {
         case 404:
-          setError('Details not found. Kindly Register!');
+          setError(msg || 'User not found. Please check your username!');
           break;
+        case 401:
         case 422:
-          setError('Invalid Credentials!');
+          setError(msg || 'Invalid password! Please try again.');
           break;
         case 500:
-          setError('Internal Server Error!');
+          setError('Internal Server Error! Please try again later.');
           break;
         default:
-          setError('Something went wrong');
-          console.log(error)
+          setError(msg || error.message || 'Something went wrong');
       }
     } finally {
       setLoading(false);

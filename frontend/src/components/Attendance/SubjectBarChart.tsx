@@ -21,7 +21,7 @@ const SubjectBarChart = ({ subjects }: { subjects: SubjectAttendanceSummary[] })
           <CartesianGrid strokeDasharray="3 3" stroke="#ececec" />
           <XAxis dataKey="name" tick={{ fontSize: 11 }} />
           <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
-          <Tooltip formatter={(v: number) => [`${v}%`, "Attendance"]} />
+          <Tooltip formatter={(v: any) => [`${v}%`, "Attendance"]} />
           <Bar dataKey="pct" radius={[4, 4, 0, 0]}>
             {data.map((d, i) => (
               <Cell key={i} fill={d.pct >= 75 ? "#16a34a" : d.pct >= 50 ? "#f59e0b" : "#dc2626"} />

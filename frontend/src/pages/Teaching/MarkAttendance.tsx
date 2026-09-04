@@ -8,7 +8,7 @@ import {
   getClassRoster, getTodaySession, createSession, updateSession,
   submitSession, getSessionRecords, upsertAttendanceRecords,
 } from "../../lib/attendance.api";
-import RosterTable, { RecordMap } from "../../components/Attendance/RosterTable";
+import RosterTable, { type RecordMap } from "../../components/Attendance/RosterTable";
 import type { AttendanceRosterStudent, AttendanceSession, AttendanceStatus, AttendanceSessionType } from "../../types/types";
 
 const todayStr = () => new Date().toISOString().slice(0, 10);

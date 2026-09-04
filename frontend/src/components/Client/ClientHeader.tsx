@@ -20,10 +20,12 @@ export function ClientHeader({
     isSidebarOpen,
     setIsSidebarOpen,
     onMessagesClick,
+    onTimetableClick,
 }: {
     isSidebarOpen?: boolean;
     setIsSidebarOpen?: (open: boolean) => void;
     onMessagesClick?: () => void;
+    onTimetableClick?: () => void;
 }) {
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const notificationRef = useRef<HTMLDivElement>(null);
@@ -155,15 +157,19 @@ export function ClientHeader({
 
                                         {timetableChanged && (
                                             <button
-                                                onClick={() => { markTimetableSeen(); setIsNotificationOpen(false); }}
-                                                className="w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 flex items-start gap-3"
+                                                onClick={() => {
+                                                    markTimetableSeen();
+                                                    onTimetableClick?.();
+                                                    setIsNotificationOpen(false);
+                                                }}
+                                                className="w-full text-left p-3 hover:bg-amber-50/60 border-b border-gray-100 flex items-start gap-3 transition-colors"
                                             >
                                                 <div className="w-9 h-9 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
                                                     <Calendar size={16} />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-sm font-medium text-gray-900">Timetable updated</p>
-                                                    <p className="text-xs text-gray-500 mt-0.5">Click to dismiss</p>
+                                                    <p className="text-xs text-amber-700 font-medium mt-0.5">Click to view timetable</p>
                                                 </div>
                                             </button>
                                         )}

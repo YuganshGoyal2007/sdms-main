@@ -41,6 +41,7 @@ export const getMyTimetable = asyncHandler(async (req, res) => {
             mygbuDepartment: result.section.mygbuDepartment,
             mygbuSectionId: result.section.mygbuSectionId,
         },
+        studentClass: result.studentClass,
     });
 });
 

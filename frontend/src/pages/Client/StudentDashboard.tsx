@@ -10,7 +10,7 @@ import StudentMessagesView from "../../components/Client/StudentMessagesView";
 import { TimetableView } from "../../components/Client/TimetableView";
 import Footer from "../../components/Client/Footer";
 import NotificationPermissionBanner from "../../components/Client/NotificationPermissionBanner";
-import { getStudentDetails } from "../../lib/user.api";
+import { getStudentDetails, getMyTimetable } from "../../lib/user.api";
 import { useDispatch } from "react-redux";
 import { setUser } from "../../context/features/userSlice";
 import { useAuth } from "../../context/useAuth";
@@ -28,6 +28,13 @@ const StudentDashboard = () => {
         }
     }, [auth.isAuthenticated]);
 
+    // Listen for custom navigation to timetable (e.g. from notification clicks)
+    useEffect(() => {
+        const handleNavTimetable = () => setActiveView("timetable");
+        window.addEventListener("nav-timetable", handleNavTimetable);
+        return () => window.removeEventListener("nav-timetable", handleNavTimetable);
+    }, []);
+
     useEffect(() => {
         const getStudent = async () => {
             try {
@@ -35,12 +42,14 @@ const StudentDashboard = () => {
                 if (data) {
                     dispatch(setUser(data.student));
                 }
+                // Auto-fetch student timetable in background on login so it is ready immediately
+                getMyTimetable().catch(() => {});
             } catch (error) {
                 console.log(error);
             }
-        }
-        getStudent()
-    }, [])
+        };
+        getStudent();
+    }, []);
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -48,6 +57,7 @@ const StudentDashboard = () => {
                 isSidebarOpen={isSidebarOpen}
                 setIsSidebarOpen={setIsSidebarOpen}
                 onMessagesClick={() => setActiveView("messages")}
+                onTimetableClick={() => setActiveView("timetable")}
             />
 
             <div className="flex">

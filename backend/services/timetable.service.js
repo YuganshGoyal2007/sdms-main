@@ -223,24 +223,54 @@ export const fetchSection = async (section, { force = false } = {}) => {
  * Find a section mapping for a given class key.
  */
 export const findSectionForClass = async (school, department, program, batch, specialization, academicYear) => {
+    const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
     const where = { school, department, program, batch, specialization, active: true };
     if (academicYear) where.academicYear = academicYear;
     const exact = await TimetableSection.findOne({ where });
     if (exact) return exact;
-    // Fuzzy fallback: if no exact match, try a smart match
+
+    // Fuzzy fallback: query all active sections matching school, department, batch
     const all = await TimetableSection.findAll({
-        where: { school, department, program, batch, active: true },
+        where: {
+            school: { [Op.like]: (school || '').trim() },
+            department: { [Op.like]: (department || '').trim() },
+            batch: { [Op.like]: (batch || '').trim() },
+            active: true,
+        },
     });
-    const normalize = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-    const target = normalize(specialization);
-    return all.find((s) => {
-        if (normalize(s.specialization) === target) return true;
-        // Student spec starts with mapped spec (e.g. "AI Sec - A" starts with "AI")
-        if (target.startsWith(normalize(s.specialization)) || normalize(s.specialization).startsWith(target)) {
-            // Make sure the first word matches (avoid "AI" matching "Cyber Security")
-            return s.specialization.split(' ')[0] === specialization.split(' ')[0];
+    if (!all.length) {
+        // Fallback: search across all departments if department string differs slightly
+        const anyDept = await TimetableSection.findAll({
+            where: {
+                batch: { [Op.like]: (batch || '').trim() },
+                active: true,
+            },
+        });
+        all.push(...anyDept);
+    }
+
+    const target = norm(specialization);
+
+    // 1. Exact normalized match (e.g. 'Core Sec-B' vs 'Core Sec- B')
+    const match1 = all.find((s) => norm(s.specialization) === target);
+    if (match1) return match1;
+
+    // 2. Starts-with match or prefix match (e.g. 'AI Sec - A' starts with 'AI', 'Cyber Security Sec - A' starts with 'Cyber Security')
+    const match2 = all.find((s) => {
+        const sNorm = norm(s.specialization);
+        if (target.startsWith(sNorm) || sNorm.startsWith(target)) {
+            const w1 = (s.specialization.split(/[\s\-]/)[0] || '').toLowerCase();
+            const w2 = (specialization.split(/[\s\-]/)[0] || '').toLowerCase();
+            return w1 === w2;
         }
         return false;
+    });
+    if (match2) return match2;
+
+    // 3. Fallback: section contains student keyword or student keyword contains section
+    return all.find((s) => {
+        const sNorm = norm(s.specialization);
+        return sNorm.includes(target) || target.includes(sNorm);
     }) || null;
 };
 
@@ -251,15 +281,34 @@ export const findSectionForClass = async (school, department, program, batch, sp
 const TIMETABLE_CACHE_TTL_MIN = 30;
 
 export const refreshTimetable = async ({ school, department, program, batch, specialization, force = false, silent = false } = {}) => {
-    const section = await TimetableSection.findOne({
+    let section = await TimetableSection.findOne({
         where: { school, department, program, batch, specialization, active: true },
     });
     if (!section) {
-        return { ok: false, error: 'No TimetableSection mapping for this class. Ask admin to map it.' };
+        section = await findSectionForClass(school, department, program, batch, specialization);
+    }
+    if (!section) {
+        return { ok: false, error: `No TimetableSection mapping for this class (${school}/${department}/${program}/${batch}/${specialization}). Ask admin to map it.` };
     }
 
+    // Use canonical section coordinates for timetable cache
+    const canonicalSchool = section.school;
+    const canonicalDept = section.department;
+    const canonicalProg = section.program;
+    const canonicalBatch = section.batch;
+    const canonicalSpec = section.specialization;
+
     // Check existing cache
-    let existing = await Timetable.findOne({ where: { school, department, program, batch, specialization } });
+    let existing = await Timetable.findOne({
+        where: {
+            school: canonicalSchool,
+            department: canonicalDept,
+            program: canonicalProg,
+            batch: canonicalBatch,
+            specialization: canonicalSpec,
+        }
+    });
+
     if (!force && existing && existing.lastFetchedAt) {
         const ageMin = (Date.now() - new Date(existing.lastFetchedAt).getTime()) / 60000;
         if (ageMin < TIMETABLE_CACHE_TTL_MIN && existing.fetchStatus === 'ok') {
@@ -267,7 +316,7 @@ export const refreshTimetable = async ({ school, department, program, batch, spe
         }
     }
 
-    if (!silent) logger.info({ class: `${school}/${department}/${program}/${batch}/${specialization}`, sectionId: section.id }, 'Refreshing timetable from mygbu.in');
+    if (!silent) logger.info({ class: `${canonicalSchool}/${canonicalDept}/${canonicalProg}/${canonicalBatch}/${canonicalSpec}`, sectionId: section.id }, 'Refreshing timetable from mygbu.in');
 
     const result = await fetchSection(section, { force });
     if (!result.ok) {
@@ -302,7 +351,11 @@ export const refreshTimetable = async ({ school, department, program, batch, spe
     }
 
     const created = await Timetable.create({
-        school, department, program, batch, specialization,
+        school: canonicalSchool,
+        department: canonicalDept,
+        program: canonicalProg,
+        batch: canonicalBatch,
+        specialization: canonicalSpec,
         entries: result.entries,
         subjects: result.subjects,
         contentHash: newHash,
@@ -357,14 +410,14 @@ export const getTimetableForStudent = async (userId) => {
         return { ok: false, error: `No timetable mapping for your class. Ask admin to add one (${me.school} / ${me.department} / ${me.program} / ${me.batch} / ${me.specialization})` };
     }
 
-    // Ensure timetable is cached
+    // Ensure timetable is cached under canonical section coordinates
     let timetable = await Timetable.findOne({
         where: {
-            school: me.school,
-            department: me.department,
-            program: me.program,
-            batch: me.batch,
-            specialization: me.specialization,
+            school: section.school,
+            department: section.department,
+            program: section.program,
+            batch: section.batch,
+            specialization: section.specialization,
         },
     });
 
@@ -374,11 +427,11 @@ export const getTimetableForStudent = async (userId) => {
 
     if (!timetable || timetable.fetchStatus !== 'ok' || timetable.isStale || isStaleMapping) {
         const refresh = await refreshTimetable({
-            school: me.school,
-            department: me.department,
-            program: me.program,
-            batch: me.batch,
-            specialization: me.specialization,
+            school: section.school,
+            department: section.department,
+            program: section.program,
+            batch: section.batch,
+            specialization: section.specialization,
             force: timetable?.isStale === true || isStaleMapping === true,
             silent: true,
         });
