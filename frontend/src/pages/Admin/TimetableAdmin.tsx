@@ -1,4 +1,5 @@
-﻿import { Plus, Trash2, ExternalLink, RefreshCw, Save, X, Upload, AlertCircle, Search } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Plus, Trash2, ExternalLink, RefreshCw, Save, X, Upload, AlertCircle, Search } from "lucide-react";
 import { toast } from "sonner";
 import { safeErrorMessage } from "../../utils/safeError";
 import AdminSideNav from "../../components/Admin/AdminSideNav";
@@ -478,6 +479,7 @@ soict,cse,B.Tech,2026-30,AI,SOICT,CSE,1249,BAI-I-A,2026-27,Odd`;
                                         </tbody>
                                     </table>
                                 </div>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -491,6 +493,13 @@ soict,cse,B.Tech,2026-30,AI,SOICT,CSE,1249,BAI-I-A,2026-27,Odd`;
 };
 
 export default TimetableAdmin;
+
+
+
+
+
+
+
 
 
 
