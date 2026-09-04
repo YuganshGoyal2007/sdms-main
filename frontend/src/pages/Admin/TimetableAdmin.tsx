@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-import { Plus, Trash2, ExternalLink, RefreshCw, Save, X, Upload, AlertCircle } from "lucide-react";
+﻿import { Plus, Trash2, ExternalLink, RefreshCw, Save, X, Upload, AlertCircle, Search } from "lucide-react";
 import { toast } from "sonner";
 import { safeErrorMessage } from "../../utils/safeError";
 import AdminSideNav from "../../components/Admin/AdminSideNav";
@@ -30,6 +29,7 @@ const DEFAULT_FORM = {
 const TimetableAdmin = () => {
     const [sections, setSections] = useState<TimetableSection[]>([]);
     const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState("");
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({ ...DEFAULT_FORM });
     const [saving, setSaving] = useState(false);
@@ -84,7 +84,7 @@ const TimetableAdmin = () => {
 
     const handleRefreshAll = async () => {
         setRefreshing(true);
-        const t = toast.loading("Refreshing all timetables from mygbu.in…");
+        const t = toast.loading("Refreshing all timetables from mygbu.inâ€¦");
         try {
             const r = await refreshAllTimetables();
             const { total, success, changed } = r.summary;
@@ -121,7 +121,7 @@ soict,cse,B.Tech,2026-30,AI,SOICT,CSE,1249,BAI-I-A,2026-27,Odd`;
         a.download = "timetable-section-mappings-template.csv";
         a.click();
         URL.revokeObjectURL(url);
-        toast.success("Template downloaded — edit and re-import via Import CSV");
+        toast.success("Template downloaded â€” edit and re-import via Import CSV");
     };
 
     const csvInputRef = useRef<HTMLInputElement | null>(null);
@@ -181,7 +181,7 @@ soict,cse,B.Tech,2026-30,AI,SOICT,CSE,1249,BAI-I-A,2026-27,Odd`;
             }).then((x) => x.json());
             if (r.success) {
                 setMissing(r.missing || []);
-                if (!r.missing?.length) toast.message("All student classes have mappings 🎉");
+                if (!r.missing?.length) toast.message("All student classes have mappings ðŸŽ‰");
             }
         } catch (e: any) {
             toast.error(e.message);
@@ -226,7 +226,7 @@ soict,cse,B.Tech,2026-30,AI,SOICT,CSE,1249,BAI-I-A,2026-27,Odd`;
                                             .map(([b, n]) => (
                                                 <span key={b} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
                                                     <span className="font-mono">{b}</span>
-                                                    <span className="text-gray-400">·</span>
+                                                    <span className="text-gray-400">Â·</span>
                                                     <span className="font-semibold">{n}</span>
                                                 </span>
                                             ))}
@@ -241,7 +241,7 @@ soict,cse,B.Tech,2026-30,AI,SOICT,CSE,1249,BAI-I-A,2026-27,Odd`;
                                     className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 border border-[#d9d9d9] rounded bg-white hover:bg-gray-50 disabled:opacity-50"
                                 >
                                     <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
-                                    {refreshing ? "Refreshing…" : "Refresh All from mygbu.in"}
+                                    {refreshing ? "Refreshingâ€¦" : "Refresh All from mygbu.in"}
                                 </button>
                                 <button
                                     onClick={handleDownloadTemplate}
@@ -399,7 +399,7 @@ soict,cse,B.Tech,2026-30,AI,SOICT,CSE,1249,BAI-I-A,2026-27,Odd`;
                                             className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 bg-[#7b3b5a] text-white rounded hover:bg-[#6a334e] disabled:opacity-50"
                                         >
                                             <Save size={14} />
-                                            {saving ? "Saving…" : "Create Mapping"}
+                                            {saving ? "Savingâ€¦" : "Create Mapping"}
                                         </button>
                                     </div>
                                 </form>
@@ -408,14 +408,32 @@ soict,cse,B.Tech,2026-30,AI,SOICT,CSE,1249,BAI-I-A,2026-27,Odd`;
 
                         <div className="bg-white border border-[#d9d9d9] rounded-lg overflow-hidden">
                             {loading ? (
-                                <div className="p-6 text-center text-sm text-gray-500">Loading sections…</div>
+                                <div className="p-6 text-center text-sm text-gray-500">Loading sectionsâ€¦</div>
                             ) : sections.length === 0 ? (
                                 <div className="p-8 text-center">
                                     <p className="text-sm text-gray-500">No timetable mappings yet.</p>
                                     <p className="text-xs text-gray-400 mt-1">Add one to start pulling live timetables from mygbu.in.</p>
                                 </div>
                             ) : (
-                                <div className="overflow-x-auto">
+                                <div>
+                                    <div className="px-3 py-2 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+                                        <Search size={14} className="text-gray-500" />
+                                        <input
+                                            value={search}
+                                            onChange={(e) => setSearch(e.target.value)}
+                                            placeholder="Filter by batch, specialization, or section idâ€¦"
+                                            className="flex-1 bg-transparent outline-none text-xs"
+                                        />
+                                        {search && (
+                                            <button
+                                                onClick={() => setSearch("")}
+                                                className="text-xs text-gray-500 hover:text-gray-700"
+                                            >
+                                                Clear
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="overflow-x-auto">
                                     <table className="w-full text-sm">
                                         <thead className="bg-[#f8f9fa] border-b border-[#d9d9d9]">
                                             <tr>
@@ -428,7 +446,7 @@ soict,cse,B.Tech,2026-30,AI,SOICT,CSE,1249,BAI-I-A,2026-27,Odd`;
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {sections.map((s) => (
+                                            {sections.filter((s) => { if (!search.trim()) return true; const q = search.toLowerCase(); return [s.batch, s.specialization, s.mygbuSectionId, s.label, s.school, s.department, s.program].filter(Boolean).some((v: any) => String(v).toLowerCase().includes(q)); }).map((s) => (
                                                 <tr key={s.id} className="border-b border-gray-100 hover:bg-gray-50">
                                                     <td className="p-3 text-gray-900">
                                                         <div className="font-medium">{s.program} {s.batch}</div>
@@ -437,9 +455,9 @@ soict,cse,B.Tech,2026-30,AI,SOICT,CSE,1249,BAI-I-A,2026-27,Odd`;
                                                     <td className="p-3 text-gray-900 font-mono text-xs">
                                                         ?name={s.mygbuSchool}&dept={s.mygbuDepartment}&section={s.mygbuSectionId}
                                                     </td>
-                                                    <td className="p-3 text-gray-900">{s.label || "—"}</td>
+                                                    <td className="p-3 text-gray-900">{s.label || "â€”"}</td>
                                                     <td className="p-3 text-gray-700 text-xs">
-                                                        {s.academicYear || "—"} {s.semester ? `(${s.semester})` : ""}
+                                                        {s.academicYear || "â€”"} {s.semester ? `(${s.semester})` : ""}
                                                     </td>
                                                     <td className="p-3">
                                                         <span className={`px-2 py-0.5 text-[10px] rounded-full border ${s.active ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-gray-50 text-gray-700 border-gray-200"}`}>
@@ -473,3 +491,11 @@ soict,cse,B.Tech,2026-30,AI,SOICT,CSE,1249,BAI-I-A,2026-27,Odd`;
 };
 
 export default TimetableAdmin;
+
+
+
+
+
+
+
+
