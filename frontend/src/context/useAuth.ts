@@ -1,6 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSelector } from "react-redux";
-import type { RootState } from "./app/store";
 
 /**
  * useAuth - unified authentication + authorization hook

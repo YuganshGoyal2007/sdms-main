@@ -225,7 +225,23 @@ export const fetchSection = async (section, { force = false } = {}) => {
 export const findSectionForClass = async (school, department, program, batch, specialization, academicYear) => {
     const where = { school, department, program, batch, specialization, active: true };
     if (academicYear) where.academicYear = academicYear;
-    return TimetableSection.findOne({ where });
+    const exact = await TimetableSection.findOne({ where });
+    if (exact) return exact;
+    // Fuzzy fallback: if no exact match, try a smart match
+    const all = await TimetableSection.findAll({
+        where: { school, department, program, batch, active: true },
+    });
+    const normalize = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const target = normalize(specialization);
+    return all.find((s) => {
+        if (normalize(s.specialization) === target) return true;
+        // Student spec starts with mapped spec (e.g. "AI Sec - A" starts with "AI")
+        if (target.startsWith(normalize(s.specialization)) || normalize(s.specialization).startsWith(target)) {
+            // Make sure the first word matches (avoid "AI" matching "Cyber Security")
+            return s.specialization.split(' ')[0] === specialization.split(' ')[0];
+        }
+        return false;
+    }) || null;
 };
 
 /**

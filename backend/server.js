@@ -10,6 +10,7 @@ import coordinatorRoute from './routes/coordinator.route.js'
 import chairpersonRoute from './routes/chairperson.route.js'
 import messagesRoute from './routes/messages.route.js';
 import timetableRoute from './routes/timetable.route.js';
+import attendanceRoute from './routes/attendance.route.js';
 
 import requestLogger from './lib/requestLogger.js';
 import securityHeaders from './lib/security.js';
@@ -95,6 +96,7 @@ app.use('/coordinator', coordinatorRoute)
 app.use('/chairperson', chairpersonRoute)
 app.use('/messages', messagesRoute)
 app.use('/timetable', timetableRoute)
+app.use('/', attendanceRoute)
 
 app.get("/", (req, res) => {
     res.send("GBU-SDSM server is working normally!");

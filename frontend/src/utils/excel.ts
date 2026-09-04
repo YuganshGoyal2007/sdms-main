@@ -79,7 +79,7 @@ const buildWorkbook = (sheets: { name: string; xml: string }[]) => {
         .map((s, i) => `<sheet name="${escapeXml(s.name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`)
         .join("");
     const sheetRelEntries = sheets
-        .map((s, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`)
+        .map((_s, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`)
         .join("");
 
     const workbookXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>

@@ -27,7 +27,7 @@ export function ClientHeader({
 }) {
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const notificationRef = useRef<HTMLDivElement>(null);
-    const { logout, role, isAuthenticated } = useAuth();
+    const { logout, isAuthenticated } = useAuth();
     const { unread, timetableChanged, markTimetableSeen } = useNotifications(30_000);
     const navigate = useNavigate();
 

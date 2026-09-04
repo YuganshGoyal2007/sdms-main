@@ -260,3 +260,95 @@ export interface MessageNotification {
   read: number | boolean;
   createdAt: string;
 }
+
+// ===================== Attendance module =====================
+
+export type AttendanceSessionType = 'lecture' | 'lab' | 'tutorial';
+export type AttendanceStatus = 'present' | 'absent' | 'excused';
+export type SessionStatus = 'draft' | 'submitted' | 'locked';
+
+export interface TeachingClass {
+  id: number;
+  subjectId: number;
+  subjectName: string | null;
+  subjectCode: string | null;
+  subjectType: string | null;
+  teacherRole: string;
+  semester: string;
+  academicYear: string;
+  classKey: string;
+  school: string;
+  department: string;
+  program: string;
+  batch: string;
+  specialization: string;
+  totalStudents: number;
+  todaySessions: { id: number; status: SessionStatus; sessionType: AttendanceSessionType }[];
+}
+
+export interface AttendanceSession {
+  id: number;
+  school: string;
+  department: string;
+  program: string;
+  batch: string;
+  specialization: string;
+  classKey: string;
+  semester: string;
+  academicYear: string;
+  subjectId: number;
+  facultyId: number;
+  date: string;
+  startTime: string | null;
+  endTime: string | null;
+  sessionType: AttendanceSessionType;
+  topic: string | null;
+  status: SessionStatus;
+  createdBy: number;
+  submittedAt: string | null;
+  lockedAt: string | null;
+  lockedBy: number | null;
+  unlockedAt: string | null;
+  unlockReason: string | null;
+  createdAt: string;
+}
+
+export interface AttendanceRosterStudent {
+  id: number;
+  rollNo: string;
+  fullName: string;
+  photo: string | null;
+}
+
+export interface AttendanceRecordInput {
+  studentId: number;
+  status: AttendanceStatus;
+  remarks?: string | null;
+}
+
+export interface SubjectAttendanceSummary {
+  subjectId: number;
+  subjectName: string | null;
+  subjectCode: string | null;
+  present: number;
+  absent: number;
+  excused: number;
+  total: number;
+  percentage: number | null;
+}
+
+export interface StudentAttendanceSummary {
+  student: { rollNo: string; fullName: string };
+  overall: { total: number; present: number; absent: number; excused: number; percentage: number | null };
+  subjects: SubjectAttendanceSummary[];
+  recent: {
+    sessionId: number;
+    date: string;
+    sessionType: AttendanceSessionType;
+    topic: string | null;
+    subjectId: number;
+    subjectName: string | null;
+    subjectCode: string | null;
+    status: AttendanceStatus;
+  }[];
+}
