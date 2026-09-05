@@ -5,9 +5,10 @@ import Footer from "../../components/Admin/Footer";
 import { getChairpersonClasses, getFilteredStudents, sendMessage, exportStudentsToExcel } from "../../lib/user.api";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { GraduationCap, Users, ChevronDown, ChevronRight, Search, Send, Mail, Phone, AlertCircle, FileSpreadsheet } from "lucide-react";
+import { GraduationCap, Users, ChevronDown, ChevronRight, Search, Send, Mail, Phone, AlertCircle, FileSpreadsheet, Edit3, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import type { RootState } from "../../context/app/store";
+import { ClassTimetableModal } from "../../components/Admin/ClassTimetableModal";
 
 type ClassInfo = {
   id: number;
@@ -102,7 +103,9 @@ const ClassCard: React.FC<{
   search: string;
   onEdit: (rollNo: string) => void;
   onExport: () => void;
-}> = ({ cls, expanded, onToggle, students, loading, search, onEdit, onExport }) => {
+  onBulkManage?: () => void;
+  onViewTimetable?: () => void;
+}> = ({ cls, expanded, onToggle, students, loading, search, onEdit, onExport, onBulkManage, onViewTimetable }) => {
   const filtered = useMemo(() => {
     if (!search.trim()) return students;
     const q = search.trim().toLowerCase();
@@ -132,7 +135,19 @@ const ClassCard: React.FC<{
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2.5 shrink-0">
+          {onViewTimetable && (
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewTimetable();
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-semibold hover:bg-indigo-100 transition cursor-pointer"
+              title="View class timetable"
+            >
+              <Calendar size={11} /> Timetable
+            </span>
+          )}
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
             <Users size={12} />
             {cls.studentCount ?? students.length} student{(cls.studentCount ?? students.length) === 1 ? "" : "s"}
@@ -172,13 +187,33 @@ const ClassCard: React.FC<{
                   <span className="text-xs text-gray-600">
                     {filtered.length} of {students.length} students
                   </span>
-                  <button
-                    onClick={onExport}
-                    className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 bg-emerald-600 text-white border border-emerald-800 rounded hover:bg-emerald-700"
-                    title="Download all students in this class as Excel"
-                  >
-                    <FileSpreadsheet size={11} /> Export Excel
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {onViewTimetable && (
+                      <button
+                        onClick={onViewTimetable}
+                        className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 bg-indigo-600 text-white border border-indigo-800 rounded hover:bg-indigo-700 font-medium cursor-pointer"
+                        title="View live class timetable in SDMS"
+                      >
+                        <Calendar size={11} /> View Timetable
+                      </button>
+                    )}
+                    {onBulkManage && (
+                      <button
+                        onClick={onBulkManage}
+                        className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 bg-[#7b3b5a] text-white border border-[#5d2b43] rounded hover:bg-[#68304b] font-medium cursor-pointer"
+                        title="Open class to view and bulk edit details"
+                      >
+                        <Edit3 size={11} /> Bulk Edit / Manage
+                      </button>
+                    )}
+                    <button
+                      onClick={onExport}
+                      className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 bg-emerald-600 text-white border border-emerald-800 rounded hover:bg-emerald-700 cursor-pointer"
+                      title="Download all students in this class as Excel"
+                    >
+                      <FileSpreadsheet size={11} /> Export Excel
+                    </button>
+                  </div>
                 </div>
                 {/* Table area — bounded by min-h-0 so it shrinks and scrolls inside */}
                 <div className="overflow-x-auto min-h-0 flex-1">
@@ -242,6 +277,7 @@ const Classes = () => {
   const [loadingClassId, setLoadingClassId] = useState<number | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
   const [search, setSearch] = useState("");
+  const [selectedClassForTimetable, setSelectedClassForTimetable] = useState<any | null>(null);
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.admin);
 
@@ -321,7 +357,7 @@ const Classes = () => {
   };
 
   const onEdit = (rollNo: string) => {
-    const base = user.role === "chairperson" ? "/chairperson" : "/admin";
+    const base = user.role === "chairperson" ? "/chairperson" : user.role === "coordinator" ? "/coordinator" : "/admin";
     navigate(`${base}/records/${encodeURIComponent(rollNo)}`);
   };
 
@@ -375,8 +411,19 @@ const Classes = () => {
                   {user.role === "chairperson" ? "Classes you oversee" : user.role === "coordinator" ? "Classes assigned to you" : "All classes"}
                 </p>
               </div>
-              <div className="text-xs text-gray-600">
-                {classes.length} class{classes.length === 1 ? "" : "es"} · {totalStudents} student{totalStudents === 1 ? "" : "s"}
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="text-xs text-gray-600">
+                  {classes.length} class{classes.length === 1 ? "" : "es"} · {totalStudents} student{totalStudents === 1 ? "" : "s"}
+                </div>
+                {user.role === "admin" && (
+                  <button
+                    onClick={() => navigate("/admin/timetable")}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-white border border-[#d9d9d9] rounded hover:bg-gray-50 text-[#7b3b5a] cursor-pointer shadow-2xs transition"
+                    title="Configure live timetable mappings for all classes"
+                  >
+                    <Calendar size={13} /> Timetable Mappings
+                  </button>
+                )}
               </div>
             </div>
 
@@ -422,6 +469,11 @@ const Classes = () => {
                       search={search}
                       onEdit={onEdit}
                       onExport={() => exportClass(cls)}
+                      onViewTimetable={() => setSelectedClassForTimetable(cls)}
+                      onBulkManage={() => {
+                        const base = user.role === "chairperson" ? "/chairperson" : user.role === "coordinator" ? "/coordinator" : "/admin";
+                        navigate(`${base}/records/${encodeURIComponent(cls.school)}/${encodeURIComponent(cls.department)}/${encodeURIComponent(cls.program)}/${encodeURIComponent(cls.batch)}/${encodeURIComponent(cls.specialization)}`);
+                      }}
                     />
                   ))}
               </div>
@@ -433,6 +485,14 @@ const Classes = () => {
           <Footer />
         </div>
       </div>
+
+      {/* Class Timetable Modal */}
+      <ClassTimetableModal
+        isOpen={Boolean(selectedClassForTimetable)}
+        onClose={() => setSelectedClassForTimetable(null)}
+        classInfo={selectedClassForTimetable}
+        onGoToMappings={() => navigate("/admin/timetable")}
+      />
     </div>
   );
 };

@@ -109,7 +109,6 @@ const StudentRegistration = () => {
           break;
       }
     } finally {
-      setError('')
       setLoading(false);
     }
   }
@@ -177,7 +176,8 @@ const StudentRegistration = () => {
       }
 
     } catch (error: any) {
-      console.log(error)
+      console.log(error);
+      setError(error?.response?.data?.message || error?.message || 'Failed to create password. Please try again.');
     } finally {
       setLoading(false);
     }

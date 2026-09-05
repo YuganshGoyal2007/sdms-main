@@ -114,7 +114,8 @@ export interface ExcelSheet {
 }
 
 export const downloadExcel = (filename: string, sheets: ExcelSheet[] | (string | number | null | undefined)[][], sheetName = "Sheet1") => {
-    const normalized: ExcelSheet[] = Array.isArray(sheets[0]) && sheets.length > 0 && Array.isArray((sheets as any)[0])
+    const isMatrix = Array.isArray(sheets[0]) && (sheets.length === 0 || Array.isArray(sheets[0]));
+    const normalized: ExcelSheet[] = isMatrix
         ? [{ name: sheetName, rows: sheets as (string | number | null | undefined)[][] }]
         : (sheets as ExcelSheet[]);
 

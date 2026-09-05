@@ -1,0 +1,217 @@
+{
+  "summary": {
+    "totalRolesTested": 5,
+    "totalPagesTested": 27,
+    "totalErrors": 0,
+    "totalFailedRequests": 0
+  },
+  "roles": {
+    "admin": {
+      "pages": [
+        {
+          "name": "dashboard",
+          "path": "/admin/dashboard",
+          "url": "http://localhost:5173/admin/dashboard",
+          "screenshot": "admin_nav_dashboard.png"
+        },
+        {
+          "name": "records",
+          "path": "/admin/records",
+          "url": "http://localhost:5173/admin/records",
+          "screenshot": "admin_nav_records.png"
+        },
+        {
+          "name": "classes",
+          "path": "/admin/classes",
+          "url": "http://localhost:5173/admin/classes",
+          "screenshot": "admin_nav_classes.png"
+        },
+        {
+          "name": "faculty_members",
+          "path": "/admin/faculty",
+          "url": "http://localhost:5173/admin/faculty",
+          "screenshot": "admin_nav_faculty_members.png"
+        },
+        {
+          "name": "faculty_assignments",
+          "path": "/admin/faculty-assignments",
+          "url": "http://localhost:5173/admin/faculty-assignments",
+          "screenshot": "admin_nav_faculty_assignments.png"
+        },
+        {
+          "name": "attendance_sessions",
+          "path": "/admin/attendance",
+          "url": "http://localhost:5173/admin/attendance",
+          "screenshot": "admin_nav_attendance_sessions.png"
+        },
+        {
+          "name": "roles",
+          "path": "/admin/roles",
+          "url": "http://localhost:5173/admin/roles",
+          "screenshot": "admin_nav_roles.png"
+        },
+        {
+          "name": "chairpersons",
+          "path": "/admin/chairpersons",
+          "url": "http://localhost:5173/admin/chairpersons",
+          "screenshot": "admin_nav_chairpersons.png"
+        },
+        {
+          "name": "timetable",
+          "path": "/admin/timetable",
+          "url": "http://localhost:5173/admin/timetable",
+          "screenshot": "admin_nav_timetable.png"
+        },
+        {
+          "name": "messages",
+          "path": "/admin/messages",
+          "url": "http://localhost:5173/admin/messages",
+          "screenshot": "admin_nav_messages.png"
+        }
+      ],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "workflows": {
+        "logoutRedirectVerified": false
+      }
+    },
+    "coordinator": {
+      "pages": [
+        {
+          "name": "dashboard",
+          "path": "/coordinator/dashboard",
+          "url": "http://localhost:5173/coordinator/dashboard",
+          "screenshot": "coordinator_nav_dashboard.png"
+        },
+        {
+          "name": "records",
+          "path": "/coordinator/records",
+          "url": "http://localhost:5173/coordinator/records",
+          "screenshot": "coordinator_nav_records.png"
+        },
+        {
+          "name": "classes",
+          "path": "/coordinator/classes",
+          "url": "http://localhost:5173/coordinator/classes",
+          "screenshot": "coordinator_nav_classes.png"
+        },
+        {
+          "name": "mark_attendance",
+          "path": "/coordinator/mark-attendance",
+          "url": "http://localhost:5173/coordinator/mark-attendance",
+          "screenshot": "coordinator_nav_mark_attendance.png"
+        },
+        {
+          "name": "messages",
+          "path": "/coordinator/messages",
+          "url": "http://localhost:5173/coordinator/messages",
+          "screenshot": "coordinator_nav_messages.png"
+        }
+      ],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "workflows": {
+        "logoutRedirectVerified": false
+      }
+    },
+    "chairperson": {
+      "pages": [
+        {
+          "name": "dashboard",
+          "path": "/chairperson/dashboard",
+          "url": "http://localhost:5173/chairperson/dashboard",
+          "screenshot": "chairperson_nav_dashboard.png"
+        },
+        {
+          "name": "classes",
+          "path": "/chairperson/classes",
+          "url": "http://localhost:5173/chairperson/classes",
+          "screenshot": "chairperson_nav_classes.png"
+        },
+        {
+          "name": "records",
+          "path": "/chairperson/records",
+          "url": "http://localhost:5173/chairperson/records",
+          "screenshot": "chairperson_nav_records.png"
+        },
+        {
+          "name": "mark_attendance",
+          "path": "/chairperson/mark-attendance",
+          "url": "http://localhost:5173/chairperson/mark-attendance",
+          "screenshot": "chairperson_nav_mark_attendance.png"
+        },
+        {
+          "name": "messages",
+          "path": "/chairperson/messages",
+          "url": "http://localhost:5173/chairperson/messages",
+          "screenshot": "chairperson_nav_messages.png"
+        },
+        {
+          "name": "logs",
+          "path": "/chairperson/logs",
+          "url": "http://localhost:5173/chairperson/logs",
+          "screenshot": "chairperson_nav_logs.png"
+        }
+      ],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "workflows": {
+        "logoutRedirectVerified": false
+      }
+    },
+    "faculty": {
+      "pages": [
+        {
+          "name": "dashboard",
+          "path": "/faculty/dashboard",
+          "url": "http://localhost:5173/faculty/dashboard",
+          "screenshot": "faculty_nav_dashboard.png"
+        },
+        {
+          "name": "profile",
+          "path": "/faculty/profile",
+          "url": "http://localhost:5173/faculty/profile",
+          "screenshot": "faculty_nav_profile.png"
+        },
+        {
+          "name": "classes",
+          "path": "/faculty/classes",
+          "url": "http://localhost:5173/faculty/classes",
+          "screenshot": "faculty_nav_classes.png"
+        },
+        {
+          "name": "mark_attendance",
+          "path": "/faculty/mark-attendance",
+          "url": "http://localhost:5173/faculty/mark-attendance",
+          "screenshot": "faculty_nav_mark_attendance.png"
+        },
+        {
+          "name": "messages",
+          "path": "/faculty/messages",
+          "url": "http://localhost:5173/faculty/messages",
+          "screenshot": "faculty_nav_messages.png"
+        }
+      ],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "workflows": {
+        "logoutRedirectVerified": false
+      }
+    },
+    "student": {
+      "pages": [
+        {
+          "name": "dashboard",
+          "path": "/student",
+          "url": "http://localhost:5173/student",
+          "screenshot": "student_nav_dashboard.png"
+        }
+      ],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "workflows": {
+        "logoutRedirectVerified": false
+      }
+    }
+  }
+}

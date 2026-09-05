@@ -193,17 +193,54 @@ export const getChairpersonClasses = asyncHandler(async (req, res) => {
   if (!req.user) {
     return res.status(401).json({ success: false, message: 'Authentication required.' });
   }
-  if (req.user.role !== 'chairperson') {
-    return res.status(403).json({ success: false, message: 'Only chairpersons can access assigned classes.' });
+  if (req.user.role !== 'chairperson' && req.user.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Only chairpersons and admins can access assigned classes.' });
   }
-  const { assignments, chairperson } = await getChairpersonAssignments(req.user);
+
+  let assignments = [];
+  let chairperson = null;
+
+  if (req.user.role === 'chairperson') {
+    const resData = await getChairpersonAssignments(req.user);
+    assignments = resData.assignments;
+    chairperson = resData.chairperson;
+  } else {
+    const allChairpersonClasses = await ChairpersonClass.findAll({
+      order: [
+        ['school', 'ASC'],
+        ['department', 'ASC'],
+        ['program', 'ASC'],
+        ['batch', 'ASC'],
+        ['specialization', 'ASC'],
+      ],
+    });
+    const unique = new Map();
+    allChairpersonClasses.forEach((record) => {
+      const item = typeof record.toJSON === 'function' ? record.toJSON() : record;
+      const key = classKey(item);
+      if (key && !unique.has(key)) unique.set(key, item);
+    });
+    assignments = [...unique.values()];
+
+    if (!assignments.length) {
+      const studentClasses = await Student.findAll({
+        attributes: ['school', 'department', 'program', 'batch', 'specialization'],
+        group: ['school', 'department', 'program', 'batch', 'specialization'],
+      });
+      assignments = studentClasses.map((s, idx) => {
+        const item = typeof s.toJSON === 'function' ? s.toJSON() : s;
+        return { id: idx + 1, ...item };
+      });
+    }
+  }
+
   if (!assignments.length) {
     return res.status(200).json({
       success: true,
       count: 0,
       classes: [],
       chairperson: chairperson ? { id: chairperson.id, name: chairperson.name, email: chairperson.email } : null,
-      message: 'No classes are assigned to this chairperson.',
+      message: 'No classes found.',
     });
   }
 
@@ -384,6 +421,10 @@ export const getMessages = asyncHandler(async (req, res) => {
 export const sendMessage = asyncHandler(async (req, res) => {
   const { content } = req.body;
   const receiverRole = req.body.receiverRole || 'admin';
+  const allowedRoles = ['admin', 'chairperson', 'coordinator', 'student'];
+  if (!allowedRoles.includes(receiverRole)) {
+    return res.status(400).json({ success: false, message: 'Invalid receiver role.' });
+  }
   if (!content?.trim()) {
     return res.status(400).json({ success: false, message: 'Message content is required.' });
   }

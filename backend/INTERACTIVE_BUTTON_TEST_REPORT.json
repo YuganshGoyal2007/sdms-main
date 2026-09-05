@@ -1,0 +1,33 @@
+{
+  "startedAt": "2026-09-05T09:37:34.839Z",
+  "roles": {
+    "admin": {
+      "buttonsClicked": 0,
+      "modalsOpened": 0
+    },
+    "coordinator": {
+      "buttonsClicked": 0
+    },
+    "chairperson": {
+      "buttonsClicked": 0
+    },
+    "student": {
+      "tabsTested": [
+        "profile",
+        "registration",
+        "attendance",
+        "timetable",
+        "fees",
+        "messages"
+      ]
+    }
+  },
+  "summary": {
+    "totalButtonsClicked": 3,
+    "totalModalsOpened": 0,
+    "totalTabsSwitched": 9,
+    "totalScreenshots": 32,
+    "errors": []
+  },
+  "completedAt": "2026-09-05T09:38:36.638Z"
+}

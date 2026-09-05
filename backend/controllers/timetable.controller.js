@@ -193,8 +193,8 @@ export const discoverMissing = asyncHandler(async (req, res) => {
     const [classes] = await sequelize.query(`
         SELECT DISTINCT school, department, program, batch, specialization,
                COUNT(*) as studentCount
-        FROM Students
-        WHERE userId IS NOT NULL
+        FROM students
+        WHERE rollNo IS NOT NULL AND rollNo != ''
         GROUP BY school, department, program, batch, specialization
         ORDER BY batch DESC, specialization
     `);

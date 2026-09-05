@@ -175,9 +175,8 @@ const AddStudentForm: React.FC = () => {
                 }
             }
         } catch (error: any) {
-            if (error.status === 409) {
-                setError(error.response.data.message)
-            }
+            const msg = error?.response?.data?.message || error?.message || 'Something went wrong';
+            setError(msg);
         }
     };
 
@@ -573,21 +572,102 @@ const AddStudentForm: React.FC = () => {
             </Section>
 
             {/* PROFESSIONAL */}
-            <Section title="Professional Status">
-                <Grid>
-                    <Select required name="internshipStatus" label="Internship Status" value={form.internshipStatus} onChange={handleChange}>
-                        <option value="">Select</option>
-                        {["Inactive", "Ongoing", "Completed"].map(i =>
-                            <option key={i} value={i}>{i}</option>
-                        )}
-                    </Select>
-                    <Select required name="placementStatus" label="Placement Status" value={form.placementStatus} onChange={handleChange}>
-                        <option value="">Select</option>
-                        {["Placed", "Not Placed"].map(i =>
-                            <option key={i} value={i}>{i}</option>
-                        )}
-                    </Select>
-                </Grid>
+            <Section title="Professional Details (Internship & Placement)">
+                <div className="space-y-6">
+                    {/* Internship Subsection */}
+                    <div className="border-b border-gray-200 pb-5">
+                        <div className="flex items-center gap-2 mb-3">
+                            <span className="text-base">💼</span>
+                            <h4 className="text-sm font-semibold text-[#7b3b5a]">Internship Information</h4>
+                        </div>
+                        <Grid>
+                            <Select required name="internshipStatus" label="Internship Status" value={form.internshipStatus} onChange={handleChange}>
+                                <option value="">Select</option>
+                                {["Inactive", "Ongoing", "Completed", "Not Applied"].map(i =>
+                                    <option key={i} value={i}>{i}</option>
+                                )}
+                            </Select>
+                            <Input
+                                name="internshipCompany"
+                                label="Company Name"
+                                placeholder="e.g. Google, Microsoft, TCS"
+                                value={form.internshipCompany || ""}
+                                onChange={handleChange}
+                            />
+                            <Input
+                                type="date"
+                                name="internshipDOJ"
+                                label="Joining Date (DOJ)"
+                                value={form.internshipDOJ || ""}
+                                onChange={handleChange}
+                            />
+                            <Input
+                                type="date"
+                                name="internshipDOE"
+                                label="Ending Date (DOE)"
+                                value={form.internshipDOE || ""}
+                                onChange={handleChange}
+                            />
+                            <Select
+                                name="internshipType"
+                                label="Internship Type (Paid / Unpaid)"
+                                value={form.internshipType || ""}
+                                onChange={handleChange}
+                            >
+                                <option value="">Select</option>
+                                <option value="Paid">Paid</option>
+                                <option value="Unpaid">Unpaid</option>
+                            </Select>
+                        </Grid>
+                    </div>
+
+                    {/* Placement Subsection */}
+                    <div>
+                        <div className="flex items-center gap-2 mb-3">
+                            <span className="text-base">🏢</span>
+                            <h4 className="text-sm font-semibold text-[#7b3b5a]">Placement Information</h4>
+                        </div>
+                        <Grid>
+                            <Select required name="placementStatus" label="Placement Status" value={form.placementStatus} onChange={handleChange}>
+                                <option value="">Select</option>
+                                {["Placed", "Not Placed"].map(i =>
+                                    <option key={i} value={i}>{i}</option>
+                                )}
+                            </Select>
+                            <Input
+                                name="placementCompany"
+                                label="Company Name"
+                                placeholder="e.g. Amazon, Infosys"
+                                value={form.placementCompany || ""}
+                                onChange={handleChange}
+                            />
+                            <Input
+                                type="date"
+                                name="placementDOJ"
+                                label="Joining Date (DOJ)"
+                                value={form.placementDOJ || ""}
+                                onChange={handleChange}
+                            />
+                            <Input
+                                type="date"
+                                name="placementDOE"
+                                label="Ending Date / Bond End (DOE)"
+                                value={form.placementDOE || ""}
+                                onChange={handleChange}
+                            />
+                            <Select
+                                name="placementType"
+                                label="Compensation Type (Paid / Unpaid)"
+                                value={form.placementType || ""}
+                                onChange={handleChange}
+                            >
+                                <option value="">Select</option>
+                                <option value="Paid">Paid</option>
+                                <option value="Unpaid">Unpaid</option>
+                            </Select>
+                        </Grid>
+                    </div>
+                </div>
             </Section>
         </div>
     );
@@ -611,9 +691,6 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 const Input: React.FC<InputProps> = ({ label, ...props }) => {
-
-    const AdminUser = useSelector((state: RootState) => state.admin);
-
     return (
         <div className="flex flex-col w-full min-w-0">
             <label className="text-sm mb-1">
@@ -629,9 +706,9 @@ const Input: React.FC<InputProps> = ({ label, ...props }) => {
                 }}
                 className={`w-full min-w-0 text-gray-600 border border-[#d9d9d9] rounded px-3 py-2
                 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent no-spinner
-                ${AdminUser.role !== 'admin'
-                ? 'bg-[#f3f4f6] cursor-not-allowed disabled:color-gray-500'
-                : ''}`}
+                ${props.disabled
+                ? 'bg-[#f3f4f6] cursor-not-allowed text-gray-400'
+                : 'bg-white'}`}
             />
         </div>
     )

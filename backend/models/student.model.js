@@ -117,9 +117,41 @@ const Student = sequelize.define('Student', {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  internshipCompany: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  internshipDOJ: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  internshipDOE: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  internshipType: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   placementStatus: {
     type: DataTypes.STRING,
     allowNull: false,
+  },
+  placementCompany: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  placementDOJ: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  placementDOE: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  placementType: {
+    type: DataTypes.STRING,
+    allowNull: true,
   },
   photo: {
     type: DataTypes.TEXT('long'),

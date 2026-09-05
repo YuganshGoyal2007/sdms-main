@@ -1,4 +1,4 @@
-import { User, Phone, FileText, NotebookText } from "lucide-react";
+import { User, Phone, FileText, NotebookText, Briefcase } from "lucide-react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../context/app/store";
 export function ProfileView() {
@@ -138,6 +138,47 @@ export function ProfileView() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {renderField("Address", student?.address)}
               {renderField("Hosteller", student?.hosteller)}
+            </div>
+          </div>
+        </div>
+
+        {/* Professional Details */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 lg:col-span-2">
+          <div className="p-6 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <Briefcase className="w-5 h-5 text-[#7b3b5a]" />
+              <h2 className="font-semibold text-gray-900">
+                Professional Details (Internship & Placement)
+              </h2>
+            </div>
+          </div>
+          <div className="p-6 space-y-6">
+            {/* Internship */}
+            <div>
+              <h3 className="text-sm font-semibold text-[#7b3b5a] mb-3 flex items-center gap-1.5">
+                <span>💼</span> Internship Details
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                {renderField("Status", student?.internshipStatus)}
+                {renderField("Company Name", student?.internshipCompany)}
+                {renderField("Joining Date (DOJ)", student?.internshipDOJ)}
+                {renderField("Ending Date (DOE)", student?.internshipDOE)}
+                {renderField("Type", student?.internshipType)}
+              </div>
+            </div>
+
+            {/* Placement */}
+            <div className="pt-4 border-t border-gray-100">
+              <h3 className="text-sm font-semibold text-[#7b3b5a] mb-3 flex items-center gap-1.5">
+                <span>🏢</span> Placement Details
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                {renderField("Status", student?.placementStatus)}
+                {renderField("Company Name", student?.placementCompany)}
+                {renderField("Joining Date (DOJ)", student?.placementDOJ)}
+                {renderField("Ending Date (DOE)", student?.placementDOE)}
+                {renderField("Type", student?.placementType)}
+              </div>
             </div>
           </div>
         </div>

@@ -179,7 +179,7 @@ const CoordinatorDashboardContent: React.FC = () => {
     }, [coordinatorClasses]);
 
     const openClass = (c: any) =>
-        navigate(`/admin/records/${encodeURIComponent(c.school)}/${encodeURIComponent(c.department)}/${encodeURIComponent(c.program)}/${encodeURIComponent(c.batch)}/${encodeURIComponent(c.specialization)}`);
+        navigate(`/coordinator/records/${encodeURIComponent(c.school)}/${encodeURIComponent(c.department)}/${encodeURIComponent(c.program)}/${encodeURIComponent(c.batch)}/${encodeURIComponent(c.specialization)}`);
 
     const exportClass = async (e: React.MouseEvent, c: any) => {
         e.stopPropagation();

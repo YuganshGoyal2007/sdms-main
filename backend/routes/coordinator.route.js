@@ -5,7 +5,7 @@ import { addCoordinator, deleteCoordinator, getAdminDetails, getAdmins, getChang
 
 const router = express.Router();
 
-router.get('/get-admin-details', isAuthenticated, getAdminDetails);
+router.get('/get-admin-details', isAuthenticated, allowRoles('coordinator', 'admin'), getAdminDetails);
 router.get('/get-admins', isAuthenticated, allowRoles('admin', 'coordinator', 'chairperson'), getAdmins);
 router.get('/classes', isAuthenticated, allowRoles('coordinator'), getCoordinatorClasses);
 router.get('/changes', isAuthenticated, allowRoles('coordinator', 'admin', 'chairperson'), getChangeLogs);
@@ -13,11 +13,6 @@ router.get('/notifications', isAuthenticated, allowRoles('admin', 'coordinator',
 router.post('/add-coordinator', isAuthenticated, allowRoles('admin'), addCoordinator);
 router.delete('/delete-coordinator/:id', isAuthenticated, allowRoles('admin'), deleteCoordinator);
 
-router.get("/me", isAuthenticated, (req, res) => {
-  res.json({
-    id: req.user.id,
-    role: req.user.role,
-  })
-})
+router.get("/me", isAuthenticated, allowRoles('admin', 'coordinator', 'chairperson', 'faculty', 'student'), getAdminDetails);
 
 export default router;

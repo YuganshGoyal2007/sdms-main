@@ -1,0 +1,1256 @@
+{
+  "variables": {
+    "autocommit": "ON",
+    "character_set_database": "utf8mb4",
+    "character_set_server": "utf8mb4",
+    "collation_database": "utf8mb4_unicode_ci",
+    "collation_server": "utf8mb4_0900_ai_ci",
+    "foreign_key_checks": "ON",
+    "innodb_buffer_pool_size": "134217728",
+    "innodb_flush_log_at_trx_commit": "1",
+    "interactive_timeout": "28800",
+    "max_connections": "151",
+    "sql_mode": "IGNORE_SPACE,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION",
+    "transaction_isolation": "REPEATABLE-READ",
+    "version": "8.0.45",
+    "version_comment": "MySQL Community Server - GPL",
+    "wait_timeout": "28800"
+  },
+  "tables": [
+    {
+      "TABLE_NAME": "attendance_records",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_unicode_ci",
+      "TABLE_ROWS": "26",
+      "DATA_LENGTH": "16384",
+      "INDEX_LENGTH": "65536"
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_unicode_ci",
+      "TABLE_ROWS": "2",
+      "DATA_LENGTH": "16384",
+      "INDEX_LENGTH": "114688"
+    },
+    {
+      "TABLE_NAME": "chairpeople",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "9",
+      "DATA_LENGTH": "16384",
+      "INDEX_LENGTH": "98304"
+    },
+    {
+      "TABLE_NAME": "chairpersonclasses",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "35",
+      "DATA_LENGTH": "16384",
+      "INDEX_LENGTH": "0"
+    },
+    {
+      "TABLE_NAME": "changelogs",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "91",
+      "DATA_LENGTH": "12075008",
+      "INDEX_LENGTH": "0"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_unicode_ci",
+      "TABLE_ROWS": "39",
+      "DATA_LENGTH": "16384",
+      "INDEX_LENGTH": "507904"
+    },
+    {
+      "TABLE_NAME": "faculties",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "2",
+      "DATA_LENGTH": "16384",
+      "INDEX_LENGTH": "49152"
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_unicode_ci",
+      "TABLE_ROWS": "7",
+      "DATA_LENGTH": "16384",
+      "INDEX_LENGTH": "98304"
+    },
+    {
+      "TABLE_NAME": "leave_applications",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "1",
+      "DATA_LENGTH": "16384",
+      "INDEX_LENGTH": "49152"
+    },
+    {
+      "TABLE_NAME": "messages",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "0",
+      "DATA_LENGTH": "16384",
+      "INDEX_LENGTH": "0"
+    },
+    {
+      "TABLE_NAME": "notifications",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "64",
+      "DATA_LENGTH": "9977856",
+      "INDEX_LENGTH": "49152"
+    },
+    {
+      "TABLE_NAME": "specializations",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_unicode_ci",
+      "TABLE_ROWS": "53",
+      "DATA_LENGTH": "16384",
+      "INDEX_LENGTH": "0"
+    },
+    {
+      "TABLE_NAME": "students",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "1685",
+      "DATA_LENGTH": "278413312",
+      "INDEX_LENGTH": "278528"
+    },
+    {
+      "TABLE_NAME": "subjects",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_unicode_ci",
+      "TABLE_ROWS": "5",
+      "DATA_LENGTH": "16384",
+      "INDEX_LENGTH": "32768"
+    },
+    {
+      "TABLE_NAME": "timetables",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "41",
+      "DATA_LENGTH": "196608",
+      "INDEX_LENGTH": "65536"
+    },
+    {
+      "TABLE_NAME": "timetablesections",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "41",
+      "DATA_LENGTH": "16384",
+      "INDEX_LENGTH": "16384"
+    },
+    {
+      "TABLE_NAME": "users",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "50",
+      "DATA_LENGTH": "16384",
+      "INDEX_LENGTH": "819200"
+    }
+  ],
+  "foreignKeys": [
+    {
+      "TABLE_NAME": "attendance_records",
+      "COLUMN_NAME": "sessionId",
+      "CONSTRAINT_NAME": "fk_ar_session",
+      "REFERENCED_TABLE_NAME": "attendance_sessions",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "NO ACTION",
+      "DELETE_RULE": "CASCADE"
+    },
+    {
+      "TABLE_NAME": "attendance_records",
+      "COLUMN_NAME": "studentId",
+      "CONSTRAINT_NAME": "fk_ar_student",
+      "REFERENCED_TABLE_NAME": "students",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "NO ACTION",
+      "DELETE_RULE": "CASCADE"
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "fk_as_creator",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "NO ACTION",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "COLUMN_NAME": "facultyId",
+      "CONSTRAINT_NAME": "fk_as_faculty",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "NO ACTION",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "COLUMN_NAME": "lockedBy",
+      "CONSTRAINT_NAME": "fk_as_locker",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "NO ACTION",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "COLUMN_NAME": "subjectId",
+      "CONSTRAINT_NAME": "fk_as_subject",
+      "REFERENCED_TABLE_NAME": "subjects",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "NO ACTION",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "COLUMN_NAME": "unlockedBy",
+      "CONSTRAINT_NAME": "fk_as_unlocker",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "NO ACTION",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_1",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_11",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_12",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "fk_fa_creator",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "NO ACTION",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "COLUMN_NAME": "subjectId",
+      "CONSTRAINT_NAME": "fk_fa_subject",
+      "REFERENCED_TABLE_NAME": "subjects",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "NO ACTION",
+      "DELETE_RULE": "CASCADE"
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "COLUMN_NAME": "facultyId",
+      "CONSTRAINT_NAME": "fk_fa_user",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "NO ACTION",
+      "DELETE_RULE": "CASCADE"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_1",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_11",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_12",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    }
+  ],
+  "indexes": [
+    {
+      "TABLE_NAME": "attendance_records",
+      "INDEX_NAME": "idx_ar_rollNo",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "rollNo",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "attendance_records",
+      "INDEX_NAME": "idx_ar_student",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "studentId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "attendance_records",
+      "INDEX_NAME": "idx_student_session",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "studentId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "attendance_records",
+      "INDEX_NAME": "idx_student_session",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "sessionId",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "attendance_records",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "attendance_records",
+      "INDEX_NAME": "uniq_record_per_session_student",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "sessionId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "attendance_records",
+      "INDEX_NAME": "uniq_record_per_session_student",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "studentId",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "INDEX_NAME": "fk_as_creator",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "createdBy",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "INDEX_NAME": "fk_as_locker",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "lockedBy",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "INDEX_NAME": "fk_as_unlocker",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "unlockedBy",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "INDEX_NAME": "idx_as_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "school",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "INDEX_NAME": "idx_as_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "department",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "INDEX_NAME": "idx_as_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "program",
+      "SEQ_IN_INDEX": 3
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "INDEX_NAME": "idx_as_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "batch",
+      "SEQ_IN_INDEX": 4
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "INDEX_NAME": "idx_as_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "specialization",
+      "SEQ_IN_INDEX": 5
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "INDEX_NAME": "idx_as_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "date",
+      "SEQ_IN_INDEX": 6
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "INDEX_NAME": "idx_as_owner",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "facultyId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "INDEX_NAME": "idx_as_owner",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "date",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "INDEX_NAME": "idx_as_status",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "status",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "INDEX_NAME": "uniq_session_per_slot",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "subjectId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "INDEX_NAME": "uniq_session_per_slot",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "date",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "attendance_sessions",
+      "INDEX_NAME": "uniq_session_per_slot",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "sessionType",
+      "SEQ_IN_INDEX": 3
+    },
+    {
+      "TABLE_NAME": "chairpeople",
+      "INDEX_NAME": "chairpersonId",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "chairpersonId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "chairpeople",
+      "INDEX_NAME": "email",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "chairpeople",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "chairpersonclasses",
+      "INDEX_NAME": "idx_cpc_chairpersonId",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "chairpersonId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "chairpersonclasses",
+      "INDEX_NAME": "idx_cpc_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "school",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "chairpersonclasses",
+      "INDEX_NAME": "idx_cpc_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "department",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "chairpersonclasses",
+      "INDEX_NAME": "idx_cpc_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "program",
+      "SEQ_IN_INDEX": 3
+    },
+    {
+      "TABLE_NAME": "chairpersonclasses",
+      "INDEX_NAME": "idx_cpc_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "batch",
+      "SEQ_IN_INDEX": 4
+    },
+    {
+      "TABLE_NAME": "chairpersonclasses",
+      "INDEX_NAME": "idx_cpc_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "specialization",
+      "SEQ_IN_INDEX": 5
+    },
+    {
+      "TABLE_NAME": "chairpersonclasses",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "changelogs",
+      "INDEX_NAME": "idx_changelogs_entity",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "entity",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "changelogs",
+      "INDEX_NAME": "idx_changelogs_entity",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "entityId",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "changelogs",
+      "INDEX_NAME": "idx_changelogs_user_created",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "userId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "changelogs",
+      "INDEX_NAME": "idx_changelogs_user_created",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "createdAt",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "changelogs",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "createdBy",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "createdBy",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "updatedBy",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "updatedBy",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "userId",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "userId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "faculties",
+      "INDEX_NAME": "faculties_email_unique",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "faculties",
+      "INDEX_NAME": "faculties_facultyId_unique",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "facultyId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "faculties",
+      "INDEX_NAME": "faculties_userId_unique",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "userId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "faculties",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "fk_fa_creator",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "createdBy",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "idx_class_lookup",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "school",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "idx_class_lookup",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "department",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "idx_class_lookup",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "program",
+      "SEQ_IN_INDEX": 3
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "idx_class_lookup",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "batch",
+      "SEQ_IN_INDEX": 4
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "idx_class_lookup",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "specialization",
+      "SEQ_IN_INDEX": 5
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "idx_class_lookup",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "semester",
+      "SEQ_IN_INDEX": 6
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "idx_fa_faculty",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "facultyId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "idx_fa_faculty",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "isActive",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "idx_fa_subject",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "subjectId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "uniq_fa_active",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "facultyId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "uniq_fa_active",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "subjectId",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "uniq_fa_active",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "school",
+      "SEQ_IN_INDEX": 3
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "uniq_fa_active",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "department",
+      "SEQ_IN_INDEX": 4
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "uniq_fa_active",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "program",
+      "SEQ_IN_INDEX": 5
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "uniq_fa_active",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "batch",
+      "SEQ_IN_INDEX": 6
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "uniq_fa_active",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "specialization",
+      "SEQ_IN_INDEX": 7
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "uniq_fa_active",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "semester",
+      "SEQ_IN_INDEX": 8
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "uniq_fa_active",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "academicYear",
+      "SEQ_IN_INDEX": 9
+    },
+    {
+      "TABLE_NAME": "faculty_assignments",
+      "INDEX_NAME": "uniq_fa_active",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "teacherRole",
+      "SEQ_IN_INDEX": 10
+    },
+    {
+      "TABLE_NAME": "leave_applications",
+      "INDEX_NAME": "idx_leave_dates",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "fromDate",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "leave_applications",
+      "INDEX_NAME": "idx_leave_dates",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "toDate",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "leave_applications",
+      "INDEX_NAME": "idx_leave_status",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "status",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "leave_applications",
+      "INDEX_NAME": "idx_leave_student_status",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "studentId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "leave_applications",
+      "INDEX_NAME": "idx_leave_student_status",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "status",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "leave_applications",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "messages",
+      "INDEX_NAME": "idx_messages_receiver_created",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "receiverId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "messages",
+      "INDEX_NAME": "idx_messages_receiver_created",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "createdAt",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "messages",
+      "INDEX_NAME": "idx_messages_sender_created",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "senderId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "messages",
+      "INDEX_NAME": "idx_messages_sender_created",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "createdAt",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "messages",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "notifications",
+      "INDEX_NAME": "idx_notifications_scope",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "scope",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "notifications",
+      "INDEX_NAME": "idx_notifications_toRole",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "toRole",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "notifications",
+      "INDEX_NAME": "idx_notifications_toUserId",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "toUserId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "notifications",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "specializations",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "students",
+      "INDEX_NAME": "createdBy",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "createdBy",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "students",
+      "INDEX_NAME": "enrollmentNo",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "enrollmentNo",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "students",
+      "INDEX_NAME": "idx_roll_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "rollNo",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "students",
+      "INDEX_NAME": "idx_roll_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "school",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "students",
+      "INDEX_NAME": "idx_roll_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "department",
+      "SEQ_IN_INDEX": 3
+    },
+    {
+      "TABLE_NAME": "students",
+      "INDEX_NAME": "idx_roll_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "program",
+      "SEQ_IN_INDEX": 4
+    },
+    {
+      "TABLE_NAME": "students",
+      "INDEX_NAME": "idx_roll_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "batch",
+      "SEQ_IN_INDEX": 5
+    },
+    {
+      "TABLE_NAME": "students",
+      "INDEX_NAME": "idx_students_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "school",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "students",
+      "INDEX_NAME": "idx_students_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "department",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "students",
+      "INDEX_NAME": "idx_students_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "program",
+      "SEQ_IN_INDEX": 3
+    },
+    {
+      "TABLE_NAME": "students",
+      "INDEX_NAME": "idx_students_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "batch",
+      "SEQ_IN_INDEX": 4
+    },
+    {
+      "TABLE_NAME": "students",
+      "INDEX_NAME": "idx_students_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "specialization",
+      "SEQ_IN_INDEX": 5
+    },
+    {
+      "TABLE_NAME": "students",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "students",
+      "INDEX_NAME": "rollNo",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "rollNo",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "students",
+      "INDEX_NAME": "updatedBy",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "updatedBy",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "students",
+      "INDEX_NAME": "userId",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "userId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "subjects",
+      "INDEX_NAME": "idx_subjects_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "school",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "subjects",
+      "INDEX_NAME": "idx_subjects_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "department",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "subjects",
+      "INDEX_NAME": "idx_subjects_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "program",
+      "SEQ_IN_INDEX": 3
+    },
+    {
+      "TABLE_NAME": "subjects",
+      "INDEX_NAME": "idx_subjects_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "batch",
+      "SEQ_IN_INDEX": 4
+    },
+    {
+      "TABLE_NAME": "subjects",
+      "INDEX_NAME": "idx_subjects_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "specialization",
+      "SEQ_IN_INDEX": 5
+    },
+    {
+      "TABLE_NAME": "subjects",
+      "INDEX_NAME": "idx_subjects_class",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "semester",
+      "SEQ_IN_INDEX": 6
+    },
+    {
+      "TABLE_NAME": "subjects",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "subjects",
+      "INDEX_NAME": "uniq_subject_per_class_code",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "school",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "subjects",
+      "INDEX_NAME": "uniq_subject_per_class_code",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "department",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "subjects",
+      "INDEX_NAME": "uniq_subject_per_class_code",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "program",
+      "SEQ_IN_INDEX": 3
+    },
+    {
+      "TABLE_NAME": "subjects",
+      "INDEX_NAME": "uniq_subject_per_class_code",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "batch",
+      "SEQ_IN_INDEX": 4
+    },
+    {
+      "TABLE_NAME": "subjects",
+      "INDEX_NAME": "uniq_subject_per_class_code",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "specialization",
+      "SEQ_IN_INDEX": 5
+    },
+    {
+      "TABLE_NAME": "subjects",
+      "INDEX_NAME": "uniq_subject_per_class_code",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "semester",
+      "SEQ_IN_INDEX": 6
+    },
+    {
+      "TABLE_NAME": "subjects",
+      "INDEX_NAME": "uniq_subject_per_class_code",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "code",
+      "SEQ_IN_INDEX": 7
+    },
+    {
+      "TABLE_NAME": "timetables",
+      "INDEX_NAME": "idx_tt_hash",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "contentHash",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "timetables",
+      "INDEX_NAME": "idx_tt_lastChanged",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "lastChangedAt",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "timetables",
+      "INDEX_NAME": "idx_tt_lastFetched",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "lastFetchedAt",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "timetables",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "timetables",
+      "INDEX_NAME": "uq_tt",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "school",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "timetables",
+      "INDEX_NAME": "uq_tt",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "department",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "timetables",
+      "INDEX_NAME": "uq_tt",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "program",
+      "SEQ_IN_INDEX": 3
+    },
+    {
+      "TABLE_NAME": "timetables",
+      "INDEX_NAME": "uq_tt",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "batch",
+      "SEQ_IN_INDEX": 4
+    },
+    {
+      "TABLE_NAME": "timetables",
+      "INDEX_NAME": "uq_tt",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "specialization",
+      "SEQ_IN_INDEX": 5
+    },
+    {
+      "TABLE_NAME": "timetablesections",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "timetablesections",
+      "INDEX_NAME": "uq_tt_section",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "school",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "timetablesections",
+      "INDEX_NAME": "uq_tt_section",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "department",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "timetablesections",
+      "INDEX_NAME": "uq_tt_section",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "program",
+      "SEQ_IN_INDEX": 3
+    },
+    {
+      "TABLE_NAME": "timetablesections",
+      "INDEX_NAME": "uq_tt_section",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "batch",
+      "SEQ_IN_INDEX": 4
+    },
+    {
+      "TABLE_NAME": "timetablesections",
+      "INDEX_NAME": "uq_tt_section",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "specialization",
+      "SEQ_IN_INDEX": 5
+    },
+    {
+      "TABLE_NAME": "timetablesections",
+      "INDEX_NAME": "uq_tt_section",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "academicYear",
+      "SEQ_IN_INDEX": 6
+    },
+    {
+      "TABLE_NAME": "timetablesections",
+      "INDEX_NAME": "uq_tt_section",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "semester",
+      "SEQ_IN_INDEX": 7
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    }
+  ],
+  "duplicateIndexes": [],
+  "sequelizeConfig": {
+    "dialect": "mysql",
+    "pool": {
+      "max": 25,
+      "min": 4,
+      "acquire": 30000,
+      "idle": 30000
+    },
+    "dialectOptions": {
+      "charset": "utf8mb4",
+      "supportBigNumbers": true,
+      "bigNumberStrings": true,
+      "dateStrings": true,
+      "typeCast": true,
+      "timezone": "+00:00",
+      "flags": "-FOUND_ROWS,IGNORE_SPACE,NO_AUTO_VALUE_ON_ZERO,NO_ENGINE_SUBSTITUTION"
+    },
+    "logging": false
+  }
+}

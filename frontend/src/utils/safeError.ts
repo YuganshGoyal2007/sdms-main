@@ -11,11 +11,12 @@
  * that starts with '<' or contains HTML tags, otherwise React throws
  * "Invalid value '<'" and the toast shows a confusing parse error.
  */
-export const safeErrorMessage = (err: any, fallback = "Something went wrong"): string => {
+export const safeErrorMessage = (err: unknown, fallback = "Something went wrong"): string => {
     if (!err) return fallback;
+    const errorObj = err as { response?: { data?: { message?: unknown; error?: unknown } | string }; message?: string };
 
     // axios JSON response
-    const data = err?.response?.data;
+    const data = errorObj?.response?.data;
     if (data && typeof data === "object") {
         if (typeof data.message === "string" && data.message && !data.message.startsWith("<")) return data.message;
         if (typeof data.error === "string" && data.error && !data.error.startsWith("<")) return data.error;
@@ -29,7 +30,7 @@ export const safeErrorMessage = (err: any, fallback = "Something went wrong"): s
     }
 
     // Plain Error message (network, parse, etc.)
-    const msg = err?.message;
+    const msg = errorObj?.message;
     if (typeof msg === "string" && msg && !msg.startsWith("<")) {
         // Strip noisy "Unexpected token" parts that contain HTML
         if (msg.includes("Unexpected token")) return "Network or parse error (see browser console)";

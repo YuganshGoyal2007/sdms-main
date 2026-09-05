@@ -1,0 +1,87 @@
+{
+  "startedAt": "2026-09-05T09:57:10.819Z",
+  "summary": {
+    "totalRolesTested": 5,
+    "totalPagesVisited": 27,
+    "totalButtonsClicked": 4,
+    "totalNetworkRequests": 4184,
+    "failedNetworkRequests": 0,
+    "consoleErrorsCount": 0,
+    "consoleWarningsCount": 0,
+    "screenshotsCaptured": 39
+  },
+  "networkFailures": [],
+  "consoleErrors": [],
+  "roleResults": {
+    "admin": {
+      "pagesVisited": [
+        "/admin/dashboard",
+        "/admin/records",
+        "/admin/classes",
+        "/admin/faculty",
+        "/admin/faculty-assignments",
+        "/admin/attendance",
+        "/admin/roles",
+        "/admin/chairpersons",
+        "/admin/timetable",
+        "/admin/messages"
+      ],
+      "buttonsClicked": 0,
+      "tabsTested": [],
+      "status": "pass"
+    },
+    "coordinator": {
+      "pagesVisited": [
+        "/coordinator/dashboard",
+        "/coordinator/records",
+        "/coordinator/classes",
+        "/coordinator/mark-attendance",
+        "/coordinator/messages"
+      ],
+      "buttonsClicked": 0,
+      "tabsTested": [],
+      "status": "pass"
+    },
+    "chairperson": {
+      "pagesVisited": [
+        "/chairperson/dashboard",
+        "/chairperson/classes",
+        "/chairperson/records",
+        "/chairperson/mark-attendance",
+        "/chairperson/messages",
+        "/chairperson/logs"
+      ],
+      "buttonsClicked": 0,
+      "tabsTested": [],
+      "status": "pass"
+    },
+    "faculty": {
+      "pagesVisited": [
+        "/faculty/dashboard",
+        "/faculty/profile",
+        "/faculty/classes",
+        "/faculty/mark-attendance",
+        "/faculty/messages"
+      ],
+      "buttonsClicked": 0,
+      "tabsTested": [],
+      "status": "pass"
+    },
+    "student": {
+      "pagesVisited": [
+        "/student"
+      ],
+      "buttonsClicked": 4,
+      "tabsTested": [
+        "profile",
+        "registration",
+        "attendance",
+        "timetable",
+        "fees",
+        "messages"
+      ],
+      "status": "pass"
+    }
+  },
+  "completedAt": "2026-09-05T09:58:27.758Z"
+}

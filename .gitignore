@@ -92,3 +92,6 @@ $RECYCLE.BIN/
 *.db
 backend/database.sqlite
 **/database.sqlite*
+
+# Archives
+*.zip

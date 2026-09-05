@@ -11,6 +11,10 @@ import chairpersonRoute from './routes/chairperson.route.js'
 import messagesRoute from './routes/messages.route.js';
 import timetableRoute from './routes/timetable.route.js';
 import attendanceRoute from './routes/attendance.route.js';
+<<<<<<< HEAD
+=======
+import facultyRoute from './routes/faculty.route.js';
+>>>>>>> 95d01e0 (feat: complete SDMS audit, timetable mapping & viewer, security and database hardening)
 
 import requestLogger from './lib/requestLogger.js';
 import securityHeaders from './lib/security.js';
@@ -41,8 +45,10 @@ app.use(cors({
 
     const allowedOrigins = [
       process.env.FRONTEND_URL,
+      'http://localhost:5173',
       'http://localhost:5174',
       'http://localhost:5175',
+      'http://127.0.0.1:5173',
       'http://127.0.0.1:5174',
       'http://127.0.0.1:5175',
       'http://10.12.9.222:5174',
@@ -97,6 +103,11 @@ app.use('/chairperson', chairpersonRoute)
 app.use('/messages', messagesRoute)
 app.use('/timetable', timetableRoute)
 app.use('/', attendanceRoute)
+<<<<<<< HEAD
+=======
+app.use('/admin', facultyRoute)
+app.use('/faculty', facultyRoute)
+>>>>>>> 95d01e0 (feat: complete SDMS audit, timetable mapping & viewer, security and database hardening)
 
 app.get("/", (req, res) => {
     res.send("GBU-SDSM server is working normally!");

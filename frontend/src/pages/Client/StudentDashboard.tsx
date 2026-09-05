@@ -15,6 +15,8 @@ import { useDispatch } from "react-redux";
 import { setUser } from "../../context/features/userSlice";
 import { useAuth } from "../../context/useAuth";
 
+import StudentAttendanceView from "../../components/Client/StudentAttendanceView";
+
 const StudentDashboard = () => {
     const [activeView, setActiveView] = useState("profile");
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -77,7 +79,7 @@ const StudentDashboard = () => {
                             )} */}
                             {activeView === "profile" && <ProfileView />}
                             {/* {activeView === "assignments" && <ComingSoon feature={'Assignments'} />} */}
-                            {activeView === "attendance" && <ComingSoon feature={'Attendance'} />}
+                            {activeView === "attendance" && <StudentAttendanceView />}
                             {/* {activeView === "clubs" && <ComingSoon feature={'clubs and Committee'} />} */}
                             {/* {activeView === "directory" && <ComingSoon feature={'directory'} />} */}
                             {/* {activeView === "documents" && <ComingSoon feature={'documents'} />} */}

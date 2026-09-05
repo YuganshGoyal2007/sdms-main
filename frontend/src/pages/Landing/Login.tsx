@@ -30,27 +30,54 @@ const StudentLogin = () => {
             navigate("/admin/dashboard");
             break;
           case 'coordinator':
+            navigate("/coordinator/dashboard");
+            break;
           case 'chairperson':
+            navigate("/chairperson/dashboard");
+            break;
+          case 'faculty':
+            navigate("/faculty/dashboard");
+            break;
+          default:
             navigate("/admin/dashboard");
             break;
         }
       }
     } catch (error: any) {
       const status = error.response?.status || error.status;
+<<<<<<< HEAD
       const msg = error.response?.data?.message || error.response?.data?.error;
       switch (status) {
         case 404:
           setError(msg || 'User not found. Please check your username!');
+=======
+      const serverMsg = error.response?.data?.message;
+      switch (status) {
+        case 404:
+          setError('User not found. Kindly register or check your username!');
+>>>>>>> 95d01e0 (feat: complete SDMS audit, timetable mapping & viewer, security and database hardening)
           break;
         case 401:
         case 422:
+<<<<<<< HEAD
           setError(msg || 'Invalid password! Please try again.');
+=======
+          setError('Invalid Credentials! Please check your username and password.');
+          break;
+        case 429:
+          setError('Too many login attempts. Please wait a moment and try again.');
+>>>>>>> 95d01e0 (feat: complete SDMS audit, timetable mapping & viewer, security and database hardening)
           break;
         case 500:
           setError('Internal Server Error! Please try again later.');
           break;
         default:
+<<<<<<< HEAD
           setError(msg || error.message || 'Something went wrong');
+=======
+          setError(serverMsg || error.message || 'Something went wrong. Please check your credentials.');
+          console.log(error);
+>>>>>>> 95d01e0 (feat: complete SDMS audit, timetable mapping & viewer, security and database hardening)
       }
     } finally {
       setLoading(false);

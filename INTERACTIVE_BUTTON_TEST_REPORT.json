@@ -1,0 +1,59 @@
+{
+  "startedAt": "2026-09-05T07:18:20.622Z",
+  "roles": {
+    "admin": {
+      "buttonsClicked": 1,
+      "modalsOpened": 0
+    },
+    "coordinator": {
+      "buttonsClicked": 0
+    },
+    "chairperson": {
+      "buttonsClicked": 0
+    },
+    "student": {
+      "tabsTested": [
+        "profile",
+        "registration",
+        "attendance",
+        "timetable",
+        "fees",
+        "messages"
+      ]
+    }
+  },
+  "summary": {
+    "totalButtonsClicked": 1,
+    "totalModalsOpened": 0,
+    "totalTabsSwitched": 7,
+    "totalScreenshots": 29,
+    "errors": [
+      {
+        "role": "admin",
+        "type": "console",
+        "text": "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+      },
+      {
+        "role": "admin",
+        "type": "console",
+        "text": "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+      },
+      {
+        "role": "admin",
+        "type": "console",
+        "text": "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+      },
+      {
+        "role": "admin",
+        "type": "console",
+        "text": "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+      },
+      {
+        "role": "admin",
+        "type": "console",
+        "text": "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+      }
+    ]
+  },
+  "completedAt": "2026-09-05T07:20:02.471Z"
+}

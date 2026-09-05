@@ -21,8 +21,8 @@ router.get('/me', isAuthenticated, allowRoles('student'), getMyTimetable);
 router.post('/refresh', isAuthenticated, allowRoles('admin', 'coordinator', 'chairperson', 'student'), refreshMyTimetable);
 router.get('/changes-since', isAuthenticated, allowRoles('admin', 'coordinator', 'chairperson', 'student'), hasChangesSince);
 
-// Class-level read (admin / coordinator / chairperson)
-router.get('/section/:school/:department/:program/:batch/:specialization', isAuthenticated, getTimetableForClass);
+// Class-level read (admin / coordinator / chairperson / faculty / student)
+router.get('/section/:school/:department/:program/:batch/:specialization', isAuthenticated, allowRoles('admin', 'coordinator', 'chairperson', 'faculty', 'student'), getTimetableForClass);
 
 // Admin: section mappings
 router.get('/sections', isAuthenticated, allowRoles('admin'), listSections);

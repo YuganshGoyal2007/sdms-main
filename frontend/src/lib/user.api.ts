@@ -86,6 +86,11 @@ export const updateStudent = async (id: string, studentData: Partial<StudentProp
     return response.data.data;
 };
 
+export const bulkUpdateStudents = async (studentIds: (number | string)[], updates: Record<string, any>): Promise<{ success: boolean; message: string; count: number }> => {
+    const response = await api.post('/admin/bulk-update-students', { studentIds, updates });
+    return response.data;
+};
+
 export const getFilteredStudents = async (school: string | undefined, department: string | undefined, program: string | undefined, batch: string | undefined, specialization: string | undefined) => {
     const response = await api.post(
         '/admin/filter-students',
@@ -370,6 +375,41 @@ export const createTimetableSection = async (payload: Partial<TimetableSection>)
 export const deleteTimetableSection = async (id: number) =>
     (await api.delete(`/timetable/sections/${id}`)).data;
 
+export const discoverMissingTimetable = async (): Promise<{
+    success: boolean;
+    total: number;
+    missingCount: number;
+    missing: Array<{
+        school: string;
+        department: string;
+        program: string;
+        batch: string;
+        specialization: string;
+        studentCount: number;
+        suggested?: string | null;
+    }>;
+}> => (await api.get('/timetable/discover')).data;
+
+export const bulkCreateTimetableSections = async (sections: any[]) =>
+    (await api.post('/timetable/sections/bulk', { sections })).data;
+
+export const getTimetableForClass = async (
+    school: string,
+    department: string,
+    program: string,
+    batch: string,
+    specialization: string
+): Promise<{ success: boolean; timetable?: any; stale?: boolean; error?: string }> =>
+    (await api.get(`/timetable/section/${encodeURIComponent(school)}/${encodeURIComponent(department)}/${encodeURIComponent(program)}/${encodeURIComponent(batch)}/${encodeURIComponent(specialization)}`)).data;
+
+export const refreshClassTimetable = async (
+    school: string,
+    department: string,
+    program: string,
+    batch: string,
+    specialization: string
+) => (await api.post('/timetable/refresh', null, { params: { school, department, program, batch, specialization } })).data;
+
 export const deleteSpecializationStudents = async (school: string | undefined, department: string | undefined, program: string | undefined, batch: string | undefined, specialization: string | undefined) => {
     const response = await api.delete(
         "/admin/delete-specialization-students",
@@ -401,3 +441,32 @@ export const exportStudentsToExcel = async (params?: Record<string, string | und
     const response = await api.get('/admin/export-students', { params: cleaned, responseType: 'blob' });
     return response.data as Blob;
 };
+
+export interface FacultyProps {
+    id?: number;
+    userId?: number;
+    facultyId?: string;
+    name: string;
+    email: string;
+    password?: string;
+    phone?: string;
+    department?: string;
+    photo?: string;
+    createdAt?: string;
+}
+
+export const getFaculties = async (): Promise<{ success: boolean; faculties: FacultyProps[] }> => {
+    const response = await api.get('/admin/faculty');
+    return response.data;
+};
+
+export const addFaculty = async (facultyData: FacultyProps): Promise<{ success: boolean; message: string; faculty: FacultyProps }> => {
+    const response = await api.post('/admin/faculty/add-faculty', facultyData);
+    return response.data;
+};
+
+export const deleteFaculty = async (id: number): Promise<{ success: boolean; message: string }> => {
+    const response = await api.delete(`/admin/faculty/${id}`);
+    return response.data;
+};
+

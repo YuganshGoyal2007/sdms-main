@@ -7,6 +7,7 @@ import Student from "../models/student.model.js";
 import sequelize from "../lib/db.js";
 import { getChairpersonLogs } from './chairperson.controller.js';
 import Chairperson from '../models/chairperson.model.js';
+import Faculty from '../models/faculty.model.js';
 import { asyncHandler } from "../lib/asyncHandler.js";
 import logger from "../lib/logger.js";
 
@@ -94,9 +95,12 @@ export const getAdminDetails = asyncHandler(async (req, res) => {
     if (req.user.role === 'admin') {
         return res.status(200).json({
             success: true,
+            id: req.user.id,
+            role: 'admin',
             message: 'User details found successfully',
             user: {
                 id: req.user.id,
+                name: req.user.name || req.user.username,
                 username: req.user.username,
                 email: req.user.username,
                 role: req.user.role,
@@ -118,8 +122,63 @@ export const getAdminDetails = asyncHandler(async (req, res) => {
         }
         return res.status(200).json({
             success: true,
+            id: req.user.id,
+            role: 'chairperson',
             message: 'User details found successfully',
-            user: chairperson,
+            user: { ...chairperson.toJSON(), role: 'chairperson' },
+        });
+    }
+
+    if (req.user.role === 'faculty') {
+        const faculty = await Faculty.findOne({
+            where: {
+                [Op.or]: [{ userId: req.user.id }, { email: req.user.username }],
+            },
+        });
+        const facultyData = faculty ? faculty.toJSON() : {};
+        return res.status(200).json({
+            success: true,
+            id: req.user.id,
+            role: 'faculty',
+            message: 'User details found successfully',
+            user: {
+                ...facultyData,
+                id: req.user.id,
+                name: faculty?.name || req.user.name || 'Faculty Member',
+                facultyId: faculty?.facultyId || `FAC-${req.user.id}`,
+                email: faculty?.email || req.user.username,
+                department: faculty?.department || '',
+                role: 'faculty',
+            },
+        });
+    }
+
+    if (req.user.role === 'student') {
+        const student = await Student.findOne({
+            where: {
+                [Op.or]: [
+                    { userId: req.user.id },
+                    { enrollmentNo: req.user.username },
+                    { rollNo: req.user.username },
+                ],
+            },
+        });
+        if (student && !student.userId) {
+            await Student.update({ userId: req.user.id }, { where: { id: student.id } });
+        }
+        const studentData = student ? student.toJSON() : {};
+        return res.status(200).json({
+            success: true,
+            id: req.user.id,
+            role: 'student',
+            message: 'User details found successfully',
+            user: {
+                ...studentData,
+                id: req.user.id,
+                name: student?.fullName || req.user.username,
+                email: student?.email || req.user.username,
+                role: 'student',
+            },
         });
     }
 

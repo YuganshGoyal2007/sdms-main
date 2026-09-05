@@ -1,18 +1,25 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom'
-import type { StudentProps } from '../../types/types';
-import user from '../../assets/images/user.png'
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { ClipboardCheck } from 'lucide-react';
+import type { StudentProps, StudentAttendanceSummaryResponse } from '../../types/types';
+import user from '../../assets/images/user.png';
 import { deleteStudent, getStudentProfile, updateStudentPhoto } from '../../lib/user.api';
+import { getStudentAttendanceSummary } from '../../lib/attendance.api';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../context/app/store';
 
 const StudentDetailComponent = () => {
 
     const [student, setStudent] = useState<StudentProps | null>(null);
     const [photoUploadFile, setPhotoUploadFile] = useState<File | null>(null);
     const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
+    const [attendanceSummary, setAttendanceSummary] = useState<StudentAttendanceSummaryResponse | null>(null);
+    const [attendanceLoading, setAttendanceLoading] = useState(false);
 
     const { school, department, program, batch, rollNo } = useParams();
 
-    const navigate = useNavigate()
+    const navigate = useNavigate();
+    const location = useLocation();
 
     const renderField = (label: string, value: string | number | boolean | null | undefined, index?: number) => (
         <div key={index} className="flex flex-col sm:flex-row sm:justify-between py-1 border-b border-gray-200">
@@ -68,8 +75,17 @@ const StudentDetailComponent = () => {
         }
     };
 
+    const currentUser = useSelector((state: RootState) => state.admin);
+
     const handleEdit = () => {
-        navigate("/admin/register-student", {
+        const userRole = (currentUser as any)?.role;
+        const basePath = (userRole === 'chairperson' || location.pathname.startsWith('/chairperson'))
+            ? '/chairperson/register-student'
+            : (userRole === 'coordinator' || location.pathname.startsWith('/coordinator'))
+            ? '/coordinator/register-student'
+            : '/admin/register-student';
+
+        navigate(basePath, {
             state: {
                 mode: "edit",
                 student, school, department, program, batch
@@ -103,7 +119,23 @@ const StudentDetailComponent = () => {
             }
         };
 
+        const fetchAttendance = async () => {
+            if (!rollNo) return;
+            try {
+                setAttendanceLoading(true);
+                const att = await getStudentAttendanceSummary(rollNo);
+                if (att?.success) {
+                    setAttendanceSummary(att);
+                }
+            } catch (err) {
+                console.error('Failed to load student attendance:', err);
+            } finally {
+                setAttendanceLoading(false);
+            }
+        };
+
         fetchStudent();
+        fetchAttendance();
     }, [rollNo]);
 
     if (!student) {
@@ -194,35 +226,35 @@ const StudentDetailComponent = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
                             <div className="flex flex-col sm:flex-row sm:justify-between py-1">
                                 <span className="font-medium text-gray-700">Full Name</span>
-                                <span className="text-gray-900">{student?.fullName}</span>
+                                <span className="text-gray-900">{student?.fullName || "N/A"}</span>
                             </div>
                             <div className="flex flex-col sm:flex-row sm:justify-between py-1">
                                 <span className="font-medium text-gray-700">Enrollment No.</span>
-                                <span className="text-gray-900">{student?.enrollmentNo.toLocaleUpperCase()}</span>
+                                <span className="text-gray-900">{student?.enrollmentNo ? student.enrollmentNo.toLocaleUpperCase() : "N/A"}</span>
                             </div>
                             <div className="flex flex-col sm:flex-row sm:justify-between py-1">
                                 <span className="font-medium text-gray-700">Roll no.</span>
-                                <span className="text-gray-900">{student?.rollNo.toLocaleUpperCase()}</span>
+                                <span className="text-gray-900">{student?.rollNo ? student.rollNo.toLocaleUpperCase() : "N/A"}</span>
                             </div>
                             <div className="flex flex-col sm:flex-row sm:justify-between py-1">
                                 <span className="font-medium text-gray-700">School</span>
-                                <span className="text-gray-900">{student?.school.toLocaleUpperCase()}</span>
+                                <span className="text-gray-900">{student?.school ? student.school.toLocaleUpperCase() : "N/A"}</span>
                             </div>
                             <div className="flex flex-col sm:flex-row sm:justify-between py-1">
                                 <span className="font-medium text-gray-700">Department</span>
-                                <span className="text-gray-900">{student?.department.toLocaleUpperCase()}</span>
+                                <span className="text-gray-900">{student?.department ? student.department.toLocaleUpperCase() : "N/A"}</span>
                             </div>
                             <div className="flex flex-col sm:flex-row sm:justify-between py-1">
                                 <span className="font-medium text-gray-700">Specialization</span>
-                                <span className="text-gray-900">{student?.specialization}</span>
+                                <span className="text-gray-900">{student?.specialization || "N/A"}</span>
                             </div>
                             <div className="flex flex-col sm:flex-row sm:justify-between py-1">
                                 <span className="font-medium text-gray-700">Program</span>
-                                <span className="text-gray-900">{student?.program}</span>
+                                <span className="text-gray-900">{student?.program || "N/A"}</span>
                             </div>
                             <div className="flex flex-col sm:flex-row sm:justify-between py-1">
                                 <span className="font-medium text-gray-700">Batch</span>
-                                <span className="text-gray-900">{student?.batch}</span>
+                                <span className="text-gray-900">{student?.batch || "N/A"}</span>
                             </div>
                         </div>
                     </div>
@@ -238,9 +270,9 @@ const StudentDetailComponent = () => {
                         {renderField("Father's Name", student?.fatherName)}
                         {renderField("Mother's Name", student?.motherName)}
                         {renderField("Gender", student?.gender)}
-                        {renderField("Date of Birth", new Date(student?.dob).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }))}
+                        {renderField("Date of Birth", student?.dob ? new Date(student.dob).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "N/A")}
                         {renderField("Category", student?.category)}
-                        {renderField("Aadhaar / National ID", student?.nationalId.toLocaleUpperCase())}
+                        {renderField("Aadhaar / National ID", student?.nationalId ? student.nationalId.toLocaleUpperCase() : "N/A")}
                         {renderField("Mobile No", student?.mobile)}
                         {renderField("Email ID", student?.email)}
                         {renderField("Address", student?.address ? student?.address : '-')}
@@ -265,6 +297,164 @@ const StudentDetailComponent = () => {
                     </div>
                 </div>
 
+                {/* Attendance & Subject Engagement Details */}
+                <div className="bg-white p-5 rounded-none border border-gray-200 space-y-4">
+                    <div className="flex items-center justify-between border-b border-gray-300 pb-2">
+                        <div className="flex items-center gap-2">
+                            <ClipboardCheck className="text-[#7b3b5a]" size={22} />
+                            <h2 className="text-xl font-semibold text-gray-900">
+                                Attendance & Subject Engagement
+                            </h2>
+                        </div>
+                        {attendanceSummary && attendanceSummary.overall.total > 0 && (
+                            <span
+                                className={`text-xs px-2.5 py-1 rounded-full font-bold ${
+                                    attendanceSummary.overall.percentage >= 75
+                                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                        : attendanceSummary.overall.percentage >= 65
+                                        ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                                        : 'bg-red-100 text-red-800 border border-red-300'
+                                }`}
+                            >
+                                Overall Attendance: {attendanceSummary.overall.percentage}%
+                            </span>
+                        )}
+                    </div>
+
+                    {attendanceLoading ? (
+                        <div className="py-6 text-center text-sm text-gray-500">Loading attendance data...</div>
+                    ) : !attendanceSummary || attendanceSummary.overall.total === 0 ? (
+                        <div className="py-6 text-center text-sm text-gray-500">
+                            No attendance records logged for this student yet.
+                        </div>
+                    ) : (
+                        <div className="space-y-5">
+                            {/* Summary Metric Counters */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <div className="p-3 bg-gray-50 rounded border border-gray-200 text-center">
+                                    <div className="text-xs text-gray-500 font-medium">Total Classes</div>
+                                    <div className="text-xl font-bold text-gray-800">{attendanceSummary.overall.total}</div>
+                                </div>
+                                <div className="p-3 bg-emerald-50 rounded border border-emerald-200 text-center">
+                                    <div className="text-xs text-emerald-700 font-medium">Present</div>
+                                    <div className="text-xl font-bold text-emerald-700">{attendanceSummary.overall.present}</div>
+                                </div>
+                                <div className="p-3 bg-red-50 rounded border border-red-200 text-center">
+                                    <div className="text-xs text-red-700 font-medium">Absent</div>
+                                    <div className="text-xl font-bold text-red-700">{attendanceSummary.overall.absent}</div>
+                                </div>
+                                <div className="p-3 bg-amber-50 rounded border border-amber-200 text-center">
+                                    <div className="text-xs text-amber-700 font-medium">Excused</div>
+                                    <div className="text-xl font-bold text-amber-700">{attendanceSummary.overall.excused}</div>
+                                </div>
+                            </div>
+
+                            {/* Subject-Wise Attendance Breakdown */}
+                            {attendanceSummary.subjects && attendanceSummary.subjects.length > 0 && (
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-800 mb-2">Subject Breakdown</h3>
+                                    <div className="overflow-x-auto border border-gray-200 rounded">
+                                        <table className="w-full text-xs text-left">
+                                            <thead className="bg-[#f8f9fa] text-gray-700 uppercase font-semibold border-b border-gray-200">
+                                                <tr>
+                                                    <th className="px-3 py-2">Subject</th>
+                                                    <th className="px-3 py-2">Code</th>
+                                                    <th className="px-3 py-2">Sem</th>
+                                                    <th className="px-3 py-2 text-center">Total</th>
+                                                    <th className="px-3 py-2 text-center">Present</th>
+                                                    <th className="px-3 py-2 text-center">Absent</th>
+                                                    <th className="px-3 py-2 text-center">Excused</th>
+                                                    <th className="px-3 py-2">Attendance %</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-200">
+                                                {attendanceSummary.subjects.map((sub) => (
+                                                    <tr key={sub.subjectId} className="hover:bg-gray-50">
+                                                        <td className="px-3 py-2 font-medium text-gray-900">{sub.subjectName}</td>
+                                                        <td className="px-3 py-2 font-mono text-gray-600">{sub.subjectCode || '—'}</td>
+                                                        <td className="px-3 py-2 text-gray-600">{sub.semester ? `Sem ${sub.semester}` : '—'}</td>
+                                                        <td className="px-3 py-2 text-center font-semibold">{sub.total}</td>
+                                                        <td className="px-3 py-2 text-center text-emerald-700 font-medium">{sub.present}</td>
+                                                        <td className="px-3 py-2 text-center text-red-600 font-medium">{sub.absent}</td>
+                                                        <td className="px-3 py-2 text-center text-amber-600 font-medium">{sub.excused}</td>
+                                                        <td className="px-3 py-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-20 bg-gray-200 rounded-full h-2 overflow-hidden">
+                                                                    <div
+                                                                        className={`h-full rounded-full ${
+                                                                            sub.percentage >= 75
+                                                                                ? 'bg-emerald-500'
+                                                                                : sub.percentage >= 65
+                                                                                ? 'bg-amber-500'
+                                                                                : 'bg-red-500'
+                                                                        }`}
+                                                                        style={{ width: `${Math.min(100, sub.percentage)}%` }}
+                                                                    />
+                                                                </div>
+                                                                <span className="font-bold text-gray-800">{sub.percentage}%</span>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Recent Sessions History */}
+                            {attendanceSummary.recentSessions && attendanceSummary.recentSessions.length > 0 && (
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-800 mb-2">Recent Attendance Sessions</h3>
+                                    <div className="overflow-x-auto border border-gray-200 rounded max-h-56 overflow-y-auto">
+                                        <table className="w-full text-xs text-left">
+                                            <thead className="bg-[#f8f9fa] text-gray-700 uppercase font-semibold border-b border-gray-200 sticky top-0">
+                                                <tr>
+                                                    <th className="px-3 py-2">Date</th>
+                                                    <th className="px-3 py-2">Subject</th>
+                                                    <th className="px-3 py-2">Type</th>
+                                                    <th className="px-3 py-2">Topic</th>
+                                                    <th className="px-3 py-2 text-center">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-200">
+                                                {attendanceSummary.recentSessions.map((rec) => {
+                                                    const isPresent = rec.status === 'present';
+                                                    const isAbsent = rec.status === 'absent';
+                                                    const isExcused = rec.status === 'excused';
+                                                    return (
+                                                        <tr key={rec.sessionId} className="hover:bg-gray-50">
+                                                            <td className="px-3 py-2 font-medium">{rec.date}</td>
+                                                            <td className="px-3 py-2 text-gray-800">{rec.subjectName || `Subject #${rec.subjectId}`}</td>
+                                                            <td className="px-3 py-2 text-gray-600 capitalize">{rec.sessionType}</td>
+                                                            <td className="px-3 py-2 text-gray-500 italic max-w-xs truncate">{rec.topic || '—'}</td>
+                                                            <td className="px-3 py-2 text-center">
+                                                                <span
+                                                                    className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold capitalize ${
+                                                                        isPresent
+                                                                            ? 'bg-emerald-100 text-emerald-800'
+                                                                            : isAbsent
+                                                                            ? 'bg-red-100 text-red-800'
+                                                                            : isExcused
+                                                                            ? 'bg-amber-100 text-amber-800'
+                                                                            : 'bg-gray-100 text-gray-600'
+                                                                    }`}
+                                                                >
+                                                                    {rec.status}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
                 {/* Registration Details */}
                 <div className="bg-white p-5 rounded-none border border-gray-200 space-y-3">
                     <h2 className="text-xl font-semibold border-b border-gray-300 pb-2 mb-3">
@@ -278,13 +468,39 @@ const StudentDetailComponent = () => {
                 </div>
 
                 {/* Professional Details */}
-                <div className="bg-white p-5 rounded-none border border-gray-200 space-y-3">
+                <div className="bg-white p-5 rounded-none border border-gray-200 space-y-5">
                     <h2 className="text-xl font-semibold border-b border-gray-300 pb-2 mb-3">
                         Professional Details
                     </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
-                        {renderField("Internship Status", student?.internshipStatus)}
-                        {renderField("Placement Status", student?.placementStatus)}
+
+                    {/* Internship Details */}
+                    <div className="space-y-2">
+                        <h3 className="text-base font-semibold text-[#7b3b5a] flex items-center gap-1.5">
+                            <span>💼</span> Internship Details
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                            {renderField("Internship Status", student?.internshipStatus)}
+                            {renderField("Company Name", student?.internshipCompany)}
+                            {renderField("Time Period (DOJ - DOE)", (student?.internshipDOJ || student?.internshipDOE) ? `${student?.internshipDOJ || "N/A"} to ${student?.internshipDOE || "N/A"}` : "N/A")}
+                            {renderField("Joining Date (DOJ)", student?.internshipDOJ)}
+                            {renderField("Ending Date (DOE)", student?.internshipDOE)}
+                            {renderField("Internship Type", student?.internshipType)}
+                        </div>
+                    </div>
+
+                    {/* Placement Details */}
+                    <div className="space-y-2 pt-4 border-t border-gray-200">
+                        <h3 className="text-base font-semibold text-[#7b3b5a] flex items-center gap-1.5">
+                            <span>🏢</span> Placement Details
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                            {renderField("Placement Status", student?.placementStatus)}
+                            {renderField("Company Name", student?.placementCompany)}
+                            {renderField("Time Period (DOJ - DOE)", (student?.placementDOJ || student?.placementDOE) ? `${student?.placementDOJ || "N/A"} to ${student?.placementDOE || "N/A"}` : "N/A")}
+                            {renderField("Joining Date (DOJ)", student?.placementDOJ)}
+                            {renderField("Ending Date / Bond End (DOE)", student?.placementDOE)}
+                            {renderField("Placement Type", student?.placementType)}
+                        </div>
                     </div>
                 </div>
             </div>

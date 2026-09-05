@@ -4,9 +4,8 @@ import logger, { runWithRequestContext } from './logger.js';
 
 const requestLogger = pinoHttp({
   logger,
-  genReqId: (req, res) => {
-    const incoming = req.headers['x-request-id'];
-    const id = (typeof incoming === 'string' && incoming) || randomUUID();
+  genReqId: (_req, res) => {
+    const id = randomUUID();
     res.setHeader('x-request-id', id);
     return id;
   },

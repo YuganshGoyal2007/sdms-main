@@ -12,31 +12,42 @@ const ProtectedRoute = () => {
     const dispatch = useDispatch();
 
     useEffect(() => {
-        const checkAuth = async () => {
+        let isMounted = true;
+        const checkAuthAndUser = async () => {
             try {
                 const { data } = await api.get("/admin/me");
-                setRole(data.role);
-            } catch (err) {
-                setRole(null);
+                if (!isMounted) return;
+                const fetchedRole = data.role || data.user?.role;
+                setRole(fetchedRole);
+
+                if (data.user && isMounted) {
+                    dispatch(setAdmin({ ...data.user, role: fetchedRole }));
+                } else if (fetchedRole) {
+                    const ep = fetchedRole === "faculty" ? "/faculty/me" : `/${fetchedRole}/get-admin-details`;
+                    const res = await api.get(ep).catch(() => null);
+                    if (res?.data?.user && isMounted) {
+                        dispatch(setAdmin({ ...res.data.user, role: fetchedRole }));
+                    }
+                }
+            } catch {
+                if (isMounted) setRole(null);
             } finally {
-                setLoading(false);
+                if (isMounted) setLoading(false);
             }
         };
-        const checkUser = async () => {
-            try {
-                const response = await api.get(`/admin/get-admin-details`);
-                if (response) {
-                    dispatch(setAdmin(response.data.user));
-                }
-            } catch (error: any) {
-                console.log(error)
-            }
-        }
-        checkAuth();
-        checkUser();
-    }, []);
+        checkAuthAndUser();
+        return () => {
+            isMounted = false;
+        };
+    }, [dispatch]);
 
-    if (loading) return null;
+    if (loading) {
+        return (
+            <div className="flex h-screen w-screen items-center justify-center bg-gray-50">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#7b3b5a]" />
+            </div>
+        );
+    }
 
     if (!role) return <Navigate to="/login" replace />;
 
@@ -52,8 +63,11 @@ const ProtectedRoute = () => {
     if (role === "admin" && location.pathname.startsWith("/coordinator")) {
         return <Navigate to="/admin/dashboard" replace />;
     }
-    if ((role === "admin" || role === "coordinator") && location.pathname.startsWith("/student")) {
-        return <Navigate to="/admin/dashboard" replace />;
+    if (role === "faculty" && (location.pathname.startsWith("/admin") || location.pathname.startsWith("/coordinator") || location.pathname.startsWith("/chairperson"))) {
+        return <Navigate to="/faculty/dashboard" replace />;
+    }
+    if ((role === "admin" || role === "coordinator" || role === "faculty" || role === "chairperson") && location.pathname === "/student") {
+        return <Navigate to={`/${role}/dashboard`} replace />;
     }
 
     return <Outlet />;

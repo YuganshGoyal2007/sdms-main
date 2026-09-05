@@ -25,6 +25,7 @@ import Coordinator from '../models/coordinator.model.js';
 import Chairperson from '../models/chairperson.model.js';
 import ChairpersonClass from '../models/chairpersonClass.model.js';
 import Student from '../models/student.model.js';
+import FacultyAssignment from '../models/facultyAssignment.model.js';
 import { getChairpersonAssignments } from './chairperson.controller.js';
 import { getCoordinatorAssignedClasses } from './student.controller.js';
 import logger from '../lib/logger.js';
@@ -33,13 +34,22 @@ const isAdmin = (u) => u?.role === 'admin';
 const isCoord = (u) => u?.role === 'coordinator';
 const isChair = (u) => u?.role === 'chairperson';
 const isStudent = (u) => u?.role === 'student';
+const isFaculty = (u) => u?.role === 'faculty';
 
 /**
  * Resolve target user ids given the recipient spec.
  * Returns { userIds: number[], role: string|null, scope: 'direct'|'broadcast'|'class', classKey?: string }
  */
 const resolveRecipients = async (req) => {
-    const { recipientType, recipientIds, recipientRole, classKey } = req.body;
+    let { recipientType, recipientIds, recipientRole, classKey, recipient } = req.body;
+    if (recipient && typeof recipient === 'object') {
+        if (!recipientType && (recipient.scope === 'user' || recipient.scope === 'direct')) recipientType = 'users';
+        if (!recipientType && recipient.scope === 'role') recipientType = 'role';
+        if (!recipientType && recipient.role === 'admin') recipientType = 'admin';
+        if (!recipientIds && recipient.userIds) recipientIds = recipient.userIds;
+        if (!recipientRole && recipient.role) recipientRole = recipient.role;
+        if (!classKey && recipient.classKey) classKey = recipient.classKey;
+    }
     const sender = req.user;
 
     // Personal: recipientIds = array of user.id
@@ -62,8 +72,14 @@ const resolveRecipients = async (req) => {
         return { userIds: [], role: recipientRole, scope: 'broadcast' };
     }
 
+    // Admin direct
+    if (recipientType === 'admin') {
+        const admins = await User.findAll({ where: { role: 'admin' }, attributes: ['id'] });
+        return { userIds: admins.map((a) => a.id), role: 'admin', scope: 'direct' };
+    }
+
     // Class-scoped: send to all coordinators of a specific class
-    if (recipientType === 'class' && classKey) {
+    if ((recipientType === 'class' || recipientType === 'class-coordinator') && classKey) {
         const [school, department, program, batch, specialization] = classKey.split('|');
         if (!school || !department || !program || !batch) return null;
         const coordinators = await Coordinator.findAll({
@@ -83,6 +99,27 @@ const resolveRecipients = async (req) => {
             attributes: ['userId', 'rollNo'],
         });
         return { userIds: students.map((s) => s.userId).filter(Boolean), role: 'student', scope: 'class', classKey };
+    }
+
+    // Universal: all students in all classes assigned to the sender
+    if (recipientType === 'all-assigned-classes' && isFaculty(sender)) {
+        const assignments = await FacultyAssignment.findAll({
+            where: { facultyId: sender.id, isActive: true },
+        });
+        if (!assignments.length) return null;
+        const conditions = assignments.map((a) => ({
+            school: a.school,
+            department: a.department,
+            program: a.program,
+            batch: a.batch,
+            specialization: a.specialization,
+        }));
+        const students = await Student.findAll({
+            where: { [Op.or]: conditions },
+            attributes: ['userId', 'rollNo'],
+        });
+        const userIds = Array.from(new Set(students.map((s) => s.userId).filter(Boolean)));
+        return { userIds, role: 'student', scope: 'all-classes' };
     }
 
     return null;
@@ -155,21 +192,63 @@ const authorizeSend = async (sender, recipient) => {
         return false;
     }
 
+    if (isFaculty(sender)) {
+        // faculty can send to admin, to coordinator of assigned class, or to students of assigned class(es)
+        if (rRole === 'admin') return true;
+        if (rRole === 'student') return true;
+        if (rRole === 'coordinator') {
+            const assignments = await FacultyAssignment.findAll({
+                where: { facultyId: sender.id, isActive: true },
+            });
+            if (!assignments.length) return false;
+            const coords = await Coordinator.findAll({
+                where: {
+                    [Op.or]: assignments.map((a) => ({
+                        school: a.school, department: a.department, program: a.program,
+                        batch: a.batch, specialization: a.specialization,
+                    })),
+                },
+                attributes: ['userId'],
+            });
+            const allowedIds = new Set(coords.map((c) => c.userId).filter(Boolean));
+            if (scope === 'class') return coords.length > 0;
+            return userIds.every((id) => allowedIds.has(id));
+        }
+        return false;
+    }
+
     if (isStudent(sender)) {
-        // student can send to coordinators of their assigned class
-        if (rRole === 'coordinator' && scope === 'class') {
-            if (!userIds.length) return true; // empty class, will be rejected
-            // Verify the student is actually in that class
-            const myStudent = await Student.findOne({ where: { userId: sender.id } });
-            if (!myStudent) return false;
-            const [school, department, program, batch, specialization] = (recipient.classKey || '').split('|');
-            return (
-                myStudent.school === school &&
-                myStudent.department === department &&
-                myStudent.program === program &&
-                myStudent.batch === batch &&
-                (myStudent.specialization || '') === (specialization || '')
-            );
+        if (rRole === 'admin') return true;
+
+        const myStudent = await Student.findOne({
+            where: {
+                [Op.or]: [
+                    { userId: sender.id },
+                    ...(sender.username ? [{ rollNo: sender.username }, { enrollmentNo: sender.username }] : []),
+                ],
+            },
+        });
+        if (!myStudent) return false;
+
+        if (rRole === 'coordinator') {
+            const coords = await Coordinator.findAll({
+                where: {
+                    school: myStudent.school,
+                    department: myStudent.department,
+                    program: myStudent.program,
+                    batch: myStudent.batch,
+                    specialization: myStudent.specialization,
+                },
+                attributes: ['userId'],
+            });
+            const allowedIds = new Set(coords.map((c) => c.userId).filter(Boolean));
+            if (scope === 'class') {
+                return coords.length > 0;
+            }
+            if (userIds && userIds.length > 0) {
+                return userIds.every((id) => allowedIds.has(id));
+            }
+            return true;
         }
         return false;
     }
@@ -180,8 +259,9 @@ const authorizeSend = async (sender, recipient) => {
 /* ──────────────────── POST /messages ──────────────────── */
 
 export const sendMessage = asyncHandler(async (req, res) => {
-    const { content } = req.body;
-    if (!content?.trim()) {
+    const rawContent = req.body.content || req.body.message || req.body.text;
+    const content = typeof rawContent === 'string' ? rawContent.trim() : '';
+    if (!content) {
         return res.status(400).json({ success: false, message: 'Message content is required.' });
     }
     if (isStudent(req.user) && content.length > 500) {
@@ -220,7 +300,7 @@ export const sendMessage = asyncHandler(async (req, res) => {
             data: baseData,
             scope: 'broadcast',
         });
-    } else if (recipient.scope === 'class' || recipient.scope === 'direct') {
+    } else if (recipient.scope === 'class' || recipient.scope === 'direct' || recipient.scope === 'all-classes') {
         for (const uid of recipient.userIds) {
             const targetUser = await User.findByPk(uid, { attributes: ['role'] });
             if (!targetUser) continue;
@@ -491,9 +571,77 @@ export const getRecipients = asyncHandler(async (req, res) => {
             batch: a.batch,
             specialization: a.specialization,
         }));
+    } else if (isFaculty(me)) {
+        const admins = await User.findAll({ where: { role: 'admin' }, attributes: ['id', 'name', 'username'] });
+        result.admins = admins;
+
+        const assignments = await FacultyAssignment.findAll({
+            where: { facultyId: me.id, isActive: true },
+        });
+
+        const classMap = new Map();
+        const conditions = [];
+
+        for (const a of assignments) {
+            const ck = `${a.school}|${a.department}|${a.program}|${a.batch}|${a.specialization}`;
+            if (!classMap.has(ck)) {
+                classMap.set(ck, {
+                    classKey: ck,
+                    label: `${a.program} ${a.batch} (${a.department.toUpperCase()}) — ${a.specialization}`,
+                    school: a.school,
+                    department: a.department,
+                    program: a.program,
+                    batch: a.batch,
+                    specialization: a.specialization,
+                });
+                conditions.push({
+                    school: a.school,
+                    department: a.department,
+                    program: a.program,
+                    batch: a.batch,
+                    specialization: a.specialization,
+                });
+            }
+        }
+
+        if (conditions.length > 0) {
+            const [coords, students] = await Promise.all([
+                Coordinator.findAll({
+                    where: { [Op.or]: conditions },
+                    attributes: ['id', 'userId', 'name', 'email', 'school', 'department', 'program', 'batch', 'specialization'],
+                }),
+                Student.findAll({
+                    where: { [Op.or]: conditions },
+                    attributes: ['id', 'rollNo', 'fullName', 'email', 'userId', 'school', 'department', 'program', 'batch', 'specialization'],
+                    limit: 300,
+                }),
+            ]);
+
+            result.coordinators = coords.map((c) => ({
+                ...c.toJSON(),
+                classKey: `${c.school}|${c.department}|${c.program}|${c.batch}|${c.specialization}`,
+            }));
+
+            result.students = students.map((s) => ({
+                ...s.toJSON(),
+                classKey: `${s.school}|${s.department}|${s.program}|${s.batch}|${s.specialization}`,
+            }));
+        }
+
+        result.classes = Array.from(classMap.values());
     } else if (isStudent(me)) {
-        // student can only message their coordinators
-        const myStudent = await Student.findOne({ where: { userId: me.id } });
+        // student can message admins and their assigned coordinators
+        const admins = await User.findAll({ where: { role: 'admin' }, attributes: ['id', 'name', 'username'] });
+        result.admins = admins;
+
+        const myStudent = await Student.findOne({
+            where: {
+                [Op.or]: [
+                    { userId: me.id },
+                    ...(me.username ? [{ rollNo: me.username }, { enrollmentNo: me.username }] : []),
+                ],
+            },
+        });
         if (myStudent) {
             const coords = await Coordinator.findAll({
                 where: {
@@ -504,6 +652,15 @@ export const getRecipients = asyncHandler(async (req, res) => {
                 attributes: ['id', 'userId', 'name', 'email'],
             });
             result.coordinators = coords;
+            result.classes = [{
+                classKey: `${myStudent.school}|${myStudent.department}|${myStudent.program}|${myStudent.batch}|${myStudent.specialization}`,
+                label: `${myStudent.program} ${myStudent.batch} — ${myStudent.specialization}`,
+                school: myStudent.school,
+                department: myStudent.department,
+                program: myStudent.program,
+                batch: myStudent.batch,
+                specialization: myStudent.specialization,
+            }];
         }
     }
 

@@ -5,7 +5,7 @@ import logger from './logger.js';
 dotenv.config();
 
 const dialect = process.env.DB_DIALECT || 'mysql';
-const logging = process.env.NODE_ENV === 'development' ? (msg) => logger.debug(msg) : false;
+const logging = process.env.DEBUG_SQL === 'true' ? (msg) => logger.debug(msg) : false;
 
 let sequelize;
 
@@ -26,13 +26,19 @@ if (dialect === 'mysql') {
         dateStrings: true,
         typeCast: true,
         timezone: '+00:00',
-        flags: '-FOUND_ROWS,IGNORE_SPACE,MULTI_STATEMENTS,NO_AUTO_VALUE_ON_ZERO,NO_BACKSLASH_ESCAPES,NO_ENGINE_SUBSTITUTION'
+        flags: '-FOUND_ROWS,IGNORE_SPACE,NO_AUTO_VALUE_ON_ZERO,NO_ENGINE_SUBSTITUTION'
       },
       pool: {
-        max: 15,
-        min: 0,
-        acquire: 60000,
-        idle: 10000,
+        max: 25,
+        min: 4,
+        acquire: 30000,
+        idle: 30000,
+        afterConnect: (connection, done) => {
+          connection.query(
+            'SET SESSION sort_buffer_size = 4 * 1024 * 1024, tmp_table_size = 64 * 1024 * 1024, max_heap_table_size = 64 * 1024 * 1024;',
+            (err) => done(err, connection)
+          );
+        },
       },
     }
   );
@@ -54,17 +60,15 @@ export const connectDB = async () => {
         dialect,
         host: process.env.DB_HOST,
         db: process.env.DB_NAME,
-        poolMax: 15,
-        poolAcquireMs: 60000,
+        poolMax: 25,
+        poolAcquireMs: 30000,
       },
       `Database connected using ${dialect}`
     );
 
     if (dialect === 'mysql') {
       try {
-        await sequelize.query("SET SESSION sort_buffer_size = 4 * 1024 * 1024;");
-        await sequelize.query("SET SESSION tmp_table_size = 64 * 1024 * 1024;");
-        await sequelize.query("SET SESSION max_heap_table_size = 64 * 1024 * 1024;");
+        await sequelize.query("SET SESSION sort_buffer_size = 4 * 1024 * 1024, tmp_table_size = 64 * 1024 * 1024, max_heap_table_size = 64 * 1024 * 1024;");
         logger.info('MySQL session tuned: sort_buffer_size=4MB, tmp_table_size=64MB, max_heap_table_size=64MB');
       } catch (tuneErr) {
         logger.warn({ err: tuneErr.message }, 'Could not tune MySQL session vars (non-super user)');

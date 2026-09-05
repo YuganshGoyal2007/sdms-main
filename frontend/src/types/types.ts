@@ -52,7 +52,33 @@ export interface YearCGPA {
   cgpa?: number | null;  
 }
 
+export interface FacultyAssignment {
+    id: number;
+    facultyId: number;
+    teacherRole: string;
+    subjectId: number;
+    school: string;
+    department: string;
+    program: string;
+    batch: string;
+    specialization: string;
+    semester: number;
+    academicYear: string;
+    isActive: boolean;
+    createdBy: number | null;
+    createdAt: string;
+    updatedAt: string;
+    facultyName?: string;
+    facultyEmail?: string | null;
+    userRole?: string;
+    subjectName?: string | null;
+    subjectCode?: string | null;
+    subjectType?: string | null;
+}
+
 export interface StudentProps {
+    id?: number;
+    userId?: number;
     rollNo: string;
     enrollmentNo: string;
     fullName: string;
@@ -78,7 +104,15 @@ export interface StudentProps {
     semesters: Semester[];
     yearCGPA: YearCGPA[];
     internshipStatus: string;
+    internshipCompany?: string;
+    internshipDOJ?: string;
+    internshipDOE?: string;
+    internshipType?: string;
     placementStatus: string;
+    placementCompany?: string;
+    placementDOJ?: string;
+    placementDOE?: string;
+    placementType?: string;
     photo?: string; 
     status?: string;
 }
@@ -170,8 +204,16 @@ export interface StudentDetail {
     sem7Reg: string;
     sem8Reg: string;
     internshipStatus: string;
+    internshipCompany?: string;
+    internshipDOJ?: string;
+    internshipDOE?: string;
+    internshipType?: string;
     fourthYearCGPA: string;
     placementStatus: string;
+    placementCompany?: string;
+    placementDOJ?: string;
+    placementDOE?: string;
+    placementType?: string;
     photo: string;
 }
 
@@ -261,6 +303,7 @@ export interface MessageNotification {
   createdAt: string;
 }
 
+<<<<<<< HEAD
 // ===================== Attendance module =====================
 
 export type AttendanceSessionType = 'lecture' | 'lab' | 'tutorial';
@@ -351,4 +394,184 @@ export interface StudentAttendanceSummary {
     subjectCode: string | null;
     status: AttendanceStatus;
   }[];
+=======
+// ============== Attendance Portal ==============
+
+export type AttendanceStatus = 'present' | 'absent' | 'excused';
+export type SessionStatus = 'draft' | 'submitted' | 'locked';
+export type SessionType = 'lecture' | 'lab' | 'tutorial';
+export type TeacherRole = 'faculty' | 'coordinator' | 'chairperson';
+
+export interface TodaySessionInfo {
+    sessionId: number;
+    status: SessionStatus;
+    sessionType: SessionType;
+    topic: string | null;
+}
+
+export interface TeachingClass {
+    assignmentId: number;
+    facultyId: number;
+    teacherRole: TeacherRole;
+    subjectId: number;
+    subjectName: string | null;
+    subjectCode: string | null;
+    subjectType: 'theory' | 'lab' | null;
+    subjectCredits: number | null;
+    semester: number;
+    academicYear: string;
+    school: string;
+    department: string;
+    program: string;
+    batch: string;
+    specialization: string;
+    isActive: boolean;
+    todaySession: TodaySessionInfo | null;
+}
+
+export interface TeachingClassesResponse {
+    success: boolean;
+    count: number;
+    classes: TeachingClass[];
+    date: string;
+    message?: string;
+}
+
+export interface SubjectInfo {
+    id: number;
+    name: string;
+    code: string;
+    semester: number;
+    credits: number | null;
+    type: 'theory' | 'lab';
+}
+
+export interface AttendanceSession {
+    id: number;
+    school: string;
+    department: string;
+    program: string;
+    batch: string;
+    specialization: string;
+    subjectId: number;
+    facultyId: number;
+    date: string;
+    startTime: string | null;
+    endTime: string | null;
+    sessionType: SessionType;
+    topic: string | null;
+    status: SessionStatus;
+    createdBy: number;
+    submittedAt: string | null;
+    lockedBy: number | null;
+    lockedAt: string | null;
+    unlockedBy: number | null;
+    unlockedAt: string | null;
+    unlockReason: string | null;
+    createdAt: string;
+    updatedAt: string;
+    subjectName?: string | null;
+    subjectCode?: string | null;
+    subjectSemester?: number | null;
+    facultyName?: string | null;
+    facultyEmail?: string | null;
+    recordCount?: number;
+}
+
+export interface TodaySessionResponse {
+    success: boolean;
+    date: string;
+    subject: SubjectInfo | null;
+    class: {
+        school: string;
+        department: string;
+        program: string;
+        batch: string;
+        specialization: string;
+    };
+    session: AttendanceSession | null;
+}
+
+export interface RosterAttendance {
+    recordId: number | null;
+    status: AttendanceStatus | null;
+    markedAt: string | null;
+    remarks: string | null;
+}
+
+export interface RosterStudent {
+    studentId: number;
+    rollNo: string;
+    enrollmentNo: string;
+    fullName: string;
+    email: string;
+    photo: string | null;
+    studentStatus: 'active' | 'inactive';
+    attendance: RosterAttendance | null;
+}
+
+export interface SessionRecordsResponse {
+    success: boolean;
+    session: AttendanceSession;
+    subject: SubjectInfo | null;
+    roster: RosterStudent[];
+}
+
+export interface UpsertRecord {
+    studentId: number;
+    status: AttendanceStatus;
+    remarks?: string;
+}
+
+export interface StudentAttendanceSummary {
+    studentId: number;
+    rollNo: string;
+    fullName: string;
+    email: string;
+    school: string;
+    department: string;
+    program: string;
+    batch: string;
+    specialization: string;
+    photo: string | null;
+}
+
+export interface SubjectAttendanceSummary {
+    subjectId: number;
+    subjectName: string;
+    subjectCode: string | null;
+    semester: number | null;
+    type: 'theory' | 'lab' | null;
+    total: number;
+    present: number;
+    absent: number;
+    excused: number;
+    percentage: number;
+}
+
+export interface StudentRecentSession {
+    sessionId: number;
+    subjectId?: number;
+    date: string;
+    sessionType: SessionType;
+    topic: string | null;
+    subjectName: string | null;
+    subjectCode: string | null;
+    status: AttendanceStatus | 'unmarked';
+}
+
+export interface StudentAttendanceSummaryResponse {
+    success: boolean;
+    student: StudentAttendanceSummary;
+    overall: {
+        total: number;
+        present: number;
+        absent: number;
+        excused: number;
+        percentage: number;
+    };
+    subjects: SubjectAttendanceSummary[];
+    recentSessions: StudentRecentSession[];
+    message?: string;
+>>>>>>> 95d01e0 (feat: complete SDMS audit, timetable mapping & viewer, security and database hardening)
 }
