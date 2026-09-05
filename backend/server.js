@@ -12,6 +12,9 @@ import messagesRoute from './routes/messages.route.js';
 import timetableRoute from './routes/timetable.route.js';
 import attendanceRoute from './routes/attendance.route.js';
 import facultyRoute from './routes/faculty.route.js';
+import feesRoute from './routes/fees.route.js';
+import noDuesRoute from './routes/noDues.route.js';
+import leaveRoute from './routes/leave.route.js';
 
 import requestLogger from './lib/requestLogger.js';
 import securityHeaders from './lib/security.js';
@@ -102,6 +105,9 @@ app.use('/timetable', timetableRoute)
 app.use('/', attendanceRoute)
 app.use('/admin', facultyRoute)
 app.use('/faculty', facultyRoute)
+app.use('/', feesRoute)
+app.use('/', noDuesRoute)
+app.use('/', leaveRoute)
 
 app.get("/", (req, res) => {
     res.send("GBU-SDSM server is working normally!");

@@ -37,6 +37,9 @@ import FacultyAssignmentsAdmin from "./pages/Admin/FacultyAssignmentsAdmin";
 import FacultyAdmin from "./pages/Admin/FacultyAdmin";
 import FacultyProfile from "./pages/Faculty/FacultyProfile";
 import FacultyMessages from "./pages/Faculty/FacultyMessages";
+import FacultyLeaves from "./pages/Faculty/FacultyLeaves";
+import NoDuesAdmin from "./pages/Admin/NoDuesAdmin";
+import LeaveAdmin from "./pages/Admin/LeaveAdmin";
 
 const App = () => {
   return (
@@ -66,6 +69,8 @@ const App = () => {
             <Route path="/admin/attendance" element={<AdminAttendanceSessions />} />
             <Route path="/admin/faculty" element={<FacultyAdmin />} />
             <Route path="/admin/faculty-assignments" element={<FacultyAssignmentsAdmin />} />
+            <Route path="/admin/no-dues" element={<NoDuesAdmin />} />
+            <Route path="/admin/leaves" element={<LeaveAdmin />} />
 
             {/* Coordinator */}
             <Route path="/coordinator/dashboard" element={<CoordinatorDashboard />} />
@@ -75,6 +80,8 @@ const App = () => {
             <Route path="/coordinator/records/:school/:department/:program/:batch/:specialization" element={<CategoryView />} />
             <Route path="/coordinator/records/:rollNo" element={<StudentDetail />} />
             <Route path="/coordinator/register-student" element={<AddStudent />} />
+            <Route path="/coordinator/no-dues" element={<NoDuesAdmin />} />
+            <Route path="/coordinator/leaves" element={<LeaveAdmin />} />
 
             {/* Chairperson */}
             <Route path="/chairperson/dashboard" element={<ChairpersonDashboard />} />
@@ -85,12 +92,15 @@ const App = () => {
             <Route path="/chairperson/records/:school/:department/:program/:batch/:specialization" element={<ChairpersonCategoryView />} />
             <Route path="/chairperson/records/:rollNo" element={<ChairpersonStudentDetail />} />
             <Route path="/chairperson/register-student" element={<AddStudent />} />
+            <Route path="/chairperson/no-dues" element={<NoDuesAdmin />} />
+            <Route path="/chairperson/leaves" element={<LeaveAdmin />} />
 
             {/* Faculty & Teaching portal */}
             <Route path="/faculty/dashboard" element={<TeachingDashboard />} />
             <Route path="/faculty/profile" element={<FacultyProfile />} />
             <Route path="/faculty/classes" element={<TeachingDashboard />} />
             <Route path="/faculty/messages" element={<FacultyMessages />} />
+            <Route path="/faculty/leaves" element={<FacultyLeaves />} />
             <Route path="/faculty/mark-attendance" element={<TeachingDashboard />} />
             <Route path="/faculty/mark-attendance/:classKey/:subjectId" element={<MarkAttendance />} />
 

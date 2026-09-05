@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LayoutDashboard, Menu, Power, Table2, UserCog, UsersRound, X, CalendarDays, ClipboardCheck, UserRound } from 'lucide-react';
+import { LayoutDashboard, Menu, Power, Table2, UserCog, UsersRound, X, CalendarDays, ClipboardCheck, UserRound, ShieldCheck, Calendar } from 'lucide-react';
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../context/app/store";
@@ -75,6 +75,13 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                                 <button className="w-full flex items-center justify-start gap-3 cursor-pointer">
                                     <UsersRound size={20} />
                                     {menu && <h1 className={activeTab === 'messages' ? 'text-black font-bold' : ''}>Messages</h1>}
+                                </button>
+                            </Link>
+
+                            <Link to="/faculty/leaves" className="block">
+                                <button className="w-full flex items-center justify-start gap-3 cursor-pointer">
+                                    <Calendar size={20} />
+                                    {menu && <h1 className={activeTab === 'leaves' ? 'text-black font-bold' : ''}>My Leaves</h1>}
                                 </button>
                             </Link>
                         </>
@@ -153,6 +160,20 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                                         <button className="w-full flex items-center justify-start gap-3 cursor-pointer">
                                             <CalendarDays size={20} />
                                             {menu && <h1 className={activeTab === 'timetable' ? 'text-black font-bold' : ''}>Timetable Mappings</h1>}
+                                        </button>
+                                    </Link>
+
+                                    <Link to={'/admin/no-dues'} className="block">
+                                        <button className="w-full flex items-center justify-start gap-3 cursor-pointer">
+                                            <ShieldCheck size={20} />
+                                            {menu && <h1 className={activeTab === 'nodues' ? 'text-black font-bold' : ''}>No-Dues Clearance</h1>}
+                                        </button>
+                                    </Link>
+
+                                    <Link to={'/admin/leaves'} className="block">
+                                        <button className="w-full flex items-center justify-start gap-3 cursor-pointer">
+                                            <Calendar size={20} />
+                                            {menu && <h1 className={activeTab === 'leaves' ? 'text-black font-bold' : ''}>Leave Management</h1>}
                                         </button>
                                     </Link>
                                 </>
@@ -267,6 +288,13 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                                     {!menu && <h1 className={activeTab === 'messages' ? 'text-black font-bold' : ''}>Messages</h1>}
                                 </button>
                             </Link>
+
+                            <Link to="/faculty/leaves" className="block">
+                                <button className="w-full flex items-center gap-3 cursor-pointer">
+                                    <Calendar size={20} />
+                                    {!menu && <h1 className={activeTab === 'leaves' ? 'text-black font-bold' : ''}>My Leaves</h1>}
+                                </button>
+                            </Link>
                         </>
                     ) : (
                         <>
@@ -347,6 +375,20 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                                             {!menu && <h1 className={activeTab === 'timetable' ? 'text-black font-bold' : ''}>Timetable Mappings</h1>}
                                         </button>
                                     </Link>
+
+                                    <Link to={'/admin/no-dues'} className="block">
+                                        <button className="w-full flex items-center gap-3 cursor-pointer">
+                                            <ShieldCheck size={20} />
+                                            {!menu && <h1 className={activeTab === 'nodues' ? 'text-black font-bold' : ''}>No-Dues Clearance</h1>}
+                                        </button>
+                                    </Link>
+
+                                    <Link to={'/admin/leaves'} className="block">
+                                        <button className="w-full flex items-center gap-3 cursor-pointer">
+                                            <Calendar size={20} />
+                                            {!menu && <h1 className={activeTab === 'leaves' ? 'text-black font-bold' : ''}>Leave Management</h1>}
+                                        </button>
+                                    </Link>
                                 </>
                             )}
 
@@ -414,4 +456,5 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
     );
 };
 
+export { userSideNav as AdminSideNav };
 export default userSideNav;

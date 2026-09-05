@@ -17,6 +17,11 @@ import AttendanceRecord from './attendanceRecord.model.js';
 // Already defined in individual models
 
 import Faculty from './faculty.model.js';
+import FeeRecord from './feeRecord.model.js';
+import NoDuesApplication from './noDuesApplication.model.js';
+import NoDuesStage from './noDuesStage.model.js';
+import LeaveType from './leaveType.model.js';
+import LeaveApplication from './leaveApplication.model.js';
 
 export {
   User,
@@ -33,5 +38,10 @@ export {
   FacultyAssignment,
   AttendanceSession,
   AttendanceRecord,
+  FeeRecord,
+  NoDuesApplication,
+  NoDuesStage,
+  LeaveType,
+  LeaveApplication,
 };
 export default sequelize;

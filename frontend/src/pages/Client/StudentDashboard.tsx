@@ -5,7 +5,6 @@ import { Sidebar } from "../../components/Client/Sidebar";
 // import { DashboardView } from "../../components/Client/DashboardView";
 import { ProfileView } from "../../components/Client/ProfileView";
 import { RegistrationView } from "../../components/Client/RegistrationView";
-import { ComingSoon } from "../../utils/ComingSoon";
 import StudentMessagesView from "../../components/Client/StudentMessagesView";
 import { TimetableView } from "../../components/Client/TimetableView";
 import Footer from "../../components/Client/Footer";
@@ -16,6 +15,7 @@ import { setUser } from "../../context/features/userSlice";
 import { useAuth } from "../../context/useAuth";
 
 import StudentAttendanceView from "../../components/Client/StudentAttendanceView";
+import StudentFeesAndNoDuesView from "../../components/Client/StudentFeesAndNoDuesView";
 
 const StudentDashboard = () => {
     const [activeView, setActiveView] = useState("profile");
@@ -85,7 +85,7 @@ const StudentDashboard = () => {
                             {/* {activeView === "documents" && <ComingSoon feature={'documents'} />} */}
                             {/* {activeView === "events" && <ComingSoon feature={'events'} />} */}
                             {/* {activeView === "exams" && <ComingSoon feature={'exams'} />} */}
-                            {activeView === "fees" && <ComingSoon feature={'fees'} />}
+                            {activeView === "fees" && <StudentFeesAndNoDuesView />}
                             {/* {activeView === "academics" && <ComingSoon feature={'GBU Academics'} />} */}
                             {/* {activeView === "faculty" && <ComingSoon feature={'Know Your Faculty'} />} */}
                             {/* {activeView === "library" && <ComingSoon feature={'Library'} />} */}
