@@ -170,7 +170,7 @@ export const LeaveAdmin: React.FC = () => {
                 <Calendar className="w-6 h-6 text-red-700" /> Leave Management & Approvals
               </h1>
               <p className="text-xs md:text-sm text-slate-500 mt-0.5">
-                Two-tier verification (HOD review $\to$ Dean approval) and leave quotas configuration.
+                Two-tier verification (HOD review → Dean approval) and leave quotas configuration.
               </p>
             </div>
 
