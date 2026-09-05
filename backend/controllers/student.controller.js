@@ -3,6 +3,7 @@ import User from "../models/user.model.js";
 import Coordinator from "../models/coordinator.model.js";
 import ChangeLog from "../models/changeLog.model.js";
 import Notification from "../models/notification.model.js";
+import sequelize from "../lib/db.js";
 import { removeSpaces } from "../services/whitespace.service.js";
 import XLSX from 'xlsx';
 import { buildSemesters, buildYearCGPA, COLUMN_ORDER, PROGRAM_CONFIG } from "../services/upload.service.js";
@@ -85,11 +86,21 @@ export const getProgramRule = (program, batch) => {
 };
 
 export const addStudent = asyncHandler(async (req, res) => {
-  const { status = 'active', rollNo, enrollmentNo, fullName, school, department, program, batch, specialization, fatherName, motherName, gender, dob, category, nationalId, mobile, email, address, hosteller, enrollmentStatus, admissionType, twelfthCompartment, admissionYear, semesters = [], yearCGPA = [], internshipStatus, placementStatus, photo } = req.body;
+  const { status = 'active', rollNo, enrollmentNo, fullName, school, department, program, batch, specialization, fatherName, motherName, gender, dob, category, nationalId, mobile, email, address, hosteller, enrollmentStatus, admissionType, twelfthCompartment, admissionYear, semesters = [], yearCGPA = [], internshipStatus, internshipCompany, internshipDOJ, internshipDOE, internshipType, placementStatus, placementCompany, placementDOJ, placementDOE, placementType, photo } = req.body;
     if (req.user && req.user.role === 'coordinator') {
       const assignedClasses = await getCoordinatorAssignedClasses(req.user);
       const targetClass = { school, department, program, batch, specialization };
       if (!isClassAssignedToCoordinator(assignedClasses, targetClass)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied: You are not authorized to add students to this class.'
+        });
+      }
+    }
+    if (req.user && req.user.role === 'chairperson') {
+      const { assignments } = await getChairpersonAssignments(req.user);
+      const targetClass = { school, department, program, batch, specialization };
+      if (!isClassAssignedToCoordinator(assignments, targetClass)) {
         return res.status(403).json({
           success: false,
           message: 'Access denied: You are not authorized to add students to this class.'
@@ -163,7 +174,15 @@ export const addStudent = asyncHandler(async (req, res) => {
       semesters,
       yearCGPA,
       internshipStatus,
+      internshipCompany,
+      internshipDOJ,
+      internshipDOE,
+      internshipType,
       placementStatus,
+      placementCompany,
+      placementDOJ,
+      placementDOE,
+      placementType,
       photo,
       status: targetStatus,
       createdBy: req.user.id,
@@ -199,7 +218,7 @@ export const addStudent = asyncHandler(async (req, res) => {
 
 export const updateStudent = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { status, rollNo, enrollmentNo, fullName, school, department, program, batch, specialization, fatherName, motherName, gender, dob, category, nationalId, mobile, email, address, hosteller, enrollmentStatus, admissionType, twelfthCompartment, admissionYear, semesters, yearCGPA, internshipStatus, placementStatus, photo } = req.body;
+  const { status, rollNo, enrollmentNo, fullName, school, department, program, batch, specialization, fatherName, motherName, gender, dob, category, nationalId, mobile, email, address, hosteller, enrollmentStatus, admissionType, twelfthCompartment, admissionYear, semesters, yearCGPA, internshipStatus, internshipCompany, internshipDOJ, internshipDOE, internshipType, placementStatus, placementCompany, placementDOJ, placementDOE, placementType, photo } = req.body;
     const student = await Student.findOne({ where: { rollNo: id } });
     if (!student) {
       return res.status(404).json({
@@ -224,6 +243,28 @@ export const updateStudent = asyncHandler(async (req, res) => {
         specialization: specialization || student.specialization
       };
       if (!isClassAssignedToCoordinator(assignedClasses, targetClass)) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied: You cannot move a student to an unassigned class."
+        });
+      }
+    }
+    if (req.user && req.user.role === 'chairperson') {
+      const { assignments } = await getChairpersonAssignments(req.user);
+      if (!isClassAssignedToCoordinator(assignments, student)) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied: Student is not in your assigned class."
+        });
+      }
+      const targetClass = {
+        school: school || student.school,
+        department: department || student.department,
+        program: program || student.program,
+        batch: batch || student.batch,
+        specialization: specialization || student.specialization
+      };
+      if (!isClassAssignedToCoordinator(assignments, targetClass)) {
         return res.status(403).json({
           success: false,
           message: "Access denied: You cannot move a student to an unassigned class."
@@ -332,8 +373,16 @@ export const updateStudent = asyncHandler(async (req, res) => {
       ...(admissionYear && { admissionYear }),
       ...(semesters && { semesters }),
       ...(yearCGPA && { yearCGPA }),
-      ...(internshipStatus && { internshipStatus }),
-      ...(placementStatus && { placementStatus }),
+      ...(internshipStatus !== undefined && { internshipStatus }),
+      ...(internshipCompany !== undefined && { internshipCompany }),
+      ...(internshipDOJ !== undefined && { internshipDOJ }),
+      ...(internshipDOE !== undefined && { internshipDOE }),
+      ...(internshipType !== undefined && { internshipType }),
+      ...(placementStatus !== undefined && { placementStatus }),
+      ...(placementCompany !== undefined && { placementCompany }),
+      ...(placementDOJ !== undefined && { placementDOJ }),
+      ...(placementDOE !== undefined && { placementDOE }),
+      ...(placementType !== undefined && { placementType }),
       ...(photo && { photo }),
       updatedBy: req.user.id
     };
@@ -442,10 +491,18 @@ export const getStudentCount = asyncHandler(async (req, res) => {
 export const getStudentProfile = asyncHandler(async (req, res) => {
     const { rollNo } = req.params;
 
-    const newRollNo = removeSpaces(rollNo.toLowerCase());
+    const lookupKey = removeSpaces(String(rollNo || '').trim());
 
     const student = await Student.findOne({
-      where: { rollNo: newRollNo },
+      where: {
+        [Op.or]: [
+          { rollNo: lookupKey.toLowerCase() },
+          { rollNo: lookupKey.toUpperCase() },
+          { enrollmentNo: lookupKey },
+          { enrollmentNo: lookupKey.toLowerCase() },
+          { enrollmentNo: lookupKey.toUpperCase() },
+        ]
+      },
       include: [
         { model: User, as: 'user' },
         { model: User, as: 'creator' },
@@ -463,6 +520,15 @@ export const getStudentProfile = asyncHandler(async (req, res) => {
     if (req.user && req.user.role === 'coordinator') {
       const assignedClasses = await getCoordinatorAssignedClasses(req.user);
       if (!isClassAssignedToCoordinator(assignedClasses, student)) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied: Student is not in your assigned class."
+        });
+      }
+    }
+    if (req.user && req.user.role === 'chairperson') {
+      const { assignments } = await getChairpersonAssignments(req.user);
+      if (!isClassAssignedToCoordinator(assignments, student)) {
         return res.status(403).json({
           success: false,
           message: "Access denied: Student is not in your assigned class."
@@ -500,6 +566,22 @@ export const searchStudents = asyncHandler(async (req, res) => {
       baseWhere = {
         [Op.and]: [baseWhere, coordWhere]
       };
+    } else if (req.user && req.user.role === 'chairperson') {
+      const { assignments } = await getChairpersonAssignments(req.user);
+      if (assignments && assignments.length) {
+        const chairWhere = {
+          [Op.or]: assignments.map((a) => ({
+            school: a.school,
+            department: a.department,
+            program: a.program,
+            batch: a.batch,
+            specialization: a.specialization,
+          })),
+        };
+        baseWhere = {
+          [Op.and]: [baseWhere, chairWhere]
+        };
+      }
     }
 
     const students = await Student.findAll({
@@ -512,7 +594,7 @@ export const searchStudents = asyncHandler(async (req, res) => {
 });
 
 export const getStudentDetails = asyncHandler(async (req, res) => {
-    const student = await Student.findOne({
+    let student = await Student.findOne({
       where: { userId: req.user.id },
       include: [
         { model: User, as: 'user' },
@@ -520,6 +602,27 @@ export const getStudentDetails = asyncHandler(async (req, res) => {
         { model: User, as: 'updater' }
       ]
     });
+
+    if (!student && req.user.username) {
+      student = await Student.findOne({
+        where: {
+          [Op.or]: [
+            { enrollmentNo: req.user.username },
+            { rollNo: req.user.username },
+            { email: req.user.username },
+          ]
+        },
+        include: [
+          { model: User, as: 'user' },
+          { model: User, as: 'creator' },
+          { model: User, as: 'updater' }
+        ]
+      });
+      if (student && !student.userId) {
+        await Student.update({ userId: req.user.id }, { where: { id: student.id } });
+      }
+    }
+
     if (student) {
       return res.status(200).json({
         success: true,
@@ -1296,4 +1399,133 @@ export const uploadStudentsWithReformat = asyncHandler(async (req, res) => {
     }
 
     return res.status(201).json(result);
+});
+
+export const bulkUpdateStudents = asyncHandler(async (req, res) => {
+    const { studentIds, updates } = req.body;
+
+    if (!Array.isArray(studentIds) || studentIds.length === 0) {
+        return res.status(400).json({ success: false, message: "No students selected for bulk update." });
+    }
+
+    if (!updates || typeof updates !== "object" || Object.keys(updates).length === 0) {
+        return res.status(400).json({ success: false, message: "No update fields provided." });
+    }
+
+    const students = await Student.findAll({
+        where: {
+            [Op.or]: [
+                { id: studentIds },
+                { rollNo: studentIds }
+            ]
+        }
+    });
+    if (students.length === 0) {
+        return res.status(404).json({ success: false, message: "No matching students found." });
+    }
+
+    // Role-based authorization
+    if (req.user && req.user.role === "coordinator") {
+        const assignedClasses = await getCoordinatorAssignedClasses(req.user);
+        for (const s of students) {
+            if (!isClassAssignedToCoordinator(assignedClasses, s)) {
+                return res.status(403).json({
+                    success: false,
+                    message: `Access denied: Student ${s.rollNo} is not in your assigned class.`
+                });
+            }
+        }
+    } else if (req.user && req.user.role === "chairperson") {
+        const { assignments } = await getChairpersonAssignments(req.user);
+        for (const s of students) {
+            if (!isClassAssignedToCoordinator(assignments, s)) {
+                return res.status(403).json({
+                    success: false,
+                    message: `Access denied: Student ${s.rollNo} is outside your assigned department.`
+                });
+            }
+        }
+    }
+
+    const allowedFields = [
+        "status",
+        "enrollmentStatus",
+        "admissionType",
+        "admissionYear",
+        "internshipStatus",
+        "internshipCompany",
+        "internshipDOJ",
+        "internshipDOE",
+        "internshipType",
+        "placementStatus",
+        "placementCompany",
+        "placementDOJ",
+        "placementDOE",
+        "placementType",
+        "hosteller",
+        "category",
+        "specialization",
+        "twelfthCompartment"
+    ];
+
+    const directUpdates = {};
+    for (const field of allowedFields) {
+        if (updates[field] !== undefined && updates[field] !== null && String(updates[field]).trim() !== "") {
+            directUpdates[field] = updates[field];
+        }
+    }
+    directUpdates.updatedBy = req.user.id;
+
+    const t = await sequelize.transaction();
+    let updatedCount = 0;
+    try {
+        for (const student of students) {
+            const studentUpdates = { ...directUpdates };
+
+            if (updates.semesterRegistration && updates.semesterRegistration.semesterNumber) {
+                const semNum = Number(updates.semesterRegistration.semesterNumber);
+                const regStatus = updates.semesterRegistration.registered || "Registered";
+                let sems = Array.isArray(student.semesters) ? JSON.parse(JSON.stringify(student.semesters)) : [];
+                while (sems.length < semNum) {
+                    sems.push({ semester: sems.length + 1, registered: "Not Registered" });
+                }
+                sems[semNum - 1] = {
+                    ...(sems[semNum - 1] || {}),
+                    semester: semNum,
+                    registered: regStatus
+                };
+                studentUpdates.semesters = sems;
+            }
+
+            await student.update(studentUpdates, { transaction: t });
+            updatedCount++;
+        }
+        await t.commit();
+    } catch (err) {
+        await t.rollback();
+        throw err;
+    }
+
+    try {
+        await ChangeLog.create({
+            userId: req.user.id,
+            action: "bulk_update",
+            entity: "student",
+            entityId: `bulk_${updatedCount}_students`,
+            details: {
+                studentIds,
+                updates,
+                by: req.user.id,
+                role: req.user.role
+            }
+        });
+    } catch (e) {
+        logger.warn({ err: e }, "Failed to write bulk update ChangeLog");
+    }
+
+    return res.status(200).json({
+        success: true,
+        message: `Successfully updated ${updatedCount} student(s).`,
+        count: updatedCount
+    });
 });

@@ -221,7 +221,6 @@ export function TimetableView() {
         openPrintWindow(title, [gridHtml, subjectsHtml]);
     };
 
-<<<<<<< HEAD
     const displayProgram = data?.program || studentClass?.program || "";
     const displayBatch = data?.batch || studentClass?.batch || "";
     const displaySpec = data?.specialization || studentClass?.specialization || "";
@@ -230,9 +229,6 @@ export function TimetableView() {
         displayBatch,
         displaySpec ? `— ${displaySpec}` : ""
     ].filter(Boolean).join(" ").trim();
-=======
-    const className = [data?.program, data?.batch, data?.specialization ? `— ${data.specialization}` : ""].filter(Boolean).join(" ").trim();
->>>>>>> 95d01e0 (feat: complete SDMS audit, timetable mapping & viewer, security and database hardening)
 
     return (
         <TimetableErrorBoundary>

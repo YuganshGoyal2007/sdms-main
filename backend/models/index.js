@@ -16,9 +16,6 @@ import AttendanceRecord from './attendanceRecord.model.js';
 // Set up associations here if needed
 // Already defined in individual models
 
-<<<<<<< HEAD
-export { User, Student, Coordinator, Specialization, ChangeLog, Notification, Chairperson, ChairpersonClass, Message, Subject, FacultyAssignment, AttendanceSession, AttendanceRecord };
-=======
 import Faculty from './faculty.model.js';
 
 export {
@@ -37,12 +34,4 @@ export {
   AttendanceSession,
   AttendanceRecord,
 };
->>>>>>> 95d01e0 (feat: complete SDMS audit, timetable mapping & viewer, security and database hardening)
 export default sequelize;
-
-// Attendance module associations
-import SubjectModel from './subject.model.js';
-import FacultyAssignmentModel from './facultyAssignment.model.js';
-import AttendanceSessionModel from './attendanceSession.model.js';
-FacultyAssignmentModel.belongsTo(SubjectModel, { foreignKey: 'subjectId', as: 'subject', constraints: false });
-AttendanceSessionModel.belongsTo(SubjectModel, { foreignKey: 'subjectId', as: 'subject', constraints: false });

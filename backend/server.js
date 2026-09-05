@@ -11,10 +11,7 @@ import chairpersonRoute from './routes/chairperson.route.js'
 import messagesRoute from './routes/messages.route.js';
 import timetableRoute from './routes/timetable.route.js';
 import attendanceRoute from './routes/attendance.route.js';
-<<<<<<< HEAD
-=======
 import facultyRoute from './routes/faculty.route.js';
->>>>>>> 95d01e0 (feat: complete SDMS audit, timetable mapping & viewer, security and database hardening)
 
 import requestLogger from './lib/requestLogger.js';
 import securityHeaders from './lib/security.js';
@@ -103,11 +100,8 @@ app.use('/chairperson', chairpersonRoute)
 app.use('/messages', messagesRoute)
 app.use('/timetable', timetableRoute)
 app.use('/', attendanceRoute)
-<<<<<<< HEAD
-=======
 app.use('/admin', facultyRoute)
 app.use('/faculty', facultyRoute)
->>>>>>> 95d01e0 (feat: complete SDMS audit, timetable mapping & viewer, security and database hardening)
 
 app.get("/", (req, res) => {
     res.send("GBU-SDSM server is working normally!");
