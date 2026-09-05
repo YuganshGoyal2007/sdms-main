@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LayoutDashboard, Menu, Power, Table2, UserCog, UsersRound, X, CalendarDays, ClipboardCheck, UserRound, ShieldCheck, Calendar } from 'lucide-react';
+import { LayoutDashboard, Menu, Power, Table2, UserCog, UsersRound, X, CalendarDays, ClipboardCheck, UserRound, ShieldCheck, Calendar, CreditCard } from 'lucide-react';
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../context/app/store";
@@ -23,6 +23,9 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
     const recordsPath = user.role === 'chairperson' ? '/chairperson/records' : user.role === 'coordinator' ? '/coordinator/records' : '/admin/records';
     const classesPath = user.role === 'chairperson' ? '/chairperson/classes' : user.role === 'coordinator' ? '/coordinator/classes' : '/admin/classes';
     const markAttendancePath = user.role === 'chairperson' ? '/chairperson/mark-attendance' : user.role === 'coordinator' ? '/coordinator/mark-attendance' : user.role === 'faculty' ? '/faculty/mark-attendance' : '/admin/faculty-assignments';
+    const feesPath = isChair ? '/chairperson/fees' : isCoord ? '/coordinator/fees' : '/admin/fees';
+    const noDuesPath = isChair ? '/chairperson/no-dues' : isCoord ? '/coordinator/no-dues' : '/admin/no-dues';
+    const leavesPath = isChair ? '/chairperson/leaves' : isCoord ? '/coordinator/leaves' : '/admin/leaves';
 
     const displayName = user?.name || user?.username || "User";
     const initial = (user?.name?.charAt(0) ?? (user?.email || user?.username || "?").charAt(0)).toUpperCase();
@@ -163,14 +166,21 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                                         </button>
                                     </Link>
 
-                                    <Link to={'/admin/no-dues'} className="block">
+                                    <Link to={feesPath} className="block">
+                                        <button className="w-full flex items-center justify-start gap-3 cursor-pointer">
+                                            <CreditCard size={20} />
+                                            {menu && <h1 className={activeTab === 'fees' ? 'text-black font-bold' : ''}>Fees & Dues</h1>}
+                                        </button>
+                                    </Link>
+
+                                    <Link to={noDuesPath} className="block">
                                         <button className="w-full flex items-center justify-start gap-3 cursor-pointer">
                                             <ShieldCheck size={20} />
                                             {menu && <h1 className={activeTab === 'nodues' ? 'text-black font-bold' : ''}>No-Dues Clearance</h1>}
                                         </button>
                                     </Link>
 
-                                    <Link to={'/admin/leaves'} className="block">
+                                    <Link to={leavesPath} className="block">
                                         <button className="w-full flex items-center justify-start gap-3 cursor-pointer">
                                             <Calendar size={20} />
                                             {menu && <h1 className={activeTab === 'leaves' ? 'text-black font-bold' : ''}>Leave Management</h1>}
@@ -376,14 +386,21 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                                         </button>
                                     </Link>
 
-                                    <Link to={'/admin/no-dues'} className="block">
+                                    <Link to={feesPath} className="block">
+                                        <button className="w-full flex items-center gap-3 cursor-pointer">
+                                            <CreditCard size={20} />
+                                            {!menu && <h1 className={activeTab === 'fees' ? 'text-black font-bold' : ''}>Fees & Dues</h1>}
+                                        </button>
+                                    </Link>
+
+                                    <Link to={noDuesPath} className="block">
                                         <button className="w-full flex items-center gap-3 cursor-pointer">
                                             <ShieldCheck size={20} />
                                             {!menu && <h1 className={activeTab === 'nodues' ? 'text-black font-bold' : ''}>No-Dues Clearance</h1>}
                                         </button>
                                     </Link>
 
-                                    <Link to={'/admin/leaves'} className="block">
+                                    <Link to={leavesPath} className="block">
                                         <button className="w-full flex items-center gap-3 cursor-pointer">
                                             <Calendar size={20} />
                                             {!menu && <h1 className={activeTab === 'leaves' ? 'text-black font-bold' : ''}>Leave Management</h1>}

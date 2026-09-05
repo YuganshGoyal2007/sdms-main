@@ -47,3 +47,61 @@ export const payFee = async (recordId: number, amount?: number, paymentMethod?: 
   const response = await api.post('/fees/pay', { recordId, amount, paymentMethod });
   return response.data;
 };
+
+export interface AdminFeesMetrics {
+  totalAssessed: number;
+  totalCollected: number;
+  totalOutstanding: number;
+  totalStudentsWithDues: number;
+}
+
+export interface AdminFeesResponse {
+  success: boolean;
+  data: (FeeRecordItem & { Student?: any })[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+  metrics: AdminFeesMetrics;
+}
+
+export const getAllFeesAdmin = async (params?: {
+  page?: number;
+  limit?: number;
+  query?: string;
+  status?: string;
+  semester?: string | number;
+  feeType?: string;
+}): Promise<AdminFeesResponse> => {
+  const response = await api.get('/fees/admin/all', { params });
+  return response.data;
+};
+
+export const assessStudentFee = async (payload: {
+  rollNo: string;
+  feeType: string;
+  amount: number;
+  semester?: number;
+  academicYear?: string;
+  dueDate?: string;
+  remarks?: string;
+}) => {
+  const response = await api.post('/fees/admin/record', payload);
+  return response.data;
+};
+
+export const updateFeeRecord = async (
+  id: number,
+  payload: {
+    paidAmount?: number;
+    dueAmount?: number;
+    status?: string;
+    remarks?: string;
+    transactionRef?: string;
+  }
+) => {
+  const response = await api.put(`/fees/admin/record/${id}`, payload);
+  return response.data;
+};

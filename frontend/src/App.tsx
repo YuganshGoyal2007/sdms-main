@@ -40,6 +40,7 @@ import FacultyMessages from "./pages/Faculty/FacultyMessages";
 import FacultyLeaves from "./pages/Faculty/FacultyLeaves";
 import NoDuesAdmin from "./pages/Admin/NoDuesAdmin";
 import LeaveAdmin from "./pages/Admin/LeaveAdmin";
+import FeesAdmin from "./pages/Admin/FeesAdmin";
 
 const App = () => {
   return (
@@ -71,6 +72,7 @@ const App = () => {
             <Route path="/admin/faculty-assignments" element={<FacultyAssignmentsAdmin />} />
             <Route path="/admin/no-dues" element={<NoDuesAdmin />} />
             <Route path="/admin/leaves" element={<LeaveAdmin />} />
+            <Route path="/admin/fees" element={<FeesAdmin />} />
 
             {/* Coordinator */}
             <Route path="/coordinator/dashboard" element={<CoordinatorDashboard />} />
@@ -82,6 +84,7 @@ const App = () => {
             <Route path="/coordinator/register-student" element={<AddStudent />} />
             <Route path="/coordinator/no-dues" element={<NoDuesAdmin />} />
             <Route path="/coordinator/leaves" element={<LeaveAdmin />} />
+            <Route path="/coordinator/fees" element={<FeesAdmin />} />
 
             {/* Chairperson */}
             <Route path="/chairperson/dashboard" element={<ChairpersonDashboard />} />
@@ -94,6 +97,7 @@ const App = () => {
             <Route path="/chairperson/register-student" element={<AddStudent />} />
             <Route path="/chairperson/no-dues" element={<NoDuesAdmin />} />
             <Route path="/chairperson/leaves" element={<LeaveAdmin />} />
+            <Route path="/chairperson/fees" element={<FeesAdmin />} />
 
             {/* Faculty & Teaching portal */}
             <Route path="/faculty/dashboard" element={<TeachingDashboard />} />

@@ -23,6 +23,9 @@ import NoDuesStage from './noDuesStage.model.js';
 import LeaveType from './leaveType.model.js';
 import LeaveApplication from './leaveApplication.model.js';
 
+FeeRecord.belongsTo(Student, { foreignKey: 'studentId' });
+Student.hasMany(FeeRecord, { foreignKey: 'studentId' });
+
 export {
   User,
   Student,

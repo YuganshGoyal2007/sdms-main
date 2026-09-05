@@ -246,3 +246,177 @@ export const payFeeRecord = asyncHandler(async (req, res) => {
     fee,
   });
 });
+
+/**
+ * GET /fees/admin/all
+ * Paginated, searchable, filterable fee records across all students.
+ */
+export const getAllFeesAdmin = asyncHandler(async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+  const offset = (page - 1) * limit;
+
+  const { query, status, semester, feeType } = req.query;
+
+  const where = {};
+  if (status && status !== 'all') {
+    where.status = status;
+  }
+  if (semester && semester !== 'all') {
+    where.semester = parseInt(semester, 10);
+  }
+  if (feeType && feeType !== 'all') {
+    where.feeType = feeType;
+  }
+
+  const studentInclude = {
+    model: Student,
+    attributes: ['id', 'rollNo', 'enrollmentNo', 'fullName', 'school', 'department', 'program', 'batch'],
+    required: false,
+  };
+
+  if (query && query.trim()) {
+    const q = `%${query.trim()}%`;
+    where[Op.or] = [
+      { rollNo: { [Op.like]: q } },
+      { transactionRef: { [Op.like]: q } },
+      { '$Student.fullName$': { [Op.like]: q } },
+      { '$Student.enrollmentNo$': { [Op.like]: q } },
+    ];
+  }
+
+  const { count, rows } = await FeeRecord.findAndCountAll({
+    where,
+    include: [studentInclude],
+    order: [['id', 'DESC']],
+    limit,
+    offset,
+  });
+
+  // Global aggregates across all students
+  const totalAssessed = (await FeeRecord.sum('amount')) || 0;
+  const totalCollected = (await FeeRecord.sum('paidAmount')) || 0;
+  const totalOutstanding = (await FeeRecord.sum('dueAmount')) || 0;
+  const studentsWithDues = await FeeRecord.count({
+    distinct: true,
+    col: 'rollNo',
+    where: { dueAmount: { [Op.gt]: 0 } },
+  });
+
+  return res.json({
+    success: true,
+    data: rows,
+    pagination: {
+      total: count,
+      page,
+      limit,
+      totalPages: Math.ceil(count / limit),
+    },
+    metrics: {
+      totalAssessed: Math.round(totalAssessed * 100) / 100,
+      totalCollected: Math.round(totalCollected * 100) / 100,
+      totalOutstanding: Math.round(totalOutstanding * 100) / 100,
+      totalStudentsWithDues: studentsWithDues,
+    },
+  });
+});
+
+/**
+ * POST /fees/admin/record
+ * Admin assesses fee or fine for a student.
+ */
+export const assessStudentFee = asyncHandler(async (req, res) => {
+  const { rollNo, feeType, amount, semester, academicYear, dueDate, remarks } = req.body;
+
+  if (!rollNo || !feeType || !amount) {
+    return res.status(400).json({ success: false, message: 'Roll No, Fee Type, and Amount are required.' });
+  }
+
+  const student = await Student.findOne({
+    where: {
+      [Op.or]: [{ rollNo }, { enrollmentNo: rollNo }],
+    },
+  });
+
+  const parsedAmount = Number(amount);
+  if (parsedAmount <= 0) {
+    return res.status(400).json({ success: false, message: 'Amount must be greater than 0.' });
+  }
+
+  const newFee = await FeeRecord.create({
+    studentId: student ? student.id : null,
+    rollNo: student ? student.rollNo : rollNo,
+    academicYear: academicYear || '2025-2026',
+    semester: parseInt(semester, 10) || 5,
+    feeType,
+    amount: parsedAmount,
+    paidAmount: 0.0,
+    dueAmount: parsedAmount,
+    status: 'pending',
+    dueDate: dueDate || new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+    remarks: remarks || `Assessed by Admin (${req.user.username || req.user.email})`,
+  });
+
+  return res.status(201).json({
+    success: true,
+    message: 'Fee assessed successfully.',
+    fee: newFee,
+  });
+});
+
+/**
+ * PUT /fees/admin/record/:id
+ * Admin updates or waives a fee record.
+ */
+export const updateFeeRecord = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { paidAmount, dueAmount, status, remarks, transactionRef } = req.body;
+
+  const fee = await FeeRecord.findByPk(id);
+  if (!fee) {
+    return res.status(404).json({ success: false, message: 'Fee record not found.' });
+  }
+
+  const updates = {};
+  if (paidAmount !== undefined) updates.paidAmount = Number(paidAmount);
+  if (dueAmount !== undefined) updates.dueAmount = Number(dueAmount);
+  if (status) updates.status = status;
+  if (remarks) updates.remarks = remarks;
+  if (transactionRef) updates.transactionRef = transactionRef;
+  if (updates.status === 'paid' && !fee.paidDate) {
+    updates.paidDate = new Date();
+  }
+
+  await fee.update(updates);
+
+  return res.json({
+    success: true,
+    message: 'Fee record updated successfully.',
+    fee,
+  });
+});
+
+/**
+ * GET /fees/admin/export
+ * Download CSV of all fee records.
+ */
+export const exportFeesCsv = asyncHandler(async (req, res) => {
+  const records = await FeeRecord.findAll({
+    include: [{ model: Student, attributes: ['fullName', 'program', 'school'] }],
+    order: [['rollNo', 'ASC'], ['semester', 'DESC']],
+    limit: 5000,
+  });
+
+  let csv = 'Roll No,Student Name,Program,School,Semester,Fee Type,Assessed (INR),Paid (INR),Due (INR),Status,Transaction Ref,Due Date\n';
+
+  for (const r of records) {
+    const name = (r.Student?.fullName || '').replace(/,/g, ' ');
+    const prog = (r.Student?.program || '').replace(/,/g, ' ');
+    const sch = (r.Student?.school || '').replace(/,/g, ' ');
+    csv += `${r.rollNo},"${name}","${prog}","${sch}",Sem ${r.semester},"${r.feeType}",${r.amount},${r.paidAmount},${r.dueAmount},${r.status},${r.transactionRef || 'N/A'},${r.dueDate || 'N/A'}\n`;
+  }
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="SDMS_All_Student_Fees.csv"');
+  return res.send(csv);
+});
