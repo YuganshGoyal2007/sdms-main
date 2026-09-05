@@ -165,7 +165,11 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                                             {menu && <h1 className={activeTab === 'timetable' ? 'text-black font-bold' : ''}>Timetable Mappings</h1>}
                                         </button>
                                     </Link>
+                                </>
+                            )}
 
+                            {(user.role === 'admin' || user.role === 'coordinator' || user.role === 'chairperson') && (
+                                <>
                                     <Link to={feesPath} className="block">
                                         <button className="w-full flex items-center justify-start gap-3 cursor-pointer">
                                             <CreditCard size={20} />
@@ -385,7 +389,11 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                                             {!menu && <h1 className={activeTab === 'timetable' ? 'text-black font-bold' : ''}>Timetable Mappings</h1>}
                                         </button>
                                     </Link>
+                                </>
+                            )}
 
+                            {(user.role === 'admin' || user.role === 'coordinator' || user.role === 'chairperson') && (
+                                <>
                                     <Link to={feesPath} className="block">
                                         <button className="w-full flex items-center gap-3 cursor-pointer">
                                             <CreditCard size={20} />

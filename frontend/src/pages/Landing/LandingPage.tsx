@@ -12,8 +12,8 @@ const LandingPage = () => {
             <section id="home" className="relative w-full bg-cover bg-center" style={{ backgroundImage: `url(${banner})` }}>
                 {/* Dark overlay */}
                 <div className="absolute inset-0 bg-black/50"></div>
-                {/* Noise overlay */}
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+                {/* Texture overlay */}
+                <div className="absolute inset-0 bg-[radial-gradient(#ffffff33_1px,transparent_1px)] [background-size:16px_16px] opacity-25 mix-blend-overlay pointer-events-none"></div>
                 {/* Content */}
                 <div className="relative max-w-4xl mx-auto px-6 py-32 text-center text-white">
                     <h1 className="text-4xl md:text-5xl font-bold mb-6 animate-fade-in-up">

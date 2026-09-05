@@ -19,10 +19,16 @@ const NotificationPermissionBanner = () => {
         const current = Notification.permission;
         setStatus(current as any);
         if (current === "default") {
+            if (sessionStorage.getItem("notificationPromptDismissed")) return;
             const t = setTimeout(() => setShow(true), 1500);
             return () => clearTimeout(t);
         }
     }, []);
+
+    const dismissBanner = () => {
+        sessionStorage.setItem("notificationPromptDismissed", "true");
+        setShow(false);
+    };
 
     const requestPermission = async () => {
         try {
@@ -34,9 +40,12 @@ const NotificationPermissionBanner = () => {
                     body: "You'll get notified for new messages, timetable updates, and important notices.",
                     icon: "/Images/gbu_logo.png",
                 });
+            } else {
+                sessionStorage.setItem("notificationPromptDismissed", "true");
             }
         } catch {
             setStatus("denied");
+            sessionStorage.setItem("notificationPromptDismissed", "true");
         }
         setShow(false);
     };
@@ -46,7 +55,7 @@ const NotificationPermissionBanner = () => {
     return (
         <div className="fixed top-4 right-4 z-50 max-w-sm bg-white border border-gray-200 rounded-lg shadow-lg p-4">
             <button
-                onClick={() => setShow(false)}
+                onClick={dismissBanner}
                 className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
                 aria-label="Dismiss"
             >
@@ -70,7 +79,7 @@ const NotificationPermissionBanner = () => {
                             Allow
                         </button>
                         <button
-                            onClick={() => setShow(false)}
+                            onClick={dismissBanner}
                             className="text-xs px-3 py-1.5 text-gray-600 hover:text-gray-900"
                         >
                             Not now
