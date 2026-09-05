@@ -13,6 +13,8 @@ export interface NoDuesStageItem {
   verifiedBy?: number;
   verifiedByName?: string;
   verifiedAt?: string;
+  isLocked?: boolean;
+  computedStatus?: 'pending' | 'approved' | 'rejected' | 'locked';
 }
 
 export interface NoDuesApplicationItem {
@@ -42,7 +44,19 @@ export interface MyNoDuesResponse {
   hasOutstandingFees: boolean;
   application: NoDuesApplicationItem | null;
   stages: NoDuesStageItem[];
+  workflow?: {
+    top: NoDuesStageItem[];
+    parallel: NoDuesStageItem[];
+    bottom: NoDuesStageItem[];
+  };
   progressPercentage: number;
+  stats?: {
+    total: number;
+    approved: number;
+    pending: number;
+    locked: number;
+    rejected: number;
+  };
   canResubmit?: boolean;
 }
 

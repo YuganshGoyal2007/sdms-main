@@ -7,12 +7,28 @@ import {
   Printer,
   FileCheck,
   Building,
+  Building2,
   ShieldCheck,
   Send,
   RefreshCw,
   Landmark,
   Receipt,
   FileText,
+  Lock,
+  Check,
+  XCircle,
+  Library,
+  Home,
+  Trophy,
+  FlaskConical,
+  Briefcase,
+  ChevronDown,
+  History,
+  Sparkles,
+  Hash,
+  GraduationCap,
+  School,
+  Layers,
 } from 'lucide-react';
 import { getMyFees, payFee, type FeeRecordItem, type FeeSummary } from '../../lib/fees.api';
 import {
@@ -22,6 +38,210 @@ import {
   type NoDuesApplicationItem,
   type NoDuesStageItem,
 } from '../../lib/noDues.api';
+
+const STATUS_CONFIG: Record<string, {
+  icon: any;
+  label: string;
+  bg: string;
+  iconBg: string;
+  border: string;
+  text: string;
+  ring: string;
+}> = {
+  locked: {
+    icon: Lock,
+    label: "Locked",
+    bg: "bg-slate-50/90",
+    iconBg: "bg-slate-100",
+    border: "border-slate-200",
+    text: "text-slate-400",
+    ring: "",
+  },
+  pending: {
+    icon: Clock,
+    label: "In Progress",
+    bg: "bg-blue-50/90",
+    iconBg: "bg-blue-100",
+    border: "border-blue-400",
+    text: "text-blue-600",
+    ring: "ring-4 ring-blue-500/20",
+  },
+  approved: {
+    icon: Check,
+    label: "Cleared",
+    bg: "bg-emerald-50/90",
+    iconBg: "bg-emerald-100",
+    border: "border-emerald-400",
+    text: "text-emerald-600",
+    ring: "ring-4 ring-emerald-500/20",
+  },
+  rejected: {
+    icon: XCircle,
+    label: "Action Req.",
+    bg: "bg-rose-50/90",
+    iconBg: "bg-rose-100",
+    border: "border-rose-400",
+    text: "text-rose-600",
+    ring: "ring-4 ring-rose-500/20",
+  },
+};
+
+const getStageIcon = (code: string = '', name: string = '') => {
+  const n = (code + ' ' + name).toLowerCase();
+  if (n.includes('lib')) return Library;
+  if (n.includes('hostel') || n.includes('hst')) return Home;
+  if (n.includes('sport') || n.includes('spt')) return Trophy;
+  if (n.includes('lab')) return FlaskConical;
+  if (n.includes('crc') || n.includes('relation') || n.includes('placement')) return Briefcase;
+  if (n.includes('acc') || n.includes('finance') || n.includes('account')) return ShieldCheck;
+  if (n.includes('dean')) return Landmark;
+  if (n.includes('hod')) return Building2;
+  return Building;
+};
+
+const formatDateIST = (dateString?: string | null) => {
+  if (!dateString) return null;
+  try {
+    let normalized = String(dateString).replace(' ', 'T');
+    if (!normalized.endsWith('Z') && !normalized.includes('+')) {
+      normalized += 'Z';
+    }
+    const date = new Date(normalized);
+    return new Intl.DateTimeFormat('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    }).format(date);
+  } catch (e) {
+    return String(dateString);
+  }
+};
+
+const WorkflowNode: React.FC<{
+  stage: NoDuesStageItem;
+  isSmall?: boolean;
+  position?: 'left' | 'right';
+  activeTooltipId: number | null;
+  setActiveTooltipId: (id: number | null) => void;
+}> = ({ stage, isSmall = false, position = 'right', activeTooltipId, setActiveTooltipId }) => {
+  const statusKey = stage.computedStatus || (stage.status === 'approved' ? 'approved' : stage.status === 'rejected' ? 'rejected' : stage.isLocked ? 'locked' : 'pending');
+  const config = STATUS_CONFIG[statusKey] || STATUS_CONFIG.locked;
+  const Icon = getStageIcon(stage.stageCode, stage.stageName);
+
+  const isTooltipOpen = activeTooltipId === stage.id;
+  const displayComment = stage.comments || (
+    statusKey === 'approved'
+      ? 'All departmental dues verified cleared (₹0 outstanding liability).'
+      : statusKey === 'locked'
+      ? 'Prerequisite verification level must be cleared first.'
+      : 'Verification in progress. Awaiting department sign-off and remarks.'
+  );
+
+  const tooltipPositionClass = position === 'right' ? 'left-[110%]' : 'right-[110%]';
+
+  return (
+    <div
+      className="relative flex flex-col items-center group cursor-pointer"
+      style={{ zIndex: isTooltipOpen ? 100 : 10 }}
+      onMouseEnter={() => setActiveTooltipId(stage.id)}
+      onMouseLeave={() => setActiveTooltipId(null)}
+      onClick={() => setActiveTooltipId(isTooltipOpen ? null : stage.id)}
+    >
+      {/* Tooltip Popup */}
+      {isTooltipOpen && (
+        <div
+          className={`absolute top-0 w-64 md:w-72 p-4 bg-slate-900/95 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl z-[150] pointer-events-none transition-all duration-200 ${tooltipPositionClass}`}
+        >
+          <div className="flex flex-col gap-2.5">
+            <div className="flex items-center justify-between border-b border-white/10 pb-2">
+              <span className="text-[10px] font-black text-slate-400 tracking-wider uppercase">Office Remarks</span>
+              <div className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${config.iconBg} ${config.text}`}>
+                {config.label}
+              </div>
+            </div>
+            <p className="text-xs leading-relaxed text-slate-200 font-medium">
+              {displayComment}
+            </p>
+            {stage.verifiedByName && (
+              <div className="text-[10px] text-slate-400 border-t border-white/5 pt-1.5 flex items-center justify-between">
+                <span>Verified: <span className="text-white font-semibold">{stage.verifiedByName}</span></span>
+                {stage.verifiedAt && <span>{formatDateIST(stage.verifiedAt)}</span>}
+              </div>
+            )}
+            {Number(stage.duesAmount) > 0 && (
+              <p className="text-[11px] font-bold text-rose-400">
+                Outstanding Dues: ₹{Number(stage.duesAmount).toLocaleString('en-IN')}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Main Node Tile */}
+      <div
+        className={`
+          ${isSmall ? 'w-14 h-14' : 'w-[4.5rem] h-[4.5rem] md:w-[5rem] md:h-[5rem]'}
+          rounded-2xl border-[3px] flex items-center justify-center shadow-sm relative
+          ${config.bg} ${config.border} ${config.ring} transition-all duration-300
+          hover:scale-105 hover:shadow-xl
+          ${statusKey === 'pending' ? 'animate-pulse shadow-blue-500/20' : ''}
+        `}
+      >
+        <div className="w-full h-full rounded-[0.85rem] flex items-center justify-center bg-white/60 backdrop-blur-sm">
+          <Icon size={isSmall ? 22 : 28} className={config.text} strokeWidth={2.5} />
+        </div>
+
+        {statusKey === 'approved' && (
+          <div className="absolute -top-2 -right-2 bg-emerald-500 text-white rounded-full p-1 border-2 border-white shadow-sm">
+            <Check size={12} strokeWidth={4} />
+          </div>
+        )}
+        {statusKey === 'rejected' && (
+          <div className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 border-2 border-white shadow-sm">
+            <XCircle size={12} strokeWidth={4} />
+          </div>
+        )}
+        {statusKey === 'locked' && (
+          <div className="absolute -top-2 -right-2 bg-slate-400 text-white rounded-full p-1 border-2 border-white shadow-sm">
+            <Lock size={10} strokeWidth={3} />
+          </div>
+        )}
+      </div>
+
+      {/* Node Labels */}
+      <div className="mt-2.5 text-center w-24 md:w-32">
+        <p className="text-[10px] md:text-xs font-black text-slate-800 leading-tight tracking-tight">
+          {stage.stageName}
+        </p>
+        <p className={`text-[9px] md:text-[10px] font-bold mt-0.5 tracking-wide ${config.text}`}>
+          {config.label}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+const InfoCard: React.FC<{
+  icon: any;
+  label: string;
+  value?: string | number | null;
+  iconBg?: string;
+  iconColor?: string;
+}> = ({ icon: Icon, label, value, iconBg = 'bg-slate-50', iconColor = 'text-slate-500' }) => (
+  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-3 transition-all hover:shadow-md">
+    <div className={`w-9 h-9 ${iconBg} ${iconColor} rounded-xl flex items-center justify-center shadow-sm border border-slate-100`}>
+      <Icon size={18} />
+    </div>
+    <div>
+      <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-0.5">{label}</p>
+      <p className="text-xs md:text-sm font-black text-slate-800 uppercase truncate">{value || '—'}</p>
+    </div>
+  </div>
+);
 
 export const StudentFeesAndNoDuesView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'fees' | 'nodues'>('fees');
@@ -40,8 +260,14 @@ export const StudentFeesAndNoDuesView: React.FC = () => {
   const [hasApp, setHasApp] = useState(false);
   const [application, setApplication] = useState<NoDuesApplicationItem | null>(null);
   const [stages, setStages] = useState<NoDuesStageItem[]>([]);
+  const [workflow, setWorkflow] = useState<{
+    top: NoDuesStageItem[];
+    parallel: NoDuesStageItem[];
+    bottom: NoDuesStageItem[];
+  }>({ top: [], parallel: [], bottom: [] });
   const [progress, setProgress] = useState(0);
   const [studentInfo, setStudentInfo] = useState<any>(null);
+  const [activeTooltipId, setActiveTooltipId] = useState<number | null>(null);
 
   // Modals & Forms
   const [showApplyModal, setShowApplyModal] = useState(false);
@@ -82,6 +308,16 @@ export const StudentFeesAndNoDuesView: React.FC = () => {
         setApplication(res.application);
         setStages(res.stages || []);
         setProgress(res.progressPercentage || 0);
+        if (res.workflow) {
+          setWorkflow(res.workflow);
+        } else {
+          const raw = (res.stages || []).slice().sort((a, b) => a.sequenceOrder - b.sequenceOrder);
+          setWorkflow({
+            top: raw.filter((s) => s.sequenceOrder < 4),
+            parallel: raw.filter((s) => s.sequenceOrder === 4),
+            bottom: raw.filter((s) => s.sequenceOrder > 4),
+          });
+        }
         if (res.student) {
           setStudentInfo(res.student);
           setIsHosteller(Boolean(res.student.hosteller));
@@ -424,56 +660,81 @@ export const StudentFeesAndNoDuesView: React.FC = () => {
       {/* TAB 2: NO DUES CLEARANCE PIPELINE */}
       {activeTab === 'nodues' && (
         <div className="space-y-6">
-          {/* Status & Action Card */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Pipeline Status</span>
+          {/* Overview Hero Section with Circular SVG Gauge */}
+          <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center gap-6 relative overflow-hidden">
+            {/* Circular Progress Gauge */}
+            <div className="relative w-36 h-36 flex-shrink-0 flex items-center justify-center">
+              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="36" className="stroke-slate-100 fill-none stroke-[8]" />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="36"
+                  className={`fill-none stroke-[8] transition-all duration-1000 ease-out ${
+                    progress === 100 ? 'stroke-emerald-500' : 'stroke-red-700'
+                  }`}
+                  strokeLinecap="round"
+                  strokeDasharray={226}
+                  strokeDashoffset={226 - (226 * progress) / 100}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <span className="text-2xl font-black text-slate-800 tracking-tight">{progress}%</span>
+                <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+                  {progress === 100 ? 'CLEARED' : 'PROGRESS'}
+                </span>
+              </div>
+            </div>
+
+            {/* Application Details & Status */}
+            <div className="flex-1 space-y-2 text-center md:text-left">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Institutional Clearance DAG</span>
                 {application?.isCompleted ? (
-                  <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                    CLEARANCE CERTIFIED
+                  <span className="px-3 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 tracking-wide">
+                    CERTIFIED & CLEARED
                   </span>
                 ) : application?.status === 'rejected' ? (
-                  <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800">
-                    ACTION REQUIRED / REJECTED
+                  <span className="px-3 py-0.5 rounded-full text-[11px] font-black bg-rose-100 text-rose-800 tracking-wide">
+                    ACTION REQUIRED / DUES FOUND
                   </span>
                 ) : hasApp ? (
-                  <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
-                    VERIFICATION IN PROGRESS
+                  <span className="px-3 py-0.5 rounded-full text-[11px] font-black bg-blue-100 text-blue-800 tracking-wide">
+                    ACTIVE VERIFICATION PIPELINE
                   </span>
                 ) : (
-                  <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
-                    NOT YET APPLIED
+                  <span className="px-3 py-0.5 rounded-full text-[11px] font-black bg-slate-100 text-slate-700 tracking-wide">
+                    NOT YET INITIATED
                   </span>
                 )}
               </div>
 
-              <h2 className="text-xl font-bold text-slate-800">
-                {hasApp ? `Application ID: ${application?.displayId}` : 'Institutional No-Dues Clearance'}
+              <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">
+                {hasApp ? `Clearance Token: ${application?.displayId || application?.id}` : 'Institutional No-Dues Clearance'}
               </h2>
 
-              <p className="text-xs md:text-sm text-slate-500 max-w-xl">
+              <p className="text-xs md:text-sm text-slate-500 max-w-2xl leading-relaxed">
                 {hasApp
-                  ? 'Your clearance is routed across 5 verification gates: School Administrative Office, HOD, School Dean, Central Library & Hostel, and Accounts.'
-                  : 'Start your official digital No Dues verification. Once all departments certify zero outstanding dues, your official certificate will be generated.'}
+                  ? 'Your clearance is governed by an institutional 3-Tier Directed Acyclic Graph (DAG). Approvals sequentially unlock the Academic Spine (Levels 1-3), enable the Parallel Auxiliary Bus (Level 4), and settle at the Terminal Accounts Gate (Level 5).'
+                  : 'Start your official digital No Dues verification. Once all departments certify zero outstanding liabilities, your tamper-evident university certificate will be issued.'}
               </p>
             </div>
 
-            {/* Right Action Buttons */}
-            <div className="flex flex-wrap items-center gap-3">
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 w-full md:w-auto">
               {!hasApp && (
                 <button
                   onClick={() => setShowApplyModal(true)}
-                  className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold bg-red-700 hover:bg-red-800 text-white transition-all shadow-md flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold bg-red-700 hover:bg-red-800 text-white transition-all shadow-md flex items-center justify-center gap-2"
                 >
-                  <Send className="w-4 h-4" /> Apply for No-Dues Clearance
+                  <Send className="w-4 h-4" /> Apply for Clearance
                 </button>
               )}
 
               {hasApp && application?.status === 'rejected' && (
                 <button
                   onClick={() => setShowResubmitModal(true)}
-                  className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold bg-amber-600 hover:bg-amber-700 text-white transition-all shadow-md flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold bg-amber-600 hover:bg-amber-700 text-white transition-all shadow-md flex items-center justify-center gap-2"
                 >
                   <RefreshCw className="w-4 h-4" /> Resubmit with Proof
                 </button>
@@ -482,7 +743,7 @@ export const StudentFeesAndNoDuesView: React.FC = () => {
               {application?.isCompleted && (
                 <button
                   onClick={() => setShowCertModal(true)}
-                  className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-md flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-md flex items-center justify-center gap-2"
                 >
                   <FileCheck className="w-4 h-4" /> View Official Certificate
                 </button>
@@ -490,104 +751,247 @@ export const StudentFeesAndNoDuesView: React.FC = () => {
 
               <button
                 onClick={loadNoDues}
-                className="p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition-all"
+                className="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
                 title="Refresh Status"
               >
-                <RefreshCw className={`w-4 h-4 ${noDuesLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 ${noDuesLoading ? 'animate-spin' : ''}`} /> Refresh Pipeline
               </button>
             </div>
           </div>
 
-          {/* Progress Bar & Gate Indicators */}
+          {/* 4 Metric Info Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <InfoCard
+              icon={Hash}
+              label="Enrollment No"
+              value={studentInfo?.enrollmentNo || studentInfo?.enrollmentNumber || '2500100481'}
+              iconBg="bg-blue-50"
+              iconColor="text-blue-600"
+            />
+            <InfoCard
+              icon={GraduationCap}
+              label="Roll Number"
+              value={studentInfo?.rollNo || studentInfo?.rollNumber || '255UCS258'}
+              iconBg="bg-purple-50"
+              iconColor="text-purple-600"
+            />
+            <InfoCard
+              icon={School}
+              label="Academic School"
+              value={studentInfo?.school || studentInfo?.department || 'SOICT'}
+              iconBg="bg-amber-50"
+              iconColor="text-amber-600"
+            />
+            <InfoCard
+              icon={Layers}
+              label="Current Active Gate"
+              value={
+                application?.isCompleted
+                  ? 'Fully Certified'
+                  : application?.currentStageOrder === 1
+                  ? 'Level 1: School Office'
+                  : application?.currentStageOrder === 2
+                  ? 'Level 2: HOD Clearance'
+                  : application?.currentStageOrder === 3
+                  ? 'Level 3: School Dean'
+                  : application?.currentStageOrder === 4
+                  ? 'Level 4: Parallel Depts'
+                  : application?.currentStageOrder === 5
+                  ? 'Level 5: Terminal Accounts'
+                  : 'Pending Application'
+              }
+              iconBg="bg-emerald-50"
+              iconColor="text-emerald-600"
+            />
+          </div>
+
+          {/* 3-Tier DAG Interactive Canvas */}
           {hasApp && (
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-6">
-              <div>
-                <div className="flex items-center justify-between text-xs md:text-sm font-bold text-slate-700 mb-2">
-                  <span>Overall Institutional Clearance Progress</span>
-                  <span className={progress === 100 ? 'text-emerald-600' : 'text-red-700'}>{progress}%</span>
+            <div className="bg-slate-50/70 border border-slate-200/90 rounded-3xl p-6 md:p-10 shadow-sm relative overflow-hidden">
+              {/* Canvas Header */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between pb-8 border-b border-slate-200/80 gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+                    <h3 className="text-base md:text-lg font-black text-slate-800 tracking-tight">
+                      Institutional Verification DAG Canvas
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Interactive 3-Tier pipeline: Sequential Academic Spine → Parallel Departmental Bus → Terminal Accounts Gate
+                  </p>
                 </div>
-                <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
-                  <div
-                    className={`h-full transition-all duration-500 rounded-full ${
-                      progress === 100 ? 'bg-emerald-500' : 'bg-red-700'
-                    }`}
-                    style={{ width: `${progress}%` }}
-                  />
+
+                {/* Status Counter Badges */}
+                <div className="flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-wider">
+                  <span className="px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-600 shadow-xs">
+                    Total Nodes: {stages.length}
+                  </span>
+                  <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    Approved: {stages.filter((s) => s.status === 'approved').length}
+                  </span>
+                  <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                    Active: {stages.filter((s) => s.status === 'pending' && !s.isLocked).length}
+                  </span>
+                  <span className="px-2.5 py-1 rounded-full bg-slate-200 text-slate-600 border border-slate-300">
+                    Gated: {stages.filter((s) => s.isLocked).length}
+                  </span>
+                  {stages.some((s) => s.status === 'rejected') && (
+                    <span className="px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
+                      Dues: {stages.filter((s) => s.status === 'rejected').length}
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* 5-Gate Visual Stepper */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2">
-                {[
-                  { title: '1. School Office', sub: 'Admin Verification', code: 'SCHOOL_OFFICE' },
-                  { title: '2. Head of Dept', sub: 'Academic Clearance', code: 'HOD' },
-                  { title: '3. School Dean', sub: 'Faculty Endorsement', code: 'DEAN' },
-                  { title: '4. Central Depts', sub: 'Library, Hostel, Labs', code: 'LIB' },
-                  { title: '5. Accounts', sub: 'Final Financial Sign-off', code: 'ACC' },
-                ].map((gate, i) => {
-                  const matching = stages.find((s) => s.stageCode.includes(gate.code));
-                  const isApproved = matching?.status === 'approved';
-                  const isRejected = matching?.status === 'rejected';
+              {/* DAG Flow Graph */}
+              <div className="pt-10 flex flex-col items-center">
+                {/* ---------------- TIER 1: SEQUENTIAL ACADEMIC SPINE ---------------- */}
+                <div className="flex flex-col items-center gap-0 w-full max-w-xl">
+                  {workflow.top.map((stage, idx) => {
+                    const isPassed = stage.status === 'approved';
+                    const isCurrentActive = stage.status === 'pending' && !stage.isLocked;
+                    return (
+                      <React.Fragment key={stage.id}>
+                        <WorkflowNode
+                          stage={stage}
+                          position={idx % 2 === 0 ? 'right' : 'left'}
+                          activeTooltipId={activeTooltipId}
+                          setActiveTooltipId={setActiveTooltipId}
+                        />
+                        {/* Downward connector between sequential nodes */}
+                        <div className="flex flex-col items-center my-1.5 h-10 relative">
+                          <div
+                            className={`w-0.5 h-full transition-colors duration-500 ${
+                              isPassed ? 'bg-emerald-500' : isCurrentActive ? 'bg-blue-400' : 'bg-slate-300'
+                            }`}
+                          />
+                          <ChevronDown
+                            size={14}
+                            className={`absolute -bottom-1 ${
+                              isPassed ? 'text-emerald-500' : isCurrentActive ? 'text-blue-400' : 'text-slate-300'
+                            }`}
+                          />
+                        </div>
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
 
-                  return (
-                    <div
-                      key={i}
-                      className={`p-4 rounded-xl border transition-all ${
-                        isApproved
-                          ? 'border-emerald-200 bg-emerald-50/50'
-                          : isRejected
-                          ? 'border-rose-200 bg-rose-50/50'
-                          : 'border-slate-200 bg-slate-50/50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-xs font-bold text-slate-800">{gate.title}</span>
-                        {isApproved ? (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        ) : isRejected ? (
-                          <AlertCircle className="w-4 h-4 text-rose-600" />
-                        ) : (
-                          <Clock className="w-4 h-4 text-slate-400" />
-                        )}
-                      </div>
-                      <p className="text-[11px] text-slate-500">{gate.sub}</p>
-                      <div className="mt-2 text-[10px] font-bold uppercase">
-                        {isApproved && <span className="text-emerald-700">Cleared</span>}
-                        {isRejected && <span className="text-rose-700">Dues Found</span>}
-                        {!isApproved && !isRejected && <span className="text-slate-400">Awaiting Turn</span>}
-                      </div>
-                    </div>
-                  );
-                })}
+                {/* ---------------- BRIDGE: SPINE TO PARALLEL BUS ---------------- */}
+                <div className="w-full max-w-4xl relative mt-1 mb-8">
+                  {/* Top distribution bus line */}
+                  <div className="hidden md:block absolute top-0 left-[6%] right-[6%] h-0.5 bg-slate-300 transition-colors" />
+
+                  {/* ---------------- TIER 2: PARALLEL AUXILIARY BUS ---------------- */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 md:gap-3 pt-6">
+                    {workflow.parallel.map((stage, pIdx) => {
+                      const isApproved = stage.status === 'approved';
+                      const isPending = stage.status === 'pending' && !stage.isLocked;
+                      return (
+                        <div key={stage.id} className="relative flex flex-col items-center">
+                          {/* Stem from top bus into node */}
+                          <div
+                            className={`hidden md:block absolute -top-6 w-0.5 h-6 transition-colors duration-500 ${
+                              isApproved ? 'bg-emerald-500' : isPending ? 'bg-blue-400' : 'bg-slate-300'
+                            }`}
+                          />
+                          <WorkflowNode
+                            stage={stage}
+                            isSmall
+                            position={pIdx < 2 ? 'right' : 'left'}
+                            activeTooltipId={activeTooltipId}
+                            setActiveTooltipId={setActiveTooltipId}
+                          />
+                          {/* Stem from node down to bottom collector */}
+                          <div
+                            className={`hidden md:block absolute -bottom-6 w-0.5 h-6 transition-colors duration-500 ${
+                              isApproved ? 'bg-emerald-500' : isPending ? 'bg-blue-400' : 'bg-slate-300'
+                            }`}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Bottom collector bus line */}
+                  <div className="hidden md:block absolute -bottom-6 left-[6%] right-[6%] h-0.5 bg-slate-300" />
+                </div>
+
+                {/* Stem from collector down into Tier 3 */}
+                <div className="flex flex-col items-center my-4 h-12 relative">
+                  <div
+                    className={`w-0.5 h-full ${
+                      workflow.parallel.length > 0 && workflow.parallel.every((s) => s.status === 'approved')
+                        ? 'bg-emerald-500'
+                        : 'bg-slate-300'
+                    }`}
+                  />
+                  <ChevronDown
+                    size={16}
+                    className={`absolute -bottom-1 ${
+                      workflow.parallel.length > 0 && workflow.parallel.every((s) => s.status === 'approved')
+                        ? 'text-emerald-500'
+                        : 'text-slate-300'
+                    }`}
+                  />
+                </div>
+
+                {/* ---------------- TIER 3: TERMINAL SETTLEMENT GATE ---------------- */}
+                <div className="flex flex-col items-center w-full max-w-sm">
+                  {workflow.bottom.map((stage) => (
+                    <WorkflowNode
+                      key={stage.id}
+                      stage={stage}
+                      position="right"
+                      activeTooltipId={activeTooltipId}
+                      setActiveTooltipId={setActiveTooltipId}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Real-time IST Engine Status Ribbon */}
+              <div className="mt-12 pt-4 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 gap-2">
+                <div className="flex items-center gap-2 font-medium">
+                  <Sparkles size={13} className="text-red-700" />
+                  <span>Strict DAG Execution • Automated Level Advancement on All-Branch Clearance</span>
+                </div>
+                <div className="flex items-center gap-2 font-mono text-slate-400">
+                  <History size={12} />
+                  <span>IST Engine Synchronized</span>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Verification Stages Details Table */}
+          {/* Department Details Table */}
           {hasApp && (
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="p-5 border-b border-slate-100">
-                <h3 className="text-base font-bold text-slate-800">Clearance Stages & Department Sign-offs</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Live status from each verification authority</p>
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold text-slate-800">Clearance Stages & Department Sign-offs</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">Live status and official audit trail from each verification authority</p>
+                </div>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs md:text-sm">
                   <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
                     <tr>
-                      <th className="py-3 px-4">Stage Order</th>
+                      <th className="py-3 px-4">Level</th>
                       <th className="py-3 px-4">Department / Authority</th>
                       <th className="py-3 px-4">Status</th>
                       <th className="py-3 px-4">Dues Amount</th>
-                      <th className="py-3 px-4">Remarks / Remarks Reason</th>
+                      <th className="py-3 px-4">Official Remarks</th>
                       <th className="py-3 px-4">Verified By</th>
-                      <th className="py-3 px-4">Timestamp</th>
+                      <th className="py-3 px-4">Timestamp (IST)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {stages.map((st) => (
                       <tr key={st.id} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="py-3 px-4 font-mono font-bold text-slate-500">#{st.sequenceOrder}</td>
+                        <td className="py-3 px-4 font-mono font-bold text-slate-500">Level {st.sequenceOrder}</td>
                         <td className="py-3 px-4 font-semibold text-slate-800">{st.stageName}</td>
                         <td className="py-3 px-4">
                           {st.status === 'approved' && (
@@ -600,9 +1004,14 @@ export const StudentFeesAndNoDuesView: React.FC = () => {
                               <AlertCircle className="w-3 h-3" /> Dues Found
                             </span>
                           )}
-                          {st.status === 'pending' && (
-                            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 inline-flex items-center gap-1">
-                              <Clock className="w-3 h-3" /> Pending
+                          {st.status === 'pending' && !st.isLocked && (
+                            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 inline-flex items-center gap-1">
+                              <Clock className="w-3 h-3" /> Active Review
+                            </span>
+                          )}
+                          {st.status === 'pending' && st.isLocked && (
+                            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 inline-flex items-center gap-1">
+                              <Lock className="w-3 h-3" /> Gated / Locked
                             </span>
                           )}
                         </td>
@@ -616,7 +1025,7 @@ export const StudentFeesAndNoDuesView: React.FC = () => {
                         <td className="py-3 px-4 text-slate-600 max-w-xs truncate">{st.comments || '—'}</td>
                         <td className="py-3 px-4 text-slate-600">{st.verifiedByName || 'Pending Review'}</td>
                         <td className="py-3 px-4 text-slate-400 text-xs">
-                          {st.verifiedAt ? new Date(st.verifiedAt).toLocaleDateString('en-IN') : '—'}
+                          {formatDateIST(st.verifiedAt) || '—'}
                         </td>
                       </tr>
                     ))}

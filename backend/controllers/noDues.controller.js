@@ -22,6 +22,68 @@ function generateDisplayId(rollNo) {
 }
 
 /**
+ * Waterfall Status Updater (DAG level advancement and completion)
+ * Automatically advances application.currentStageOrder across sequential levels (1 -> 2 -> 3),
+ * unlocks parallel level 4 departments, and upon full auxiliary clearance unlocks level 5 (Accounts),
+ * finally issuing the verified certificate upon terminal sign-off.
+ */
+async function advanceApplicationWorkflow(application) {
+  if (!application) return null;
+  if (application.isCompleted || application.status === 'completed') {
+    return application;
+  }
+
+  const allStages = await NoDuesStage.findAll({
+    where: { applicationId: application.id },
+    order: [['sequenceOrder', 'ASC'], ['id', 'ASC']],
+  });
+
+  if (allStages.length === 0) return application;
+
+  // 1. Check if any stage is explicitly rejected
+  const anyRejected = allStages.find((s) => s.status === 'rejected');
+  if (anyRejected) {
+    application.status = 'rejected';
+    application.remarks = `Rejected at [${anyRejected.stageName}]: ${anyRejected.comments || 'Outstanding dues / document required'}`;
+    await application.save();
+    return application;
+  }
+
+  // 2. Identify distinct sequence levels
+  const distinctLevels = [...new Set(allStages.map((s) => s.sequenceOrder))].sort((a, b) => a - b);
+
+  let activeLevel = distinctLevels[0] || 1;
+  let allCleared = true;
+
+  for (const level of distinctLevels) {
+    const stagesAtLevel = allStages.filter((s) => s.sequenceOrder === level);
+    const hasPending = stagesAtLevel.some((s) => s.status !== 'approved');
+
+    if (hasPending) {
+      activeLevel = level;
+      allCleared = false;
+      break;
+    }
+  }
+
+  if (allCleared) {
+    application.currentStageOrder = 999;
+    application.status = 'completed';
+    application.isCompleted = true;
+    if (!application.certificateNumber) {
+      application.certificateNumber = `GBU-ND-${application.displayId}-${Date.now().toString().slice(-6)}`;
+      application.certificateIssuedAt = new Date();
+    }
+  } else {
+    application.currentStageOrder = activeLevel;
+    application.status = 'in_progress';
+  }
+
+  await application.save();
+  return application;
+}
+
+/**
  * GET /no-dues/my
  * Current student's No-Dues application, stage progress, and certificate if cleared.
  */
@@ -45,7 +107,7 @@ export const getMyNoDues = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'Student profile not found.' });
   }
 
-  const application = await NoDuesApplication.findOne({
+  let application = await NoDuesApplication.findOne({
     where: { studentId: student.id },
     order: [['createdAt', 'DESC']],
     include: [{ model: NoDuesStage, as: 'stages' }],
@@ -67,14 +129,46 @@ export const getMyNoDues = asyncHandler(async (req, res) => {
       hasOutstandingFees: feeDueCount > 0,
       application: null,
       stages: [],
+      workflow: { top: [], parallel: [], bottom: [] },
       progressPercentage: 0,
+      stats: { total: 0, approved: 0, pending: 0, locked: 0, rejected: 0 },
     });
   }
 
-  const stages = (application.stages || []).sort((a, b) => a.sequenceOrder - b.sequenceOrder);
+  // Waterfall progression update
+  application = await advanceApplicationWorkflow(application);
+
+  const rawStages = await NoDuesStage.findAll({
+    where: { applicationId: application.id },
+    order: [['sequenceOrder', 'ASC'], ['id', 'ASC']],
+  });
+
+  const currentLevel = application.isCompleted ? 999 : (application.currentStageOrder || 1);
+
+  const stages = rawStages.map((s) => {
+    const isLocked = !application.isCompleted && s.sequenceOrder > currentLevel;
+    let computedStatus = s.status;
+    if (s.status === 'pending' && isLocked) {
+      computedStatus = 'locked';
+    }
+    return {
+      ...s.toJSON(),
+      isLocked,
+      computedStatus,
+    };
+  });
+
   const totalStages = stages.length;
   const approvedStages = stages.filter((s) => s.status === 'approved').length;
-  const progressPercentage = totalStages > 0 ? Math.round((approvedStages / totalStages) * 100) : 0;
+  const progressPercentage = application.isCompleted
+    ? 100
+    : totalStages > 0
+    ? Math.round((approvedStages / totalStages) * 100)
+    : 0;
+
+  const top = stages.filter((s) => s.sequenceOrder < 4);
+  const parallel = stages.filter((s) => s.sequenceOrder === 4);
+  const bottom = stages.filter((s) => s.sequenceOrder > 4);
 
   return res.json({
     success: true,
@@ -83,7 +177,15 @@ export const getMyNoDues = asyncHandler(async (req, res) => {
     hasOutstandingFees: feeDueCount > 0,
     application,
     stages,
-    progressPercentage: application.isCompleted ? 100 : progressPercentage,
+    workflow: { top, parallel, bottom },
+    progressPercentage,
+    stats: {
+      total: totalStages,
+      approved: approvedStages,
+      pending: stages.filter((s) => s.computedStatus === 'pending').length,
+      locked: stages.filter((s) => s.computedStatus === 'locked').length,
+      rejected: stages.filter((s) => s.computedStatus === 'rejected').length,
+    },
     canResubmit: application.status === 'rejected',
   });
 });
@@ -187,8 +289,26 @@ export const applyNoDues = asyncHandler(async (req, res) => {
     },
     {
       applicationId: application.id,
-      stageCode: 'SPORTS_LAB',
-      stageName: 'Department Labs & Sports Council',
+      stageCode: 'LAB',
+      stageName: 'Department Laboratories & Instrumentation',
+      verifierRole: 'staff',
+      status: 'pending',
+      duesAmount: 0.0,
+      sequenceOrder: 4,
+    },
+    {
+      applicationId: application.id,
+      stageCode: 'SPT',
+      stageName: 'University Sports Council',
+      verifierRole: 'staff',
+      status: 'pending',
+      duesAmount: 0.0,
+      sequenceOrder: 4,
+    },
+    {
+      applicationId: application.id,
+      stageCode: 'CRC',
+      stageName: 'Corporate Relations & Training Cell (CRC)',
       verifierRole: 'staff',
       status: 'pending',
       duesAmount: 0.0,
@@ -200,7 +320,7 @@ export const applyNoDues = asyncHandler(async (req, res) => {
     stagesToCreate.push({
       applicationId: application.id,
       stageCode: 'HST',
-      stageName: 'Hostel Warden & Mess Office',
+      stageName: 'Hostel Administration & Mess Office',
       verifierRole: 'staff',
       status: 'pending',
       duesAmount: 0.0,
@@ -340,13 +460,21 @@ export const getPendingClearances = asyncHandler(async (req, res) => {
         ],
       },
     ],
-    order: [['createdAt', 'ASC']],
+    order: [['sequenceOrder', 'ASC'], ['createdAt', 'ASC']],
+  });
+
+  // Only return stages that are ready for active review (sequenceOrder <= application.currentStageOrder)
+  const readyStages = pendingStages.filter((st) => {
+    const app = st.application;
+    if (!app || app.status === 'rejected' || app.isCompleted) return false;
+    const currentLvl = app.currentStageOrder || 1;
+    return st.sequenceOrder <= currentLvl;
   });
 
   return res.json({
     success: true,
-    count: pendingStages.length,
-    pendingClearances: pendingStages,
+    count: readyStages.length,
+    pendingClearances: readyStages,
   });
 });
 
@@ -370,9 +498,18 @@ export const actionClearanceStage = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'Clearance stage not found.' });
   }
 
-  const application = stage.application;
+  let application = stage.application;
   if (!application) {
     return res.status(404).json({ success: false, message: 'Parent application not found.' });
+  }
+
+  // Enforce workflow level locking
+  const currentLvl = application.isCompleted ? 999 : (application.currentStageOrder || 1);
+  if (action === 'approve' && stage.sequenceOrder > currentLvl) {
+    return res.status(400).json({
+      success: false,
+      message: `Stage [${stage.stageName}] is locked. Level ${currentLvl} clearance must be completed first.`,
+    });
   }
 
   const due = action === 'reject' ? Number(duesAmount || 0) : 0.0;
@@ -387,31 +524,8 @@ export const actionClearanceStage = asyncHandler(async (req, res) => {
     verifiedAt: new Date(),
   });
 
-  if (action === 'reject') {
-    // Mark overall application rejected
-    await application.update({
-      status: 'rejected',
-      remarks: `Rejected at [${stage.stageName}]: ${comments || 'Outstanding dues'} (Amount: ₹${due})`,
-    });
-  } else {
-    // Check if ALL stages in application are now approved
-    const allStages = await NoDuesStage.findAll({
-      where: { applicationId: application.id },
-    });
-
-    const isAllApproved = allStages.every((s) => s.status === 'approved');
-    if (isAllApproved) {
-      const certNo = `GBU-ND-${application.displayId}-${Date.now().toString().slice(-6)}`;
-      await application.update({
-        status: 'completed',
-        isCompleted: true,
-        certificateNumber: certNo,
-        certificateIssuedAt: new Date(),
-      });
-    } else {
-      await application.update({ status: 'in_progress' });
-    }
-  }
+  // Advance application waterfall
+  application = await advanceApplicationWorkflow(application);
 
   try {
     await ChangeLog.create({
