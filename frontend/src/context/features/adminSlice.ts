@@ -13,6 +13,7 @@ const initialState: AdminUserProps = {
   batch: '',
   specialization: '',
   role: '',
+  officeCode: '',
 }
 
 const adminSlice = createSlice({
@@ -24,6 +25,7 @@ const adminSlice = createSlice({
       state.name = action.payload.name
       state.email = action.payload.email
       state.role = action.payload.role
+      state.officeCode = action.payload.officeCode || ''
       state.coordinatorId = action.payload.coordinatorId
       state.school = action.payload.school
       state.department = action.payload.department
@@ -36,6 +38,7 @@ const adminSlice = createSlice({
       state.name = ''
       state.email = ''
       state.role = ''
+      state.officeCode = ''
       state.coordinatorId = ''
       state.school = ''
       state.department = ''

@@ -4,6 +4,7 @@ import sequelize from '../lib/db.js';
 import Timetable from '../models/timetable.model.js';
 import TimetableSection from '../models/timetableSection.model.js';
 import { getTimetableForStudent, refreshTimetable, refreshAllTimetables } from '../services/timetable.service.js';
+import { getScrapeLiveStatus, syncFacultyAssignments, getFacultyAuditLogs } from '../services/timetableSync.service.js';
 import logger from '../lib/logger.js';
 
 const isAdmin = (u) => u?.role === 'admin';
@@ -263,4 +264,29 @@ export const hasChangesSince = asyncHandler(async (req, res) => {
         lastChangedAt: result.timetable.lastChangedAt,
         lastFetchedAt: result.timetable.lastFetchedAt,
     });
+});
+
+/* ──────────────────── GET /timetable/scrape-live-status (admin) ──────────────────── */
+export const getScrapeStatusController = asyncHandler(async (req, res) => {
+    const status = await getScrapeLiveStatus();
+    res.json({ success: true, ...status });
+});
+
+/* ──────────────────── POST /timetable/sync-faculty (admin) ──────────────────── */
+export const syncFacultyController = asyncHandler(async (req, res) => {
+    const { school = 'SOICT', department = 'CSE', dryRun = false } = req.body || {};
+    const result = await syncFacultyAssignments({
+        school,
+        department,
+        dryRun,
+        triggeredById: req.user?.id,
+    });
+    res.json(result);
+});
+
+/* ──────────────────── GET /timetable/faculty-audit-log (admin) ──────────────────── */
+export const getFacultyAuditLogController = asyncHandler(async (req, res) => {
+    const limit = parseInt(req.query.limit, 10) || 50;
+    const logs = await getFacultyAuditLogs({ limit });
+    res.json({ success: true, logs });
 });

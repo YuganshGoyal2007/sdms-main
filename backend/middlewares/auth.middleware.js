@@ -55,6 +55,7 @@ export const isAuthenticated = async (req, res, next) => {
             id: user.id,
             username: user.username,
             role: user.role,
+            officeCode: user.officeCode,
             name: user.name,
             email: user.email,
         };

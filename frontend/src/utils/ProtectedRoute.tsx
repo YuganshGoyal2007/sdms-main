@@ -66,8 +66,12 @@ const ProtectedRoute = () => {
     if (role === "faculty" && (location.pathname.startsWith("/admin") || location.pathname.startsWith("/coordinator") || location.pathname.startsWith("/chairperson"))) {
         return <Navigate to="/faculty/dashboard" replace />;
     }
-    if ((role === "admin" || role === "coordinator" || role === "faculty" || role === "chairperson") && location.pathname === "/student") {
-        return <Navigate to={`/${role}/dashboard`} replace />;
+    if (role === "officer") {
+        const allowedPrefixes = ["/no-dues/portal", "/portal"];
+        const isAllowed = allowedPrefixes.some((p) => location.pathname.startsWith(p));
+        if (!isAllowed) {
+            return <Navigate to="/no-dues/portal/library" replace />;
+        }
     }
 
     return <Outlet />;

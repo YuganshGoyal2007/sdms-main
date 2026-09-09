@@ -41,6 +41,9 @@ import FacultyLeaves from "./pages/Faculty/FacultyLeaves";
 import NoDuesAdmin from "./pages/Admin/NoDuesAdmin";
 import LeaveAdmin from "./pages/Admin/LeaveAdmin";
 import FeesAdmin from "./pages/Admin/FeesAdmin";
+import NoDuesPortalsHub from "./pages/NoDues/NoDuesPortalsHub";
+import OfficeClearancePortal from "./pages/NoDues/OfficeClearancePortal";
+import DeskLogin from "./pages/Landing/DeskLogin";
 
 const App = () => {
   return (
@@ -50,6 +53,7 @@ const App = () => {
           {/* Public */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/clearance/auth/:deskSlug" element={<DeskLogin />} />
           <Route path="/register" element={<Signup />} />
           <Route path="/developers" element={<DeveloperPage />} />
 
@@ -71,6 +75,11 @@ const App = () => {
             <Route path="/admin/faculty" element={<FacultyAdmin />} />
             <Route path="/admin/faculty-assignments" element={<FacultyAssignmentsAdmin />} />
             <Route path="/admin/no-dues" element={<NoDuesAdmin />} />
+            <Route path="/admin/no-dues/portals" element={<NoDuesPortalsHub />} />
+            <Route path="/admin/no-dues/:officeCode" element={<OfficeClearancePortal />} />
+            <Route path="/no-dues/portals" element={<NoDuesPortalsHub />} />
+            <Route path="/no-dues/portal/:officeCode" element={<OfficeClearancePortal />} />
+            <Route path="/portal/:officeCode" element={<OfficeClearancePortal />} />
             <Route path="/admin/leaves" element={<LeaveAdmin />} />
             <Route path="/admin/fees" element={<FeesAdmin />} />
 

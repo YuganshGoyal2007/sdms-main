@@ -12,9 +12,17 @@ import {
     discoverMissing,
     deleteSection,
     hasChangesSince,
+    getScrapeStatusController,
+    syncFacultyController,
+    getFacultyAuditLogController,
 } from '../controllers/timetable.controller.js';
 
 const router = express.Router();
+
+// Live Scraping & Faculty Reassignment Engine (Admin / Coordinator)
+router.get('/scrape-live-status', isAuthenticated, allowRoles('admin', 'coordinator', 'chairperson'), getScrapeStatusController);
+router.post('/sync-faculty', isAuthenticated, allowRoles('admin'), syncFacultyController);
+router.get('/faculty-audit-log', isAuthenticated, allowRoles('admin'), getFacultyAuditLogController);
 
 // Student endpoints
 router.get('/me', isAuthenticated, allowRoles('student'), getMyTimetable);

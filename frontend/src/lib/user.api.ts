@@ -410,6 +410,60 @@ export const refreshClassTimetable = async (
     specialization: string
 ) => (await api.post('/timetable/refresh', null, { params: { school, department, program, batch, specialization } })).data;
 
+export const getScrapeLiveStatus = async (): Promise<{
+    success: boolean;
+    timestamp: string;
+    allHealthy: boolean;
+    sources: Array<{
+        name: string;
+        url: string;
+        status: number;
+        online: boolean;
+        latencyMs: number;
+        recordCount?: number | null;
+        error?: string;
+        checkedAt: string;
+    }>;
+}> => (await api.get('/timetable/scrape-live-status')).data;
+
+export const syncFacultyAssignments = async (payload: {
+    school?: string;
+    department?: string;
+    dryRun?: boolean;
+} = {}): Promise<{
+    success: boolean;
+    timestamp: string;
+    school: string;
+    department: string;
+    summary: {
+        totalAllocationsParsed: number;
+        reassignedCount: number;
+        newAssignmentCount: number;
+        unchangedCount: number;
+    };
+    changes: Array<{
+        type: string;
+        subjectCode: string;
+        subjectName: string;
+        class: string;
+        newTeacher: string;
+        previousTeacher?: string;
+        details: string;
+    }>;
+}> => (await api.post('/timetable/sync-faculty', payload)).data;
+
+export const getFacultyAuditLogs = async (limit = 50): Promise<{
+    success: boolean;
+    logs: Array<{
+        id: number;
+        action: string;
+        entity: string;
+        entityId: string;
+        details: any;
+        createdAt: string;
+    }>;
+}> => (await api.get('/timetable/faculty-audit-log', { params: { limit } })).data;
+
 export const deleteSpecializationStudents = async (school: string | undefined, department: string | undefined, program: string | undefined, batch: string | undefined, specialization: string | undefined) => {
     const response = await api.delete(
         "/admin/delete-specialization-students",

@@ -1,0 +1,232 @@
+{
+  "timestamp": "2026-09-09T20:15:54.290Z",
+  "auditType": "Full E2E Security & Pipeline Deep Audit",
+  "categories": {
+    "authentication": {
+      "passed": 9,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Unauthenticated request to clearance overview rejected",
+          "passed": true,
+          "details": "Status: 401"
+        },
+        {
+          "name": "Unauthenticated request to admin timetable rejected",
+          "passed": true,
+          "details": "Status: 401"
+        },
+        {
+          "name": "Unauthenticated request to student no-dues rejected",
+          "passed": true,
+          "details": "Status: 401"
+        },
+        {
+          "name": "Forged JWT signature rejected with 401",
+          "passed": true,
+          "details": "Status: 401"
+        },
+        {
+          "name": "JWT \"none\" algorithm bypass attempt rejected with 401",
+          "passed": true,
+          "details": "Status: 401"
+        },
+        {
+          "name": "Library Officer authentication successful",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Hostel Officer authentication successful",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "HOD Admin authentication successful",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Student authentication successful",
+          "passed": true,
+          "details": ""
+        }
+      ]
+    },
+    "authorization_rbac": {
+      "passed": 8,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Library Officer allowed access to matching Library desk (LIB)",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Library Officer blocked from Hostel desk with 403 FORBIDDEN_DESK",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Library Officer blocked from Sports desk with 403 FORBIDDEN_DESK",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Library Officer blocked from Dean desk with 403 FORBIDDEN_DESK",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Library Officer blocked from ICT desk with 403 FORBIDDEN_DESK",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Hostel Officer blocked from Library desk with 403 FORBIDDEN_DESK",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Library Officer prohibited from executing approvals on Hostel desk (403)",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Library Officer prohibited from bulk approving on Hostel desk (403)",
+          "passed": true,
+          "details": ""
+        }
+      ]
+    },
+    "privilege_escalation": {
+      "passed": 6,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Student vertical escalation to clearance overview blocked (403)",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Student vertical escalation to admin timetable mappings blocked (403)",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Officer vertical escalation to admin timetable mappings blocked (403)",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Central HOD Admin strictly blocked from Library Clearance Desk (403 FORBIDDEN_DESK)",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Central HOD Admin strictly blocked from Hostel Clearance Desk (403 FORBIDDEN_DESK)",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Central HOD Admin retains legitimate access to Academic Admin endpoints (200 OK)",
+          "passed": true,
+          "details": ""
+        }
+      ]
+    },
+    "state_machine_pipeline": {
+      "passed": 7,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Clearance DAG contains Central Library node",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Clearance DAG contains Hostel Office node",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Clearance DAG contains Sports Council node",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Clearance DAG contains School Dean node",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Clearance DAG contains ICT Office node",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "DAG stages respect non-decreasing sequence order (level progression)",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Active DAG level gates correctly unlock pending stages",
+          "passed": true,
+          "details": ""
+        }
+      ]
+    },
+    "fees_and_data_integrity": {
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Departmental ledger dues totals are strictly non-negative",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Overview returns exclusively valid institutional office codes",
+          "passed": true,
+          "details": ""
+        }
+      ]
+    },
+    "timetable_scraping_engine": {
+      "passed": 5,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Live scrape status endpoint responds with 200 OK",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Samay Live API (samay.mygbu.in) is online and responding",
+          "passed": true,
+          "details": "Latency: 950ms, Records: 4154"
+        },
+        {
+          "name": "Faculty Sync Dry Run simulation succeeds (200 OK)",
+          "passed": true,
+          "details": ""
+        },
+        {
+          "name": "Dry Run returns structured summary and allocation count",
+          "passed": true,
+          "details": "Allocations: 330"
+        },
+        {
+          "name": "Faculty transition audit log endpoint responds with 200 OK",
+          "passed": true,
+          "details": ""
+        }
+      ]
+    }
+  },
+  "summary": {
+    "total": 37,
+    "passed": 37,
+    "failed": 0
+  }
+}

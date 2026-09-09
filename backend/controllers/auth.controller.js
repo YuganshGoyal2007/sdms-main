@@ -296,5 +296,70 @@ export const userLogin = asyncHandler(async (req, res) => {
     return res.status(200).json({
         accessToken,
         role: user.role,
+        officeCode: user.officeCode || null,
+        name: user.name || user.username,
     });
 });
+
+export const officerLogin = asyncHandler(async (req, res) => {
+    const { username, password, officeCode } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({
+            success: false,
+            error: 'BAD_REQUEST',
+            message: 'Department officer username and password are required.'
+        });
+    }
+
+    const newUsername = removeSpaces(username.toLowerCase());
+    const user = await User.findOne({ where: { username: newUsername } });
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            error: 'NOT_FOUND',
+            message: 'Department clearance officer account not found.'
+        });
+    }
+
+    if (user.role !== 'officer' && user.role !== 'admin') {
+        return res.status(403).json({
+            success: false,
+            error: 'FORBIDDEN',
+            message: 'This account does not have departmental clearance officer privileges.'
+        });
+    }
+
+    if (officeCode && user.role === 'officer') {
+        const reqOffice = String(officeCode).toUpperCase().trim();
+        const userOffice = String(user.officeCode || '').toUpperCase().trim();
+        if (userOffice && reqOffice !== userOffice) {
+            return res.status(403).json({
+                success: false,
+                error: 'OFFICE_MISMATCH',
+                message: `This account is assigned to ${userOffice} desk, not ${reqOffice}. Please select the matching department.`
+            });
+        }
+    }
+
+    const passwordValid = await verifyPassword(password, user.password);
+    if (!passwordValid) {
+        return res.status(422).json({
+            success: false,
+            error: 'INVALID_CREDENTIALS',
+            message: 'Invalid departmental officer credentials.'
+        });
+    }
+
+    const accessToken = generateAccessToken(user);
+    return res.status(200).json({
+        success: true,
+        accessToken,
+        role: user.role,
+        officeCode: user.officeCode || null,
+        name: user.name || user.username,
+        message: `Welcome, ${user.name || user.username}. Authorized for ${user.officeCode || 'Institutional Clearance'} desk.`
+    });
+});
+

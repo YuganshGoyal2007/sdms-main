@@ -5,6 +5,8 @@ import { Link, useNavigate } from "react-router-dom";
 import universityLogo from "../../assets/images/logo.png";
 import { useAuth } from "../../context/useAuth";
 import { useNotifications } from "../../hooks/useNotifications";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../context/app/store";
 
 /**
  * Unified client header with:
@@ -32,6 +34,7 @@ export function ClientHeader({
     const { logout, isAuthenticated } = useAuth();
     const { unread, timetableChanged, markTimetableSeen } = useNotifications(30_000);
     const navigate = useNavigate();
+    const student = useSelector((state: RootState) => state.user.student);
 
     const handleLogout = () => {
         logout();
@@ -185,6 +188,20 @@ export function ClientHeader({
                             )}
                         </AnimatePresence>
                     </div>
+
+                    {/* Student Avatar Pill */}
+                    {student && (
+                        <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-gray-50 border border-gray-200">
+                            <div className="w-7 h-7 rounded-full bg-[#faf7f9] border border-[#e5d5df] flex items-center justify-center overflow-hidden shrink-0">
+                                {student.photo ? (
+                                    <img src={student.photo} alt={student.fullName} className="w-full h-full object-cover" />
+                                ) : (
+                                    <span className="text-[11px] font-bold text-[#7b3b5a]">{student.fullName?.charAt(0) || "S"}</span>
+                                )}
+                            </div>
+                            <span className="text-xs font-semibold text-gray-800 max-w-[120px] truncate">{student.fullName}</span>
+                        </div>
+                    )}
 
                     {/* Logout */}
                     {isAuthenticated && (

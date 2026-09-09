@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { User, ClipboardCheck, Landmark, ClipboardPen, MessageCircle, CalendarDays } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getUnreadCount, hasTimetableChangesSince } from "../../lib/user.api";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../context/app/store";
 
 interface SidebarProps {
   activeView: string;
@@ -22,6 +24,7 @@ const navItems = [
 export function Sidebar({ activeView, setActiveView, isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
   const [unread, setUnread] = useState(0);
   const [ttChanged, setTtChanged] = useState(false);
+  const student = useSelector((state: RootState) => state.user.student);
 
   useEffect(() => {
     const lastSeenKey = "ttLastSeenAt";
@@ -67,14 +70,27 @@ export function Sidebar({ activeView, setActiveView, isSidebarOpen, setIsSidebar
 
   return (
     <aside
-      className={`fixed left-0 top-16 w-72 h-[calc(100vh-4rem)] bg-white border-r border-gray-200 transition-transform batch-300 ease-in-out z-40 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0`}
+      className={`fixed left-0 top-16 w-72 h-[calc(100vh-4rem)] bg-white border-r border-gray-200 transition-transform batch-300 ease-in-out z-40 ${
+        isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      } md:translate-x-0`}
     >
       <div className="p-5 overflow-y-auto h-full flex flex-col">
-        {/* <div className="bg-[#faf7f9] h-auto rounded-lg p-4 mb-6">
-          <p className="font-semibold text-gray-900">{student?.specialization}</p>
-          <p className="text-xs text-gray-500 my-1">{student?.program} {student?.department.toLocaleUpperCase()}</p>
-        </div> */}
+        {student && (
+          <div className="bg-[#faf7f9] rounded-xl p-3.5 mb-5 border border-[#e5d5df] flex items-center gap-3 shadow-xs">
+            <div className="w-11 h-11 rounded-xl bg-white border border-[#e5d5df] flex items-center justify-center overflow-hidden shrink-0">
+              {student.photo ? (
+                <img src={student.photo} alt={student.fullName} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-sm font-bold text-[#7b3b5a]">{student.fullName?.charAt(0) || "S"}</span>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-gray-900 truncate">{student.fullName}</p>
+              <p className="text-[11px] font-semibold text-[#7b3b5a] uppercase truncate">{student.rollNo}</p>
+              <p className="text-[10px] text-gray-500 truncate">{student.specialization || student.program}</p>
+            </div>
+          </div>
+        )}
 
         <nav className="space-y-1 no-scrollbar overflow-scroll flex-1">
           {navItems.map((item) => {
@@ -84,10 +100,9 @@ export function Sidebar({ activeView, setActiveView, isSidebarOpen, setIsSidebar
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg transition-colors cursor-pointer ${isActive
-                  ? "bg-[#faf7f9] text-[#7b3b5a] font-medium"
-                  : "text-gray-700 hover:bg-gray-50"
-                  }`}
+                className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg transition-colors cursor-pointer ${
+                  isActive ? "bg-[#faf7f9] text-[#7b3b5a] font-medium" : "text-gray-700 hover:bg-gray-50"
+                }`}
               >
                 <div className="flex items-center gap-3">
                   <Icon className="w-5 h-5" />

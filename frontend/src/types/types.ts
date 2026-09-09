@@ -134,6 +134,7 @@ export interface AdminUserProps {
     specialization: string;
     role?: string;
     username?: string;
+    officeCode?: string;
 }
 
 export interface StudentAuthProps {

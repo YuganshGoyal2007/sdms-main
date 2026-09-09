@@ -1,4 +1,4 @@
-import { User, Phone, FileText, NotebookText, Briefcase } from "lucide-react";
+import { User, Phone, FileText, NotebookText, Briefcase, Building2 } from "lucide-react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../context/app/store";
 export function ProfileView() {
@@ -18,10 +18,22 @@ export function ProfileView() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 md:p-6">
         <div className="flex items-start gap-4 md:gap-6 flex-wrap lg:flex-nowrap">
           <div className="flex items-start gap-4 md:gap-6 flex-1 min-w-0 flex-wrap sm:flex-nowrap">
-            <div className="w-20 h-20 md:w-24 md:h-24 bg-[#faf7f9] rounded-xl flex items-center justify-center shrink-0 border border-[#e5d5df]">
-              <span className="text-[#7b3b5a] text-2xl md:text-3xl font-medium">
-                {student?.fullName.charAt(0)}
-              </span>
+            <div className="w-20 h-20 md:w-24 md:h-24 bg-[#faf7f9] rounded-xl flex items-center justify-center shrink-0 border border-[#e5d5df] overflow-hidden shadow-xs">
+              {student?.photo ? (
+                <img
+                  src={student.photo}
+                  alt={student.fullName}
+                  className="w-full h-full object-cover rounded-xl"
+                  onError={(e) => {
+                    // Fallback to initials if photo fails to render
+                    (e.target as HTMLElement).style.display = "none";
+                  }}
+                />
+              ) : (
+                <span className="text-[#7b3b5a] text-2xl md:text-3xl font-medium">
+                  {student?.fullName?.charAt(0) || "S"}
+                </span>
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
@@ -156,7 +168,7 @@ export function ProfileView() {
             {/* Internship */}
             <div>
               <h3 className="text-sm font-semibold text-[#7b3b5a] mb-3 flex items-center gap-1.5">
-                <span>💼</span> Internship Details
+                <Briefcase size={14} className="text-[#7b3b5a]" /> Internship Details
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                 {renderField("Status", student?.internshipStatus)}
@@ -170,7 +182,7 @@ export function ProfileView() {
             {/* Placement */}
             <div className="pt-4 border-t border-gray-100">
               <h3 className="text-sm font-semibold text-[#7b3b5a] mb-3 flex items-center gap-1.5">
-                <span>🏢</span> Placement Details
+                <Building2 size={14} className="text-[#7b3b5a]" /> Placement Details
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                 {renderField("Status", student?.placementStatus)}

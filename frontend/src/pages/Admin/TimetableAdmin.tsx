@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Plus, Trash2, ExternalLink, RefreshCw, Save, X, Upload, Download, AlertCircle, Search, Calendar, Eye } from "lucide-react";
+import { Plus, Trash2, ExternalLink, RefreshCw, Save, X, Upload, Download, AlertCircle, Search, Calendar, Eye, Radio, Activity, CheckCircle2, ArrowRight, History, Users } from "lucide-react";
 import { toast } from "sonner";
 import { safeErrorMessage } from "../../utils/safeError";
 import AdminSideNav from "../../components/Admin/AdminSideNav";
@@ -13,6 +13,9 @@ import {
     refreshAllTimetables,
     discoverMissingTimetable,
     bulkCreateTimetableSections,
+    getScrapeLiveStatus,
+    syncFacultyAssignments,
+    getFacultyAuditLogs,
     type TimetableSection,
 } from "../../lib/user.api";
 
@@ -42,6 +45,75 @@ const TimetableAdmin = () => {
     const [missing, setMissing] = useState<any[] | null>(null);
     const [selectedClassForTimetable, setSelectedClassForTimetable] = useState<any | null>(null);
 
+    // Live University Timetable & Faculty Sync Engine State
+    const [liveStatus, setLiveStatus] = useState<any | null>(null);
+    const [checkingStatus, setCheckingStatus] = useState(false);
+    const [syncSchool, setSyncSchool] = useState("SOICT");
+    const [syncDept, setSyncDept] = useState("CSE");
+    const [syncingFaculty, setSyncingFaculty] = useState(false);
+    const [syncResult, setSyncResult] = useState<any | null>(null);
+    const [auditLogs, setAuditLogs] = useState<any[]>([]);
+    const [loadingAudit, setLoadingAudit] = useState(false);
+    const [showAuditSection, setShowAuditSection] = useState(false);
+
+    const checkLiveSources = async () => {
+        setCheckingStatus(true);
+        try {
+            const r = await getScrapeLiveStatus();
+            setLiveStatus(r);
+            if (r.allHealthy) {
+                toast.success("All timetable scraping endpoints are online & responding");
+            } else {
+                toast.warning("One or more timetable scraping endpoints reported latency or error");
+            }
+        } catch (e: any) {
+            toast.error(safeErrorMessage(e, "Failed to check live timetable sources"));
+        } finally {
+            setCheckingStatus(false);
+        }
+    };
+
+    const handleFacultySync = async (dryRun = false) => {
+        setSyncingFaculty(true);
+        const t = toast.loading(dryRun ? "Running faculty assignment simulation..." : "Executing live timetable sync & faculty reassignments...");
+        try {
+            const r = await syncFacultyAssignments({ school: syncSchool, department: syncDept, dryRun });
+            setSyncResult(r);
+            if (r.success) {
+                const { reassignedCount, newAssignmentCount, totalAllocationsParsed } = r.summary;
+                toast.success(
+                    dryRun
+                        ? `Dry run complete: ${totalAllocationsParsed} allocations parsed (${reassignedCount} reassignments pending)`
+                        : `Synced ${totalAllocationsParsed} classes: ${reassignedCount} faculty reassignments updated, ${newAssignmentCount} created`,
+                    { id: t }
+                );
+                if (!dryRun) {
+                    await fetchAuditLogs();
+                }
+            } else {
+                toast.error(safeErrorMessage(r, "Sync failed"), { id: t });
+            }
+        } catch (e: any) {
+            toast.error(safeErrorMessage(e, "Faculty sync failed"), { id: t });
+        } finally {
+            setSyncingFaculty(false);
+        }
+    };
+
+    const fetchAuditLogs = async () => {
+        setLoadingAudit(true);
+        try {
+            const r = await getFacultyAuditLogs(50);
+            if (r.success) {
+                setAuditLogs(r.logs || []);
+            }
+        } catch (e: any) {
+            toast.error(safeErrorMessage(e, "Failed to load faculty audit logs"));
+        } finally {
+            setLoadingAudit(false);
+        }
+    };
+
     const load = async () => {
         setLoading(true);
         try {
@@ -56,6 +128,8 @@ const TimetableAdmin = () => {
 
     useEffect(() => {
         load();
+        checkLiveSources();
+        fetchAuditLogs();
     }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -336,6 +410,237 @@ soict,cse,B.Tech,2026-30,AI,SOICT,CSE,1249,BAI-I-A,2026-27,Odd`;
 
                         {/* Hidden CSV File Input */}
                         <input type="file" ref={csvInputRef} accept=".csv" onChange={handleCsvFile} className="hidden" />
+
+                        {/* Live University Timetable & Faculty Sync Engine Panel */}
+                        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-2xs">
+                            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-4 border-b border-gray-100">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="p-1.5 rounded-md bg-rose-50 text-[#7b3b5a]">
+                                            <Radio size={16} />
+                                        </span>
+                                        <h2 className="text-base font-semibold text-gray-900">
+                                            Live Timetable Scraping & Faculty Reassignment Engine
+                                        </h2>
+                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                            liveStatus?.allHealthy ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200"
+                                        }`}>
+                                            <Activity size={12} className={checkingStatus ? "animate-spin" : ""} />
+                                            {liveStatus?.allHealthy ? "Live Endpoints Active" : "Endpoints Probed"}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-gray-500">
+                                        Reverse-engineers live schedules from samay.mygbu.in and mygbu.in. Automatically transfers class rosters and attendance permissions when teachers change.
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <button
+                                        onClick={checkLiveSources}
+                                        disabled={checkingStatus}
+                                        className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 border border-gray-200 rounded bg-white hover:bg-gray-50 text-gray-700 cursor-pointer disabled:opacity-50"
+                                        title="Ping and test all scraping endpoints"
+                                    >
+                                        <RefreshCw size={12} className={checkingStatus ? "animate-spin" : ""} />
+                                        {checkingStatus ? "Pinging..." : "Check Latency"}
+                                    </button>
+                                    <div className="flex items-center border border-gray-200 rounded overflow-hidden text-xs">
+                                        <span className="px-2 py-1.5 bg-gray-50 text-gray-500 border-r border-gray-200 font-medium">School / Dept</span>
+                                        <select
+                                            value={syncSchool}
+                                            onChange={(e) => setSyncSchool(e.target.value)}
+                                            className="px-2 py-1.5 bg-white text-gray-800 outline-none border-r border-gray-200"
+                                        >
+                                            <option value="SOICT">SOICT</option>
+                                        </select>
+                                        <select
+                                            value={syncDept}
+                                            onChange={(e) => setSyncDept(e.target.value)}
+                                            className="px-2 py-1.5 bg-white text-gray-800 outline-none"
+                                        >
+                                            <option value="CSE">CSE</option>
+                                        </select>
+                                    </div>
+                                    <button
+                                        onClick={() => handleFacultySync(true)}
+                                        disabled={syncingFaculty}
+                                        className="inline-flex items-center gap-1 text-xs px-3 py-1.5 border border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100 rounded cursor-pointer disabled:opacity-50 font-medium"
+                                        title="Simulate faculty reassignments without writing changes"
+                                    >
+                                        Dry Run Test
+                                    </button>
+                                    <button
+                                        onClick={() => handleFacultySync(false)}
+                                        disabled={syncingFaculty}
+                                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-[#7b3b5a] text-white hover:bg-[#682f4b] rounded cursor-pointer disabled:opacity-50 font-medium shadow-xs"
+                                        title="Synchronize live faculty assignments and transfer class rosters"
+                                    >
+                                        <Users size={12} />
+                                        {syncingFaculty ? "Syncing..." : "Sync & Reassign Faculty"}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Endpoint Live Health Strip */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3">
+                                {liveStatus?.sources?.map((src: any, idx: number) => (
+                                    <div key={idx} className="p-2.5 rounded-lg border border-gray-100 bg-gray-50/60 flex items-center justify-between text-xs">
+                                        <div className="min-w-0 pr-2">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className={`w-2 h-2 rounded-full shrink-0 ${src.online ? "bg-emerald-500" : "bg-rose-500"}`} />
+                                                <span className="font-medium text-gray-900 truncate">{src.name}</span>
+                                            </div>
+                                            <span className="text-[10px] text-gray-400 truncate block mt-0.5">{src.url}</span>
+                                        </div>
+                                        <div className="text-right shrink-0">
+                                            <span className="inline-block font-mono text-[11px] font-semibold text-gray-700">
+                                                {src.latencyMs}ms
+                                            </span>
+                                            {src.recordCount !== null && src.recordCount !== undefined && (
+                                                <span className="block text-[10px] text-emerald-700 font-medium">
+                                                    {src.recordCount.toLocaleString()} records
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                )) || (
+                                    <div className="col-span-3 text-xs text-gray-400 py-1 text-center">
+                                        Probing live timetable scraping endpoints...
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Latest Sync Result Preview */}
+                            {syncResult && (
+                                <div className="mt-4 p-4 rounded-lg bg-slate-50 border border-slate-200">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <CheckCircle2 size={16} className="text-emerald-600" />
+                                            <span className="text-xs font-semibold text-gray-900">
+                                                Sync Execution Report ({syncResult.school} - {syncResult.department})
+                                            </span>
+                                            <span className="text-[10px] text-gray-500 font-mono">
+                                                {new Date(syncResult.timestamp).toLocaleTimeString()}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-3 text-xs">
+                                            <span className="text-gray-600">
+                                                Parsed: <strong className="text-gray-900">{syncResult.summary?.totalAllocationsParsed}</strong>
+                                            </span>
+                                            <span className="text-amber-700 font-medium">
+                                                Reassigned: <strong className="text-amber-900">{syncResult.summary?.reassignedCount}</strong>
+                                            </span>
+                                            <span className="text-emerald-700 font-medium">
+                                                New: <strong className="text-emerald-900">{syncResult.summary?.newAssignmentCount}</strong>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {syncResult.changes && syncResult.changes.length > 0 ? (
+                                        <div className="mt-2 space-y-1.5 max-h-48 overflow-y-auto">
+                                            {syncResult.changes.map((ch: any, i: number) => (
+                                                <div key={i} className="text-xs bg-white p-2 rounded border border-gray-200 flex items-start justify-between gap-3">
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-mono font-semibold text-[#7b3b5a]">{ch.subjectCode}</span>
+                                                            <span className="text-gray-800">{ch.subjectName}</span>
+                                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{ch.class}</span>
+                                                        </div>
+                                                        <p className="text-[11px] text-gray-500 mt-1">{ch.details}</p>
+                                                    </div>
+                                                    <div className="text-right shrink-0">
+                                                        {ch.previousTeacher ? (
+                                                            <div className="flex items-center gap-1 text-[11px]">
+                                                                <span className="line-through text-gray-400">{ch.previousTeacher}</span>
+                                                                <ArrowRight size={10} className="text-gray-400" />
+                                                                <span className="font-semibold text-emerald-700">{ch.newTeacher}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="font-semibold text-emerald-700 text-[11px]">{ch.newTeacher}</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            No faculty reassignments needed. All current teacher allocations match the live university timetable.
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Audit Log Accordion Toggle */}
+                            <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
+                                <button
+                                    onClick={() => setShowAuditSection((v) => !v)}
+                                    className="text-[#7b3b5a] hover:underline inline-flex items-center gap-1 font-medium cursor-pointer"
+                                >
+                                    <History size={13} className={loadingAudit ? "animate-spin" : ""} />
+                                    {loadingAudit
+                                        ? "Loading Audit Logs..."
+                                        : showAuditSection
+                                        ? "Hide Faculty Transition History"
+                                        : `View Faculty Reassignment Audit Logs (${auditLogs.length})`}
+                                </button>
+                                <span className="text-[11px] text-gray-400">
+                                    Audited via system ChangeLog
+                                </span>
+                            </div>
+
+                            {/* Audit Log Table */}
+                            {showAuditSection && (
+                                <div className="mt-3 overflow-x-auto border border-gray-200 rounded-lg">
+                                    <table className="w-full text-xs text-left text-gray-700">
+                                        <thead className="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
+                                            <tr>
+                                                <th className="py-2 px-3">Timestamp</th>
+                                                <th className="py-2 px-3">Action</th>
+                                                <th className="py-2 px-3">Subject</th>
+                                                <th className="py-2 px-3">Previous Teacher</th>
+                                                <th className="py-2 px-3">New Teacher</th>
+                                                <th className="py-2 px-3">Roster Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100 bg-white">
+                                            {auditLogs.length > 0 ? (
+                                                auditLogs.slice(0, 10).map((log: any) => {
+                                                    const d = typeof log.details === "string" ? JSON.parse(log.details) : log.details || {};
+                                                    return (
+                                                        <tr key={log.id} className="hover:bg-gray-50/75">
+                                                            <td className="py-2 px-3 whitespace-nowrap text-gray-500 font-mono text-[11px]">
+                                                                {new Date(log.createdAt).toLocaleString()}
+                                                            </td>
+                                                            <td className="py-2 px-3">
+                                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                                                                    {log.action}
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-2 px-3 font-medium text-gray-900">
+                                                                {d.subjectCode || "—"} {d.subjectName ? `(${d.subjectName})` : ""}
+                                                            </td>
+                                                            <td className="py-2 px-3 text-rose-700">
+                                                                {typeof d.previousTeacher === "object" ? (d.previousTeacher?.name || "None") : (d.previousTeacher || "None")}
+                                                            </td>
+                                                            <td className="py-2 px-3 font-semibold text-emerald-700">
+                                                                {typeof d.newTeacher === "object" ? (d.newTeacher?.name || "—") : (d.newTeacher || d.assignedTeacher || "—")}
+                                                            </td>
+                                                            <td className="py-2 px-3 text-[11px] text-gray-600">
+                                                                {d.reason || "Class roster access transferred"}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan={6} className="text-center py-4 text-gray-400">
+                                                        No faculty reassignment logs recorded yet.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
 
                         {/* Missing Classes Panel */}
                         {missing && missing.length > 0 && (

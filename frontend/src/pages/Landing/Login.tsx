@@ -35,9 +35,18 @@ const StudentLogin = () => {
           case 'chairperson':
             navigate("/chairperson/dashboard");
             break;
-          case 'faculty':
-            navigate("/faculty/dashboard");
+          case 'officer': {
+            const codeMap: Record<string, string> = {
+              LIB: "library",
+              HST: "hostel",
+              SPT: "sports",
+              DEAN: "dean",
+              ICT: "ict",
+            };
+            const targetSlug = codeMap[data.officeCode || ""] || "library";
+            navigate(`/no-dues/portal/${targetSlug}`);
             break;
+          }
           default:
             navigate("/admin/dashboard");
             break;

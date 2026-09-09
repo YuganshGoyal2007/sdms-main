@@ -8,6 +8,10 @@ import {
   getPendingClearances,
   actionClearanceStage,
   getClearanceCertificate,
+  getAllOfficesOverview,
+  getOfficePortalData,
+  actionOfficeClearance,
+  bulkApproveOfficeClearance,
 } from '../controllers/noDues.controller.js';
 
 const router = express.Router();
@@ -32,4 +36,31 @@ router.post(
   actionClearanceStage
 );
 
+// Departmental Portals (Library, Hostel, Sports, Dean, ICT Office)
+router.get(
+  '/no-dues/portals/overview',
+  isAuthenticated,
+  allowRoles('admin', 'chairperson', 'coordinator', 'faculty', 'officer'),
+  getAllOfficesOverview
+);
+router.get(
+  '/no-dues/portal/:officeCode',
+  isAuthenticated,
+  allowRoles('admin', 'chairperson', 'coordinator', 'faculty', 'officer'),
+  getOfficePortalData
+);
+router.post(
+  '/no-dues/portal/:officeCode/action/:stageId',
+  isAuthenticated,
+  allowRoles('admin', 'chairperson', 'coordinator', 'faculty', 'officer'),
+  actionOfficeClearance
+);
+router.post(
+  '/no-dues/portal/:officeCode/bulk-approve',
+  isAuthenticated,
+  allowRoles('admin', 'chairperson', 'coordinator', 'faculty', 'officer'),
+  bulkApproveOfficeClearance
+);
+
 export default router;
+

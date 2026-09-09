@@ -104,3 +104,111 @@ export const getClearanceCertificate = async (applicationId: number) => {
   const response = await api.get(`/no-dues/certificate/${applicationId}`);
   return response.data;
 };
+
+export interface OfficeConfig {
+  code: string;
+  slug: string;
+  name: string;
+  category: string;
+  icon: string;
+  description: string;
+  checklists: string[];
+  quickRemarks: string[];
+  stats?: OfficeStats;
+}
+
+export interface OfficeStats {
+  total: number;
+  pending: number;
+  ready: number;
+  approved: number;
+  rejected: number;
+  totalDues: number;
+}
+
+export interface OfficeQueueItem {
+  id: number;
+  applicationId: number;
+  stageCode: string;
+  stageName: string;
+  status: 'pending' | 'approved' | 'rejected';
+  duesAmount: number;
+  comments?: string;
+  sequenceOrder: number;
+  verifiedBy?: number;
+  verifiedByName?: string;
+  verifiedAt?: string;
+  createdAt?: string;
+  isReady: boolean;
+  isLocked: boolean;
+  application: {
+    id: number;
+    displayId: string;
+    rollNo?: string;
+    status: string;
+    currentStageOrder: number;
+    isCompleted: boolean;
+    studentRemarks?: string;
+    remarks?: string;
+    proofDocumentUrl?: string;
+    student?: {
+      id: number;
+      rollNo: string;
+      enrollmentNo: string;
+      fullName: string;
+      school: string;
+      department: string;
+      program: string;
+      batch: string;
+      specialization: string;
+      mobile?: string;
+      email?: string;
+      hosteller?: string | boolean;
+      photo?: string;
+    };
+  } | null;
+}
+
+export interface OfficePortalResponse {
+  success: boolean;
+  office: OfficeConfig;
+  stats: OfficeStats;
+  queue: OfficeQueueItem[];
+  history: OfficeQueueItem[];
+}
+
+export interface AllOfficesOverviewResponse {
+  success: boolean;
+  offices: (OfficeConfig & { stats: OfficeStats })[];
+}
+
+export const getAllOfficesOverview = async (): Promise<AllOfficesOverviewResponse> => {
+  const response = await api.get('/no-dues/portals/overview');
+  return response.data;
+};
+
+export const getOfficePortalData = async (officeCode: string): Promise<OfficePortalResponse> => {
+  const response = await api.get(`/no-dues/portal/${officeCode}`);
+  return response.data;
+};
+
+export const actionOfficeClearance = async (
+  officeCode: string,
+  stageId: number,
+  payload: {
+    action: 'approve' | 'reject';
+    comments?: string;
+    duesAmount?: number;
+  }
+) => {
+  const response = await api.post(`/no-dues/portal/${officeCode}/action/${stageId}`, payload);
+  return response.data;
+};
+
+export const bulkApproveOfficeClearance = async (
+  officeCode: string,
+  stageIds: number[]
+) => {
+  const response = await api.post(`/no-dues/portal/${officeCode}/bulk-approve`, { stageIds });
+  return response.data;
+};

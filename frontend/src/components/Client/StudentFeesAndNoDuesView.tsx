@@ -29,6 +29,7 @@ import {
   GraduationCap,
   School,
   Layers,
+  Laptop,
 } from 'lucide-react';
 import { getMyFees, payFee, type FeeRecordItem, type FeeSummary } from '../../lib/fees.api';
 import {
@@ -91,6 +92,7 @@ const getStageIcon = (code: string = '', name: string = '') => {
   if (n.includes('lib')) return Library;
   if (n.includes('hostel') || n.includes('hst')) return Home;
   if (n.includes('sport') || n.includes('spt')) return Trophy;
+  if (n.includes('ict') || n.includes('network') || n.includes('information tech')) return Laptop;
   if (n.includes('lab')) return FlaskConical;
   if (n.includes('crc') || n.includes('relation') || n.includes('placement')) return Briefcase;
   if (n.includes('acc') || n.includes('finance') || n.includes('account')) return ShieldCheck;

@@ -1,0 +1,83 @@
+{
+  "timestamp": "2026-09-09T18:33:21.645Z",
+  "checks": [
+    {
+      "name": "Main Login page shows Officer Login button",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "All 6 Department / Admin Options Rendered",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Zero Emojis on Officer Login Portal",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Direct Desk URL loaded (/login/library)",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Library Officer routed directly to /no-dues/portal/library",
+      "passed": true,
+      "details": "http://localhost:5173/no-dues/portal/library"
+    },
+    {
+      "name": "Library Officer Session Badge displayed",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "RBAC Access Denied Barrier rendered on unauthorized desk",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Return to Authorized Desk button displayed",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Hostel Officer routed directly to /no-dues/portal/hostel",
+      "passed": true,
+      "details": "http://localhost:5173/no-dues/portal/hostel"
+    },
+    {
+      "name": "Hostel Officer Session Badge displayed",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "HOD Admin routed to Clearance Directory",
+      "passed": true,
+      "details": "http://localhost:5173/no-dues/portals"
+    },
+    {
+      "name": "HOD Unrestricted Access to Library Desk",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "HOD Unrestricted Access to Hostel Desk",
+      "passed": true,
+      "details": ""
+    }
+  ],
+  "screenshots": [
+    "C:\\Users\\harsh\\.gemini\\antigravity\\brain\\3aea231d-33fe-4c94-b612-f8002d421b3f\\screenshots\\09_officer_login_portal.png",
+    "C:\\Users\\harsh\\.gemini\\antigravity\\brain\\3aea231d-33fe-4c94-b612-f8002d421b3f\\screenshots\\10_library_officer_authenticated.png",
+    "C:\\Users\\harsh\\.gemini\\antigravity\\brain\\3aea231d-33fe-4c94-b612-f8002d421b3f\\screenshots\\11_library_officer_blocked_on_hostel.png",
+    "C:\\Users\\harsh\\.gemini\\antigravity\\brain\\3aea231d-33fe-4c94-b612-f8002d421b3f\\screenshots\\12_hostel_officer_authenticated.png",
+    "C:\\Users\\harsh\\.gemini\\antigravity\\brain\\3aea231d-33fe-4c94-b612-f8002d421b3f\\screenshots\\13_hod_admin_full_access.png"
+  ],
+  "summary": {
+    "total": 13,
+    "passed": 13,
+    "failed": 0,
+    "emojiViolations": 0
+  }
+}

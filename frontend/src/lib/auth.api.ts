@@ -39,3 +39,12 @@ export const userLogin = async (username: string, password: string) => {
     );
     return response.data;
 };
+
+export const officerLogin = async (payload: {
+    username: string;
+    password: string;
+    officeCode?: string;
+}) => {
+    const response = await api.post('/auth/officer-login', payload);
+    return response.data;
+};

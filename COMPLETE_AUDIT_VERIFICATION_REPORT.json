@@ -1,0 +1,90 @@
+{
+  "timestamp": "2026-09-09T19:52:15.662Z",
+  "checks": [
+    {
+      "name": "Main /login page has NO officer links",
+      "passed": true,
+      "details": "Officer login link successfully hidden from students"
+    },
+    {
+      "name": "Main /login page has NO departmental clearance buttons",
+      "passed": true,
+      "details": "Clearance endpoints are completely unlisted"
+    },
+    {
+      "name": "Main /login page has zero emojis",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Unlisted endpoint /clearance/auth/library renders dedicated desk portal",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "/clearance/auth/library has zero emojis",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Unlisted endpoint /clearance/auth/hostel renders dedicated desk portal",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "/clearance/auth/hostel has zero emojis",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Unlisted endpoint /clearance/auth/sports renders dedicated desk portal",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "/clearance/auth/sports has zero emojis",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Unlisted endpoint /clearance/auth/dean renders dedicated desk portal",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "/clearance/auth/dean has zero emojis",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Unlisted endpoint /clearance/auth/ict renders dedicated desk portal",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "/clearance/auth/ict has zero emojis",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Library Officer logs into /no-dues/portal/library",
+      "passed": true,
+      "details": "Current URL: http://localhost:5173/no-dues/portal/library"
+    },
+    {
+      "name": "Test suite execution completed without uncaught exceptions",
+      "passed": false,
+      "details": "Runtime.callFunctionOn timed out. Increase the 'protocolTimeout' setting in launch/connect calls for a higher timeout if needed."
+    }
+  ],
+  "screenshots": [
+    "C:\\Users\\harsh\\.gemini\\antigravity\\brain\\3aea231d-33fe-4c94-b612-f8002d421b3f\\screenshots\\audit_01_student_login_clean.png",
+    "C:\\Users\\harsh\\.gemini\\antigravity\\brain\\3aea231d-33fe-4c94-b612-f8002d421b3f\\screenshots\\audit_02_unlisted_library_desk_auth.png"
+  ],
+  "summary": {
+    "total": 15,
+    "passed": 14,
+    "failed": 1,
+    "emojiViolations": 0
+  }
+}

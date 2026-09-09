@@ -13,6 +13,6 @@ router.get('/notifications', isAuthenticated, allowRoles('admin', 'coordinator',
 router.post('/add-coordinator', isAuthenticated, allowRoles('admin'), addCoordinator);
 router.delete('/delete-coordinator/:id', isAuthenticated, allowRoles('admin'), deleteCoordinator);
 
-router.get("/me", isAuthenticated, allowRoles('admin', 'coordinator', 'chairperson', 'faculty', 'student'), getAdminDetails);
+router.get("/me", isAuthenticated, allowRoles('admin', 'coordinator', 'chairperson', 'faculty', 'student', 'officer'), getAdminDetails);
 
 export default router;

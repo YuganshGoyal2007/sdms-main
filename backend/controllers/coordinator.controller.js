@@ -104,6 +104,25 @@ export const getAdminDetails = asyncHandler(async (req, res) => {
                 username: req.user.username,
                 email: req.user.username,
                 role: req.user.role,
+                officeCode: null,
+            },
+        });
+    }
+
+    if (req.user.role === 'officer') {
+        return res.status(200).json({
+            success: true,
+            id: req.user.id,
+            role: 'officer',
+            officeCode: req.user.officeCode,
+            message: 'Departmental clearance officer details found',
+            user: {
+                id: req.user.id,
+                name: req.user.name || req.user.username,
+                username: req.user.username,
+                email: req.user.username,
+                role: 'officer',
+                officeCode: req.user.officeCode,
             },
         });
     }
