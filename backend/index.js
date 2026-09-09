@@ -4,6 +4,7 @@ import logger from './lib/logger.js';
 import { connectDB } from './lib/db.js';
 import { installProcessHandlers } from './lib/shutdown.js';
 import app from './server.js';
+import { syncFacultyAssignments } from './services/timetableSync.service.js';
 import os from 'os';
 
 config({ path: '.env' });
@@ -71,6 +72,41 @@ connectDB().then((ok) => {
       },
       `Backend listening on ${bindText}:${PORT}`
     );
+
+    // ── Automatic Faculty Reassignment Sync ──────────────────────────
+    // Runs syncFacultyAssignments every 30 minutes so that when the
+    // university changes a teacher assignment on samay.mygbu.in, the
+    // SDMS system picks it up automatically without admin clicking Sync.
+    const SYNC_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+
+    const runAutoSync = async () => {
+      try {
+        logger.info('Auto-sync: starting scheduled faculty reassignment check');
+        const result = await syncFacultyAssignments({
+          school: 'SOICT',
+          department: 'CSE',
+          dryRun: false,
+          triggeredById: null, // system-triggered, no user
+        });
+        if (result.success) {
+          const s = result.summary;
+          logger.info(
+            { reassigned: s.reassignedCount, newAssignments: s.newAssignmentCount, unchanged: s.unchangedCount },
+            'Auto-sync: faculty reassignment check complete'
+          );
+        } else {
+          logger.warn({ error: result.error || result.message }, 'Auto-sync: faculty reassignment check failed');
+        }
+      } catch (err) {
+        logger.error({ error: err.message }, 'Auto-sync: unhandled error during faculty reassignment');
+      }
+    };
+
+    // First run 60 seconds after boot (let DB models finish syncing)
+    setTimeout(runAutoSync, 60 * 1000);
+    // Then repeat every 30 minutes
+    setInterval(runAutoSync, SYNC_INTERVAL_MS);
+    logger.info({ intervalMinutes: 30 }, 'Auto-sync: faculty reassignment background job scheduled');
   });
 
   server.on('error', (err) => {

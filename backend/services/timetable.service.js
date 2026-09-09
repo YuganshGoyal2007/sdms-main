@@ -19,6 +19,7 @@ import Timetable from '../models/timetable.model.js';
 import TimetableSection from '../models/timetableSection.model.js';
 import Student from '../models/student.model.js';
 import logger from '../lib/logger.js';
+import { syncFacultyAssignments } from './timetableSync.service.js';
 
 const MYGBU_BASE = 'https://mygbu.in/schd/index.php';
 const FETCH_TIMEOUT_MS = 15000;
@@ -347,6 +348,28 @@ export const refreshTimetable = async ({ school, department, program, batch, spe
         existing.semester = section.semester || existing.semester;
         existing.academicYear = section.academicYear || existing.academicYear;
         await existing.save();
+
+        // When timetable content changed, trigger automatic faculty reassignment
+        // in the background (fire-and-forget) so teacher moves are picked up
+        // without waiting for the 30-min background cron or admin click.
+        if (changed) {
+            syncFacultyAssignments({
+                school: canonicalSchool,
+                department: canonicalDept,
+                dryRun: false,
+                triggeredById: null,
+            }).then((syncResult) => {
+                if (syncResult.success && syncResult.summary.reassignedCount > 0) {
+                    logger.info(
+                        { school: canonicalSchool, dept: canonicalDept, reassigned: syncResult.summary.reassignedCount },
+                        'Auto-sync triggered by timetable content change: faculty reassignments applied'
+                    );
+                }
+            }).catch((err) => {
+                logger.warn({ error: err.message }, 'Auto-sync triggered by timetable change failed (non-blocking)');
+            });
+        }
+
         return { ok: true, timetable: existing, changed };
     }
 
