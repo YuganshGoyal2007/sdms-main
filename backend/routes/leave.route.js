@@ -11,6 +11,7 @@ import {
   applyLeave,
   getPendingLeaves,
   updateLeaveStatus,
+  getTeacherTimetableForLeave,
 } from '../controllers/leave.controller.js';
 
 const router = express.Router();
@@ -21,23 +22,23 @@ router.post('/leaves/types', isAuthenticated, allowRoles('admin'), createLeaveTy
 router.put('/leaves/types/:id', isAuthenticated, allowRoles('admin'), updateLeaveType);
 router.delete('/leaves/types/:id', isAuthenticated, allowRoles('admin'), deleteLeaveType);
 
-// Faculty / Staff Leave Operations
+// Leave Operations (Faculty, Staff, Coordinators, Chairpersons, Admin, Officers — restricted from students)
 router.get(
   '/leaves/my',
   isAuthenticated,
-  allowRoles('faculty', 'coordinator', 'chairperson', 'admin'),
+  allowRoles('faculty', 'coordinator', 'chairperson', 'admin', 'officer'),
   getMyLeaves
 );
 router.get(
   '/leaves/my/balance',
   isAuthenticated,
-  allowRoles('faculty', 'coordinator', 'chairperson', 'admin'),
+  allowRoles('faculty', 'coordinator', 'chairperson', 'admin', 'officer'),
   getMyLeaveBalances
 );
 router.post(
   '/leaves/apply',
   isAuthenticated,
-  allowRoles('faculty', 'coordinator', 'chairperson', 'admin'),
+  allowRoles('faculty', 'coordinator', 'chairperson', 'admin', 'officer'),
   applyLeave
 );
 
@@ -45,14 +46,22 @@ router.post(
 router.get(
   '/leaves/pending',
   isAuthenticated,
-  allowRoles('admin', 'chairperson', 'coordinator'),
+  allowRoles('admin', 'chairperson', 'coordinator', 'officer'),
   getPendingLeaves
 );
 router.put(
   '/leaves/:id/status',
   isAuthenticated,
-  allowRoles('admin', 'chairperson', 'coordinator'),
+  allowRoles('admin', 'chairperson', 'coordinator', 'officer'),
   updateLeaveStatus
+);
+
+// Teacher timetable review for approvers
+router.get(
+  '/leaves/:id/teacher-timetable',
+  isAuthenticated,
+  allowRoles('admin', 'chairperson', 'coordinator', 'officer'),
+  getTeacherTimetableForLeave
 );
 
 export default router;

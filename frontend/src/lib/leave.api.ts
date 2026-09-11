@@ -33,6 +33,7 @@ export interface LeaveApplicationItem {
   toDate: string;
   totalDays: number;
   reason: string;
+  remarks?: string;
   attachmentUrl?: string;
   status: 'pending' | 'approved' | 'rejected';
   hodStatus: 'pending' | 'approved' | 'rejected';
@@ -46,6 +47,45 @@ export interface LeaveApplicationItem {
   createdAt: string;
   leaveType?: LeaveTypeItem;
   applicant?: { id: number; username: string; role: string };
+}
+
+export interface TeacherTimetableResponse {
+  success: boolean;
+  teacher: {
+    id: number;
+    name: string;
+    role: string;
+    department?: string;
+    school?: string;
+    facultyId?: string;
+    email?: string;
+  };
+  leave: {
+    id: number;
+    fromDate: string;
+    toDate: string;
+    totalDays: number;
+    reason: string;
+    remarks?: string;
+  };
+  assignedClasses: Array<{
+    assignmentId: number;
+    school: string;
+    department: string;
+    program: string;
+    batch: string;
+    specialization: string;
+    semester?: number;
+    academicYear?: string;
+    subject?: {
+      id: number;
+      name: string;
+      code: string;
+      type: string;
+    } | null;
+    entries: Record<string, Record<string, Array<{ code: string; faculty: string; room: string; group?: string | null }>>>;
+  }>;
+  candidateCodes: string[];
 }
 
 export const getLeaveTypes = async (): Promise<{ success: boolean; leaveTypes: LeaveTypeItem[] }> => {
@@ -89,6 +129,7 @@ export const applyLeave = async (payload: {
   fromDate: string;
   toDate: string;
   reason: string;
+  remarks?: string;
   attachmentUrl?: string;
   department?: string;
   school?: string;
@@ -97,8 +138,8 @@ export const applyLeave = async (payload: {
   return response.data;
 };
 
-export const getPendingLeaves = async (): Promise<{ success: boolean; leaves: LeaveApplicationItem[] }> => {
-  const response = await api.get('/leaves/pending');
+export const getPendingLeaves = async (params?: { filter?: string; role?: string }): Promise<{ success: boolean; leaves: LeaveApplicationItem[] }> => {
+  const response = await api.get('/leaves/pending', { params });
   return response.data;
 };
 
@@ -107,8 +148,14 @@ export const updateLeaveStatus = async (
   payload: {
     status: 'approved' | 'rejected';
     comments?: string;
+    asRole?: 'hod' | 'dean';
   }
 ) => {
   const response = await api.put(`/leaves/${leaveId}/status`, payload);
+  return response.data;
+};
+
+export const getTeacherTimetableForLeave = async (leaveId: number): Promise<TeacherTimetableResponse> => {
+  const response = await api.get(`/leaves/${leaveId}/teacher-timetable`);
   return response.data;
 };

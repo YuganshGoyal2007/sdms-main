@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import bcrypt from 'bcryptjs';
+import { Agent, setGlobalDispatcher } from 'undici';
 import sequelize from '../lib/db.js';
 import logger from '../lib/logger.js';
 import User from '../models/user.model.js';
@@ -8,6 +9,14 @@ import Subject from '../models/subject.model.js';
 import FacultyAssignment from '../models/facultyAssignment.model.js';
 import TimetableSection from '../models/timetableSection.model.js';
 import ChangeLog from '../models/changeLog.model.js';
+
+// University servers (samay.mygbu.in & mygbu.in) use university internal/self-signed SSL certificates.
+// Configure dispatcher to tolerate university certificate chains for scraping.
+try {
+  setGlobalDispatcher(new Agent({ connect: { rejectUnauthorized: false } }));
+} catch (e) {
+  // Ignore if already set
+}
 
 const SAMAY_API_URL = 'https://samay.mygbu.in/api.php';
 const MYGBU_LOAD_URL = 'https://mygbu.in/schd/load.php?school=SOICT&dept=CSE+++++++';
@@ -240,8 +249,22 @@ async function resolveOrCreateSubject(subjectCode, subjectName, coords = {}, tra
 
 /**
  * Maps timetable section details to canonical SDMS class coordinates.
+ * Priority 1: Exact matching against configured TimetableSection mapping by mygbuSectionId.
+ * Priority 2: Heuristic derivation from SectionName / Program name.
  */
-function resolveClassCoordinates(item) {
+function resolveClassCoordinates(item, mappedSection = null) {
+  if (mappedSection) {
+    return {
+      school: mappedSection.school,
+      department: mappedSection.department,
+      program: mappedSection.program,
+      batch: mappedSection.batch,
+      specialization: mappedSection.specialization,
+      semester: mappedSection.semester ? (parseInt(String(mappedSection.semester).replace(/\D/g, ''), 10) || 1) : 1,
+      academicYear: mappedSection.academicYear || '2025-2026',
+    };
+  }
+
   const school = String(item.school || 'SOICT').trim().toUpperCase();
   const department = String(item.StudentDepartment || item.dept || 'CSE').trim().toUpperCase();
   const program = String(item.program_name || 'B.Tech (CS)').trim();
@@ -271,6 +294,7 @@ function resolveClassCoordinates(item) {
   else if (rawSection.includes('CS') || rawSection.includes('BCS')) {
     if (rawSection.includes('B')) specialization = 'Core Sec- B';
     else if (rawSection.includes('C')) specialization = 'Core Sec- C';
+    else if (rawSection.includes('D')) specialization = 'Core Sec- D';
     else specialization = 'Core Sec- A';
   }
 
@@ -325,6 +349,15 @@ export async function syncFacultyAssignments({
     }
   }
 
+  // Load active TimetableSection mappings indexed by mygbuSectionId for high-fidelity class resolution
+  const activeSections = await TimetableSection.findAll({ where: { active: true } });
+  const sectionIdMap = new Map();
+  for (const s of activeSections) {
+    if (s.mygbuSectionId) {
+      sectionIdMap.set(String(s.mygbuSectionId).trim(), s);
+    }
+  }
+
   const changes = [];
   let reassignedCount = 0;
   let newAssignmentCount = 0;
@@ -334,7 +367,9 @@ export async function syncFacultyAssignments({
 
   try {
     for (const [key, item] of allocationMap.entries()) {
-      const coords = resolveClassCoordinates(item);
+      const rawSecId = String(item.Section_Id || '').trim();
+      const mappedSection = sectionIdMap.get(rawSecId) || null;
+      const coords = resolveClassCoordinates(item, mappedSection);
       const subject = await resolveOrCreateSubject(item.Subject_Code, item.subject_name, coords, transaction);
       if (!subject) continue;
 

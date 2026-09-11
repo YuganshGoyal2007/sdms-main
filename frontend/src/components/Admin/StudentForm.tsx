@@ -483,30 +483,30 @@ const AddStudentForm: React.FC = () => {
             {/* PERSONAL */}
             <Section title="Personal Information">
                 <Grid>
-                    <Input required name="fatherName" label="Father's Name" value={form.fatherName} disabled={isEditMode && AdminUser.role !== 'admin'} onChange={handleChange} />
-                    <Input required name="motherName" label="Mother's Name" value={form.motherName} disabled={isEditMode && AdminUser.role !== 'admin'} onChange={handleChange} />
-                    <Select required name="gender" label="Gender" value={form.gender} disabled={isEditMode && AdminUser.role !== 'admin'} onChange={handleChange}>
+                    <Input required name="fatherName" label="Father's Name" value={form.fatherName} onChange={handleChange} />
+                    <Input required name="motherName" label="Mother's Name" value={form.motherName} onChange={handleChange} />
+                    <Select required name="gender" label="Gender" value={form.gender} onChange={handleChange}>
                         <option value="">Select</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
                         <option value="Others">Others</option>
                     </Select>
-                    <Input required type="date" name="dob" label="Date of Birth" disabled={isEditMode && AdminUser.role !== 'admin'} value={form.dob} onChange={handleChange} />
-                    <Select required name="category" label="Category" value={form.category} disabled={isEditMode && AdminUser.role !== 'admin'} onChange={handleChange}>
+                    <Input required type="date" name="dob" label="Date of Birth" value={form.dob} onChange={handleChange} />
+                    <Select required name="category" label="Category" value={form.category} onChange={handleChange}>
                         <option value="">Select</option>
                         {["General", "OBC", "SC", "ST", "EWS", "PwD"].map(c =>
                             <option key={c} value={c}>{c}</option>
                         )}
                     </Select>
-                    <Input required name="nationalId" label="Aadhaar / National ID" disabled={isEditMode && AdminUser.role !== 'admin'} value={form.nationalId} onChange={handleChange} />
-                    <Input required name="mobile" label="Mobile No" value={form.mobile} disabled={isEditMode && AdminUser.role !== 'admin'} onChange={handleChange} type="tel" />
-                    <Input required name="email" label="Email ID" value={form.email} disabled={isEditMode && AdminUser.role !== 'admin'} onChange={handleChange} type="email" />
-                    <Select required name="hosteller" label="Hosteller" value={form.hosteller} disabled={isEditMode && AdminUser.role !== 'admin'} onChange={handleChange}>
+                    <Input required name="nationalId" label="Aadhaar / National ID" value={form.nationalId} onChange={handleChange} />
+                    <Input required name="mobile" label="Mobile No" value={form.mobile} onChange={handleChange} type="tel" />
+                    <Input required name="email" label="Email ID" value={form.email} onChange={handleChange} type="email" />
+                    <Select required name="hosteller" label="Hosteller" value={form.hosteller} onChange={handleChange}>
                         <option value="">Select</option>
                         <option value="Yes">Yes</option>
                         <option value="No">No</option>
                     </Select>
-                    <Textarea name="address" label="Address" value={form.address} disabled={isEditMode && AdminUser.role !== 'admin'} onChange={handleChange} />
+                    <Textarea name="address" label="Address" value={form.address} onChange={handleChange} />
                 </Grid>
             </Section>
 

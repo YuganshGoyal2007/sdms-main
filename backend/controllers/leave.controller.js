@@ -1,7 +1,22 @@
 import { Op } from 'sequelize';
 import asyncHandler from '../lib/asyncHandler.js';
 import logger from '../lib/logger.js';
-import { LeaveType, LeaveApplication, User, ChangeLog } from '../models/index.js';
+import {
+  LeaveType,
+  LeaveApplication,
+  User,
+  ChangeLog,
+  Faculty,
+  Coordinator,
+  Chairperson,
+  ChairpersonClass,
+  Notification,
+  FacultyAssignment,
+  Subject,
+} from '../models/index.js';
+import Timetable from '../models/timetable.model.js';
+import TimetableSection from '../models/timetableSection.model.js';
+import { findSectionForClass } from '../services/timetable.service.js';
 
 /**
  * GET /leaves/types
@@ -125,10 +140,17 @@ export const getMyLeaveBalances = asyncHandler(async (req, res) => {
 
 /**
  * POST /leaves/apply
- * Apply for leave with quota deduction and day calculation.
+ * Apply for leave with quota deduction, day calculation, and optional remarks.
  */
 export const applyLeave = asyncHandler(async (req, res) => {
-  const { leaveTypeId, fromDate, toDate, reason, attachmentUrl, department, school } = req.body;
+  if (req.user.role === 'student') {
+    return res.status(403).json({
+      success: false,
+      message: 'Access Denied: Leave management is restricted to faculty and academic staff.',
+    });
+  }
+
+  const { leaveTypeId, fromDate, toDate, reason, remarks, attachmentUrl, department, school } = req.body;
 
   if (!leaveTypeId || !fromDate || !toDate || !reason) {
     return res.status(400).json({ success: false, message: 'Leave type, dates, and reason are required.' });
@@ -168,18 +190,54 @@ export const applyLeave = asyncHandler(async (req, res) => {
     });
   }
 
+  // Auto-resolve applicant profile info if not supplied
+  let resolvedName = req.user.name || req.user.username;
+  let resolvedDept = department || req.user.department || null;
+  let resolvedSchool = school || req.user.school || null;
+
+  try {
+    if (req.user.role === 'faculty') {
+      const fac = await Faculty.findOne({ where: { userId: req.user.id } });
+      if (fac) {
+        if (fac.name) resolvedName = fac.name;
+        if (!resolvedDept && fac.department) resolvedDept = fac.department;
+      }
+    } else if (req.user.role === 'chairperson') {
+      const chair = await Chairperson.findOne({ where: { userId: req.user.id } });
+      if (chair) {
+        if (chair.name) resolvedName = chair.name;
+        const chairClass = await ChairpersonClass.findOne({ where: { chairpersonId: chair.id } });
+        if (chairClass) {
+          if (!resolvedDept && chairClass.department) resolvedDept = chairClass.department;
+          if (!resolvedSchool && chairClass.school) resolvedSchool = chairClass.school;
+        }
+      }
+    } else if (req.user.role === 'coordinator') {
+      const coord = await Coordinator.findOne({ where: { userId: req.user.id } });
+      if (coord) {
+        if (coord.name) resolvedName = coord.name;
+        if (!resolvedDept && coord.department) resolvedDept = coord.department;
+        if (!resolvedSchool && coord.school) resolvedSchool = coord.school;
+      }
+    }
+    // officer (e.g. Dean) — use user record name directly; department/school from req.user
+  } catch (e) {
+    logger.warn({ err: e }, 'Could not auto-resolve profile for leave application');
+  }
+
   const app = await LeaveApplication.create({
     userId: req.user.id,
-    applicantName: req.user.name || req.user.username,
+    applicantName: resolvedName,
     applicantRole: req.user.role,
-    department: department || req.user.department || null,
-    school: school || req.user.school || null,
+    department: resolvedDept,
+    school: resolvedSchool,
     leaveTypeId,
     fromDate,
     toDate,
     totalDays,
-    reason,
-    attachmentUrl: attachmentUrl || null,
+    reason: reason.trim(),
+    remarks: remarks ? remarks.trim() : null,
+    attachmentUrl: attachmentUrl ? attachmentUrl.trim() : null,
     status: 'pending',
     hodStatus: 'pending',
     deanStatus: 'pending',
@@ -191,10 +249,29 @@ export const applyLeave = asyncHandler(async (req, res) => {
       action: 'apply_leave',
       entity: 'leave_application',
       entityId: String(app.id),
-      details: { leaveType: lt.name, totalDays, fromDate, toDate },
+      details: { leaveType: lt.name, totalDays, fromDate, toDate, remarks },
     });
   } catch (e) {
     logger.warn({ err: e }, 'Failed to record leave application changelog');
+  }
+
+  // Notify admins/coordinators of new leave application
+  try {
+    await Notification.create({
+      toRole: 'admin',
+      message: `New leave request submitted by ${resolvedName} (${req.user.role}, ${resolvedDept || 'All Depts'}): ${totalDays} day(s) for ${lt.name}.`,
+      data: {
+        leaveId: app.id,
+        applicantId: req.user.id,
+        applicantName: resolvedName,
+        applicantRole: req.user.role,
+        leaveType: lt.name,
+        totalDays,
+      },
+      scope: 'broadcast',
+    });
+  } catch (e) {
+    logger.warn({ err: e }, 'Failed to dispatch notification for leave application');
   }
 
   const populated = await LeaveApplication.findByPk(app.id, {
@@ -203,31 +280,72 @@ export const applyLeave = asyncHandler(async (req, res) => {
 
   return res.status(201).json({
     success: true,
-    message: 'Leave application submitted successfully for HOD review.',
+    message: 'Leave application submitted successfully for review.',
     leave: populated,
   });
 });
 
 /**
  * GET /leaves/pending
- * Approver review queue for HOD and Dean.
+ * Approver review queue for HOD, Coordinators, and Dean / Admin.
+ * Supports optional ?filter=all|pending|history and ?role=all|faculty|coordinator|chairperson|student query parameters.
  */
 export const getPendingLeaves = asyncHandler(async (req, res) => {
   const userRole = req.user.role;
+  const isDeanOrOfficer = userRole === 'officer' && (req.user.officeCode === 'DEAN' || req.user.officeCode === 'dean');
+  const isHodOrDept = userRole === 'chairperson' || userRole === 'coordinator';
+  const isAdmin = userRole === 'admin';
+
+  const { filter, role: filterRole } = req.query;
   let whereClause = {};
 
-  if (userRole === 'chairperson' || userRole === 'coordinator') {
+  if (isHodOrDept) {
     // HOD review tier
-    whereClause.hodStatus = 'pending';
-    whereClause.status = 'pending';
-    if (req.user.department) {
-      whereClause.department = req.user.department;
+    if (filter === 'history') {
+      whereClause.hodStatus = { [Op.in]: ['approved', 'rejected'] };
+    } else if (filter === 'all') {
+      // no status constraint
+    } else {
+      whereClause.hodStatus = 'pending';
+      whereClause.status = 'pending';
     }
-  } else if (userRole === 'admin') {
-    // Admin / Dean review tier (can review HOD-approved or all pending)
-    whereClause.status = 'pending';
+
+    // If user has a department, optionally filter by department, but allow seeing all if none set
+    let dept = req.user.department;
+    if (!dept) {
+      try {
+        if (userRole === 'chairperson') {
+          const chair = await Chairperson.findOne({ where: { userId: req.user.id } });
+          if (chair) {
+            const chairClass = await ChairpersonClass.findOne({ where: { chairpersonId: chair.id } });
+            if (chairClass?.department) dept = chairClass.department;
+          }
+        } else {
+          const coord = await Coordinator.findOne({ where: { userId: req.user.id } });
+          if (coord?.department) dept = coord.department;
+        }
+      } catch (e) {}
+    }
+    if (dept) {
+      whereClause.department = dept;
+    }
+  } else if (isAdmin || isDeanOrOfficer) {
+    // Admin / Dean review tier
+    if (filter === 'history') {
+      whereClause.status = { [Op.in]: ['approved', 'rejected'] };
+    } else if (filter === 'all') {
+      // no status constraint
+    } else {
+      // Pending review queue:
+      // Show applications pending Dean action (or all pending applications)
+      whereClause.status = 'pending';
+    }
   } else {
     return res.status(403).json({ success: false, message: 'Not authorized to view approval queue.' });
+  }
+
+  if (filterRole && filterRole !== 'all') {
+    whereClause.applicantRole = filterRole;
   }
 
   const leaves = await LeaveApplication.findAll({
@@ -244,11 +362,18 @@ export const getPendingLeaves = asyncHandler(async (req, res) => {
 
 /**
  * PUT /leaves/:id/status
- * Two-tier approval handler (HOD -> Dean).
+ * Dual approval handler:
+ * For teaching roles (faculty, coordinator, chairperson):
+ * - BOTH HOD and Dean must approve for overall status to become 'approved'.
+ * - If EITHER rejects, overall status immediately becomes 'rejected'.
+ * For students:
+ * - HOD or Dean review can finalize.
  */
 export const updateLeaveStatus = asyncHandler(async (req, res) => {
   const { status, comments } = req.body;
   const userRole = req.user.role;
+  const isDean = (userRole === 'officer' && (req.user.officeCode === 'DEAN' || req.user.officeCode === 'dean')) || (userRole === 'admin' && req.body.asRole === 'dean');
+  const isHOD = userRole === 'chairperson' || userRole === 'coordinator' || (userRole === 'admin' && req.body.asRole !== 'dean');
 
   if (!['approved', 'rejected'].includes(status)) {
     return res.status(400).json({ success: false, message: "Status must be 'approved' or 'rejected'." });
@@ -264,8 +389,26 @@ export const updateLeaveStatus = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'Leave application has already been finalized.' });
   }
 
-  if (userRole === 'chairperson' || userRole === 'coordinator') {
-    // HOD ACTION
+  const isTeacherApplicant = ['faculty', 'coordinator', 'chairperson'].includes(leave.applicantRole);
+
+  // Determine reviewer tier
+  let reviewerTier = '';
+  if (userRole === 'officer' && (req.user.officeCode === 'DEAN' || req.user.officeCode === 'dean')) {
+    reviewerTier = 'dean';
+  } else if (userRole === 'chairperson' || userRole === 'coordinator') {
+    reviewerTier = 'hod';
+  } else if (userRole === 'admin') {
+    // Admin can act as HOD or Dean (defaults to Dean if hodStatus already approved, or explicit asRole)
+    if (req.body.asRole === 'dean' || leave.hodStatus === 'approved') {
+      reviewerTier = 'dean';
+    } else {
+      reviewerTier = 'hod';
+    }
+  } else {
+    return res.status(403).json({ success: false, message: 'Not authorized to approve/reject leaves.' });
+  }
+
+  if (reviewerTier === 'hod') {
     if (leave.hodStatus !== 'pending') {
       return res.status(400).json({ success: false, message: 'Already reviewed by HOD.' });
     }
@@ -273,28 +416,56 @@ export const updateLeaveStatus = asyncHandler(async (req, res) => {
     leave.hodStatus = status;
     leave.hodApprovedBy = req.user.id;
     leave.hodApprovedAt = new Date();
-    leave.hodComments = comments || null;
+    leave.hodComments = comments ? comments.trim() : null;
 
     if (status === 'rejected') {
+      // Immediate rejection
       leave.status = 'rejected';
     } else {
-      leave.deanStatus = 'pending';
+      // HOD approved
+      if (isTeacherApplicant) {
+        // Teacher leave requires BOTH HOD and Dean approval
+        if (leave.deanStatus === 'approved') {
+          leave.status = 'approved';
+        } else {
+          leave.status = 'pending';
+        }
+      } else {
+        // For students, HOD approval suffices or advances
+        leave.status = 'approved';
+      }
     }
-  } else if (userRole === 'admin') {
-    // DEAN / ADMIN ACTION
+  } else if (reviewerTier === 'dean') {
+    if (leave.deanStatus !== 'pending') {
+      return res.status(400).json({ success: false, message: 'Already reviewed by Dean.' });
+    }
+
     leave.deanStatus = status;
     leave.deanApprovedBy = req.user.id;
     leave.deanApprovedAt = new Date();
-    leave.deanComments = comments || null;
+    leave.deanComments = comments ? comments.trim() : null;
 
-    leave.status = status;
-    if (!leave.hodApprovedBy) {
-      leave.hodStatus = status;
-      leave.hodApprovedBy = req.user.id;
-      leave.hodApprovedAt = new Date();
+    if (status === 'rejected') {
+      // Immediate rejection
+      leave.status = 'rejected';
+    } else {
+      // Dean approved
+      if (isTeacherApplicant) {
+        // Teacher leave requires BOTH HOD and Dean approval
+        if (leave.hodStatus === 'approved') {
+          leave.status = 'approved';
+        } else {
+          leave.status = 'pending';
+        }
+      } else {
+        leave.status = 'approved';
+        if (!leave.hodApprovedBy) {
+          leave.hodStatus = 'approved';
+          leave.hodApprovedBy = req.user.id;
+          leave.hodApprovedAt = new Date();
+        }
+      }
     }
-  } else {
-    return res.status(403).json({ success: false, message: 'Not authorized to approve/reject leaves.' });
   }
 
   await leave.save();
@@ -305,15 +476,145 @@ export const updateLeaveStatus = asyncHandler(async (req, res) => {
       action: `leave_${status}`,
       entity: 'leave_application',
       entityId: String(leave.id),
-      details: { status, reviewerRole: userRole, comments },
+      details: { status, reviewerTier, reviewerRole: userRole, comments },
     });
   } catch (e) {
     logger.warn({ err: e }, 'Failed to record leave review changelog');
   }
 
+  // Notify applicant of review outcome
+  try {
+    const actionLabel = status === 'approved' ? 'approved' : 'rejected';
+    await Notification.create({
+      toUserId: leave.userId,
+      toRole: leave.applicantRole,
+      message: `Your leave application #${leave.id} (${leave.leaveType?.name || 'Leave'}) has been ${actionLabel} by ${reviewerTier.toUpperCase()} (${userRole.toUpperCase()}).${comments ? ` Remarks: ${comments}` : ''}`,
+      data: {
+        leaveId: leave.id,
+        status: leave.status,
+        reviewerTier,
+        reviewerRole: userRole,
+        comments,
+      },
+      scope: 'direct',
+    });
+  } catch (e) {
+    logger.warn({ err: e }, 'Failed to dispatch notification to leave applicant');
+  }
+
   return res.json({
     success: true,
-    message: `Leave request ${status} by ${userRole}.`,
+    message: `Leave request marked as ${status} by ${reviewerTier.toUpperCase()}. Overall status: ${leave.status}.`,
     leave,
   });
 });
+
+/**
+ * GET /leaves/:id/teacher-timetable
+ * Returns scheduled classes and timetable entries for the teacher associated with this leave application.
+ * Accessible to HOD, Dean, and Admin approvers to inspect lecture clashes during the requested leave.
+ */
+export const getTeacherTimetableForLeave = asyncHandler(async (req, res) => {
+  const leaveId = req.params.id;
+  const leave = await LeaveApplication.findByPk(leaveId);
+
+  if (!leave) {
+    return res.status(404).json({ success: false, message: 'Leave application not found.' });
+  }
+
+  const teacherUserId = leave.userId;
+
+  // 1. Fetch faculty record to get facultyId / short code if any
+  const facultyRecord = await Faculty.findOne({ where: { userId: teacherUserId } });
+  const teacherUser = await User.findByPk(teacherUserId, { attributes: ['id', 'name', 'username', 'role'] });
+
+  // 2. Fetch assigned classes from FacultyAssignment
+  const assignments = await FacultyAssignment.findAll({
+    where: { facultyId: teacherUserId, isActive: true },
+  });
+
+  const subjectIds = Array.from(new Set(assignments.map((a) => a.subjectId).filter(Boolean)));
+  const subjects = await Subject.findAll({
+    where: { id: { [Op.in]: subjectIds } },
+    attributes: ['id', 'name', 'code', 'credits', 'type', 'semester'],
+  });
+  const subjectMap = new Map(subjects.map((s) => [s.id, s]));
+
+  // 3. For each assigned class, lookup its timetable
+  const classTimetables = [];
+  for (const asgn of assignments) {
+    const subj = subjectMap.get(asgn.subjectId);
+    let tt = await Timetable.findOne({
+      where: {
+        school: asgn.school,
+        department: asgn.department,
+        program: asgn.program,
+        batch: asgn.batch,
+        specialization: asgn.specialization,
+      },
+    });
+
+    if (!tt) {
+      // Fallback section lookup
+      const section = await findSectionForClass(asgn.school, asgn.department, asgn.program, asgn.batch, asgn.specialization);
+      if (section) {
+        tt = await Timetable.findOne({
+          where: {
+            school: section.school,
+            department: section.department,
+            program: section.program,
+            batch: section.batch,
+            specialization: section.specialization,
+          },
+        });
+      }
+    }
+
+    classTimetables.push({
+      assignmentId: asgn.id,
+      school: asgn.school,
+      department: asgn.department,
+      program: asgn.program,
+      batch: asgn.batch,
+      specialization: asgn.specialization,
+      semester: asgn.semester,
+      academicYear: asgn.academicYear,
+      subject: subj ? { id: subj.id, name: subj.name, code: subj.code, type: subj.type } : null,
+      entries: tt ? tt.entries : {},
+    });
+  }
+
+  // 4. Also search for any timetable slot mentioning teacher's faculty code or name
+  let candidateCodes = [];
+  if (facultyRecord?.facultyId) candidateCodes.push(facultyRecord.facultyId.toUpperCase());
+  if (teacherUser?.name) {
+    // Generate acronym/initials, e.g., 'Arun Solanki' -> 'AS', 'Dr. Test Faculty' -> 'TF'
+    const cleanName = teacherUser.name.replace(/^(Dr\.|Prof\.|Mr\.|Ms\.|Mrs\.)\s*/i, '').trim();
+    const initials = cleanName.split(/\s+/).map((w) => w[0]).join('').toUpperCase();
+    if (initials) candidateCodes.push(initials);
+  }
+
+  return res.json({
+    success: true,
+    teacher: {
+      id: teacherUserId,
+      name: leave.applicantName,
+      role: leave.applicantRole,
+      department: leave.department,
+      school: leave.school,
+      facultyId: facultyRecord?.facultyId || null,
+      email: teacherUser?.username || null,
+    },
+    leave: {
+      id: leave.id,
+      fromDate: leave.fromDate,
+      toDate: leave.toDate,
+      totalDays: leave.totalDays,
+      reason: leave.reason,
+      remarks: leave.remarks,
+    },
+    assignedClasses: classTimetables,
+    candidateCodes,
+  });
+});
+

@@ -52,6 +52,10 @@ const LeaveApplication = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    remarks: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     attachmentUrl: {
       type: DataTypes.STRING(500),
       allowNull: true,

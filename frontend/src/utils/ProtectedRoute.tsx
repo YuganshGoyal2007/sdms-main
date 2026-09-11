@@ -68,7 +68,8 @@ const ProtectedRoute = () => {
     }
     if (role === "officer") {
         const allowedPrefixes = ["/no-dues/portal", "/portal"];
-        const isAllowed = allowedPrefixes.some((p) => location.pathname.startsWith(p));
+        const isLeavesAllowed = location.pathname.startsWith("/admin/leaves");
+        const isAllowed = allowedPrefixes.some((p) => location.pathname.startsWith(p)) || isLeavesAllowed;
         if (!isAllowed) {
             return <Navigate to="/no-dues/portal/library" replace />;
         }

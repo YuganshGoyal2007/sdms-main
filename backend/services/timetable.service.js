@@ -15,11 +15,19 @@
  */
 import crypto from 'crypto';
 import { Op } from 'sequelize';
+import { Agent, setGlobalDispatcher } from 'undici';
 import Timetable from '../models/timetable.model.js';
 import TimetableSection from '../models/timetableSection.model.js';
 import Student from '../models/student.model.js';
 import logger from '../lib/logger.js';
 import { syncFacultyAssignments } from './timetableSync.service.js';
+
+// Tolerate university internal/self-signed SSL certificates for timetable scraper
+try {
+  setGlobalDispatcher(new Agent({ connect: { rejectUnauthorized: false } }));
+} catch (e) {
+  // Ignore if already set
+}
 
 const MYGBU_BASE = 'https://mygbu.in/schd/index.php';
 const FETCH_TIMEOUT_MS = 15000;

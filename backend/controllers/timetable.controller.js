@@ -3,7 +3,7 @@ import { asyncHandler } from '../lib/asyncHandler.js';
 import sequelize from '../lib/db.js';
 import Timetable from '../models/timetable.model.js';
 import TimetableSection from '../models/timetableSection.model.js';
-import { getTimetableForStudent, refreshTimetable, refreshAllTimetables } from '../services/timetable.service.js';
+import { getTimetableForStudent, refreshTimetable, refreshAllTimetables, findSectionForClass } from '../services/timetable.service.js';
 import { getScrapeLiveStatus, syncFacultyAssignments, getFacultyAuditLogs } from '../services/timetableSync.service.js';
 import logger from '../lib/logger.js';
 
@@ -50,9 +50,25 @@ export const getMyTimetable = asyncHandler(async (req, res) => {
 
 export const getTimetableForClass = asyncHandler(async (req, res) => {
     const { school, department, program, batch, specialization } = req.params;
-    let timetable = await Timetable.findOne({ where: { school, department, program, batch, specialization } });
+    const section = await findSectionForClass(school, department, program, batch, specialization);
+    const lookupSchool = section ? section.school : school;
+    const lookupDept = section ? section.department : department;
+    const lookupProg = section ? section.program : program;
+    const lookupBatch = section ? section.batch : batch;
+    const lookupSpec = section ? section.specialization : specialization;
+
+    let timetable = await Timetable.findOne({
+        where: {
+            school: lookupSchool,
+            department: lookupDept,
+            program: lookupProg,
+            batch: lookupBatch,
+            specialization: lookupSpec
+        }
+    });
+
     if (!timetable || timetable.isStale) {
-        const r = await refreshTimetable({ school, department, program, batch, specialization, silent: true });
+        const r = await refreshTimetable({ school: lookupSchool, department: lookupDept, program: lookupProg, batch: lookupBatch, specialization: lookupSpec, silent: true });
         if (!r.ok) {
             if (timetable) {
                 return res.json({ success: true, timetable, stale: true, error: r.error });

@@ -114,6 +114,7 @@ const App = () => {
             <Route path="/faculty/classes" element={<TeachingDashboard />} />
             <Route path="/faculty/messages" element={<FacultyMessages />} />
             <Route path="/faculty/leaves" element={<FacultyLeaves />} />
+            <Route path="/officer/my-leaves" element={<FacultyLeaves />} />
             <Route path="/faculty/mark-attendance" element={<TeachingDashboard />} />
             <Route path="/faculty/mark-attendance/:classKey/:subjectId" element={<MarkAttendance />} />
 

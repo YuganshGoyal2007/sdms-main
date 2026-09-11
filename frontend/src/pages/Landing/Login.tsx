@@ -29,6 +29,9 @@ const StudentLogin = () => {
           case 'admin':
             navigate("/admin/dashboard");
             break;
+          case 'faculty':
+            navigate("/faculty/dashboard");
+            break;
           case 'coordinator':
             navigate("/coordinator/dashboard");
             break;

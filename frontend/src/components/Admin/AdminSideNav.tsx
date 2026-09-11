@@ -62,6 +62,23 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                                     {menu && <h1 className={activeTab === 'nodues' ? 'text-black font-bold' : ''}>Clearance Desk</h1>}
                                 </button>
                             </Link>
+
+                            {isOfficer && (user?.officeCode === 'DEAN' || user?.officeCode === 'dean') && (
+                                <>
+                                    <Link to="/admin/leaves" className="block">
+                                        <button className="w-full flex items-center justify-start gap-3 cursor-pointer">
+                                            <Calendar size={20} className="text-[#7b3b5a]" />
+                                            {menu && <h1 className={activeTab === 'leaves' ? 'text-black font-bold' : ''}>Leave Approvals</h1>}
+                                        </button>
+                                    </Link>
+                                    <Link to="/officer/my-leaves" className="block">
+                                        <button className="w-full flex items-center justify-start gap-3 cursor-pointer">
+                                            <CalendarDays size={20} className="text-[#7b3b5a]" />
+                                            {menu && <h1 className={activeTab === 'my-leaves' ? 'text-black font-bold' : ''}>My Leaves</h1>}
+                                        </button>
+                                    </Link>
+                                </>
+                            )}
                         </>
                     ) : isFaculty ? (
                         <>
@@ -300,6 +317,23 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                                     {!menu && <h1 className={activeTab === 'nodues' ? 'text-black font-bold' : ''}>My Clearance Desk</h1>}
                                 </button>
                             </Link>
+
+                            {isOfficer && (user?.officeCode === 'DEAN' || user?.officeCode === 'dean') && (
+                                <>
+                                    <Link to="/admin/leaves" className="block">
+                                        <button className="w-full flex items-center gap-3 cursor-pointer">
+                                            <Calendar size={20} className="text-[#7b3b5a]" />
+                                            {!menu && <h1 className={activeTab === 'leaves' ? 'text-black font-bold' : ''}>Leave Approvals</h1>}
+                                        </button>
+                                    </Link>
+                                    <Link to="/officer/my-leaves" className="block">
+                                        <button className="w-full flex items-center gap-3 cursor-pointer">
+                                            <CalendarDays size={20} className="text-[#7b3b5a]" />
+                                            {!menu && <h1 className={activeTab === 'my-leaves' ? 'text-black font-bold' : ''}>My Leaves</h1>}
+                                        </button>
+                                    </Link>
+                                </>
+                            )}
                         </>
                     ) : isFaculty ? (
                         <>
