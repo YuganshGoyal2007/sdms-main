@@ -22,9 +22,9 @@ import NoDuesApplication from './noDuesApplication.model.js';
 import NoDuesStage from './noDuesStage.model.js';
 import LeaveType from './leaveType.model.js';
 import LeaveApplication from './leaveApplication.model.js';
-
-FeeRecord.belongsTo(Student, { foreignKey: 'studentId' });
-Student.hasMany(FeeRecord, { foreignKey: 'studentId' });
+import Timetable from './timetable.model.js';
+import TimetableSection from './timetableSection.model.js';
+import TimetableSnapshot from './timetableSnapshot.model.js';
 
 export {
   User,
@@ -46,5 +46,8 @@ export {
   NoDuesStage,
   LeaveType,
   LeaveApplication,
+  Timetable,
+  TimetableSection,
+  TimetableSnapshot,
 };
 export default sequelize;

@@ -6,7 +6,7 @@ import Header from "../../components/Admin/Header";
 import Footer from "../../components/Admin/Footer";
 import type { CategoryFormProps, UniqueForm } from "../../types/types";
 import { school, cse, soict } from "../../constants";
-import { searchBatches, searchSpecializations } from "../../lib/user.api";
+import { searchBatches, searchSpecializations, exportStudentsToExcel } from "../../lib/user.api";
 import { getChangeLogs } from "../../lib/user.api";
 import { downloadExcel } from "../../utils/excel";
 import { useSelector } from 'react-redux';
@@ -107,14 +107,105 @@ const Records = () => {
         }));
     };
 
+    const [exporting, setExporting] = useState(false);
+
+    const triggerExcelDownload = (blob: Blob, filename: string) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    };
+
+    const handleExportScope = async (scope: 'department' | 'batch' | 'class' | 'all') => {
+        let params: Record<string, string> = {};
+        let label = "Students";
+
+        if (scope === 'all') {
+            params = {};
+            label = "All Students in University";
+        } else if (scope === 'department') {
+            if (!form.school || !form.department) {
+                toast.error("Please select School and Department first");
+                return;
+            }
+            params = { school: form.school, department: form.department };
+            label = `Entire ${form.department.toUpperCase()} Department`;
+        } else if (scope === 'batch') {
+            if (!form.batch) {
+                toast.error("Please select a Batch first");
+                return;
+            }
+            params = {
+                school: form.school,
+                department: form.department,
+                program: form.program,
+                batch: form.batch,
+            };
+            label = `Batch ${form.batch}`;
+        } else if (scope === 'class') {
+            if (!form.specialization) {
+                toast.error("Please select a Specialization first");
+                return;
+            }
+            params = {
+                school: form.school,
+                department: form.department,
+                program: form.program,
+                batch: form.batch,
+                specialization: form.specialization,
+            };
+            label = `Class ${form.specialization}`;
+        }
+
+        setExporting(true);
+        const t = toast.loading(`Preparing Excel export for ${label}…`);
+        try {
+            const blob = await exportStudentsToExcel(params);
+            const dateStr = new Date().toISOString().slice(0, 10);
+            let filename = `students_${dateStr}.xlsx`;
+            if (scope === 'department') {
+                filename = `${form.school.toUpperCase()}_${form.department.toUpperCase()}_all_students_${dateStr}.xlsx`;
+            } else if (scope === 'batch') {
+                filename = `${form.department.toUpperCase()}_Batch_${form.batch}_students_${dateStr}.xlsx`;
+            } else if (scope === 'class') {
+                filename = `${form.department.toUpperCase()}_${form.batch}_${form.specialization.replace(/\s+/g, '_')}_students_${dateStr}.xlsx`;
+            } else {
+                filename = `all_university_students_${dateStr}.xlsx`;
+            }
+
+            triggerExcelDownload(blob, filename);
+            toast.success(`Export complete: ${label}`, { id: t });
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || "Failed to export Excel", { id: t });
+        } finally {
+            setExporting(false);
+        }
+    };
+
     const submitClassSearch = (e: React.FormEvent) => {
         e.preventDefault();
 
         const { school, department, program, batch, specialization } = form;
 
-        if (!school || !department || !program || !batch || !specialization) return;
+        if (school && department && program && batch && specialization) {
+            navigate(`${school}/${department}/${program}/${batch}/${specialization}`);
+            return;
+        }
 
-        navigate(`${school}/${department}/${program}/${batch}/${specialization}`);
+        if (school && department) {
+            if (batch) {
+                handleExportScope('batch');
+            } else {
+                handleExportScope('department');
+            }
+            return;
+        }
+
+        toast.error("Please select at least School and Department");
     };
 
     const submitUniqueSearch = (e: React.FormEvent) => {
@@ -192,11 +283,11 @@ const Records = () => {
                         {/* CATEGORY SEARCH */}
                         {mode === "CATEGORY" && (
                             <>
-                                <p className="text-lg font-medium mt-5 mb-2">Search Students</p>
-                                <form onSubmit={submitClassSearch} className="bg-white border border-gray-300 p-3">
-                                    <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                                <p className="text-lg font-medium mt-5 mb-2">Search & Export Students</p>
+                                <form onSubmit={submitClassSearch} className="bg-white border border-gray-300 p-4 rounded-lg shadow-2xs">
+                                    <div className="grid grid-cols-1 md:grid-cols-5 gap-2.5">
                                         <select name="school" required value={form.school} onChange={handleChange} className="input">
-                                            <option value="">Select School</option>
+                                            <option value="">Select School *</option>
                                             {school.map((s) => (
                                                 <option key={s.code} value={s.code}>
                                                     {s.code.toUpperCase()}
@@ -208,7 +299,7 @@ const Records = () => {
                                             className="input"
                                             required
                                         >
-                                            <option value="">Department</option>
+                                            <option value="">Department *</option>
                                             {(departmentMap[form.school] || []).map((dept) => (
                                                 <option key={dept.code} value={dept.code}>
                                                     {dept.code.toUpperCase()}
@@ -216,15 +307,15 @@ const Records = () => {
                                             ))}
                                         </select>
 
-                                        <select name="program" value={form.program} onChange={handleChange} disabled={!form.department} className="input" required >
-                                            <option value="">Program</option>
+                                        <select name="program" value={form.program} onChange={handleChange} disabled={!form.department} className="input">
+                                            <option value="">All Programs (Optional)</option>
                                             {(programMap[form.department] || []).map((program) => (
                                                 <option key={program.code} value={program.name}>{program.name}</option>
                                             ))}
                                         </select>
 
-                                        <select name="batch" value={form.batch} onChange={handleChange} disabled={!form.program} className="input" required >
-                                            <option value="">Batch</option>
+                                        <select name="batch" value={form.batch} onChange={handleChange} disabled={!form.program} className="input">
+                                            <option value="">All Batches (Optional)</option>
                                             {batches.map((d) => (
                                                 <option key={d} value={d}>
                                                     {d}
@@ -232,8 +323,8 @@ const Records = () => {
                                             ))}
                                         </select>
 
-                                        <select name="specialization" value={form.specialization} onChange={handleChange} disabled={!form.batch} className="input" required>
-                                            <option value="">Specialization</option>
+                                        <select name="specialization" value={form.specialization} onChange={handleChange} disabled={!form.batch} className="input">
+                                            <option value="">All Specializations (Optional)</option>
                                             {specializations.map((br) => (
                                                 <option key={br} value={br}>
                                                     {br}
@@ -242,11 +333,63 @@ const Records = () => {
                                         </select>
                                     </div>
 
-                                    <div className="flex justify-end mt-3">
-                                        <button type="submit" className="px-5 py-1.5 border border-gray-400
-                             text-sm hover:bg-gray-100 cursor-pointer">
-                                            Search
-                                        </button>
+                                    {/* Action & Export Controls */}
+                                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 flex-wrap gap-2">
+                                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                                            <span className="font-medium">Filter Scope:</span>
+                                            {form.specialization ? (
+                                                <span className="font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                                    Class: {form.specialization} ({form.batch})
+                                                </span>
+                                            ) : form.batch ? (
+                                                <span className="font-semibold text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                                                    Batch: {form.batch} (All sections)
+                                                </span>
+                                            ) : form.department ? (
+                                                <span className="font-semibold text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                                                    Entire Department: {form.department.toUpperCase()}
+                                                </span>
+                                            ) : (
+                                                <span className="italic text-gray-400">Select School & Department</span>
+                                            )}
+                                        </div>
+
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {/* Department-level export */}
+                                            {form.department && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleExportScope('department')}
+                                                    disabled={exporting}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-800 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition disabled:opacity-50 cursor-pointer"
+                                                    title={`Export all students in ${form.department.toUpperCase()} department`}
+                                                >
+                                                    <Download size={13} /> {exporting ? "Exporting..." : `Export Entire ${form.department.toUpperCase()} Dept`}
+                                                </button>
+                                            )}
+
+                                            {/* Batch-level export */}
+                                            {form.batch && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleExportScope('batch')}
+                                                    disabled={exporting}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-800 bg-indigo-50 border border-indigo-200 rounded hover:bg-indigo-100 transition disabled:opacity-50 cursor-pointer"
+                                                    title={`Export all students in batch ${form.batch}`}
+                                                >
+                                                    <Download size={13} /> {exporting ? "Exporting..." : `Export Batch ${form.batch}`}
+                                                </button>
+                                            )}
+
+                                            {/* Search / View specific class roster */}
+                                            <button
+                                                type="submit"
+                                                className="px-4 py-1.5 bg-black text-white text-xs font-medium hover:bg-gray-800 cursor-pointer rounded transition"
+                                                title={form.specialization ? "View class student records" : "Select specialization to view class roster"}
+                                            >
+                                                {form.specialization ? "Search Class Roster" : "Search / Export"}
+                                            </button>
+                                        </div>
                                     </div>
                                 </form>
                             </>

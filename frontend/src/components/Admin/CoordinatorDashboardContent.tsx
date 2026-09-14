@@ -18,6 +18,7 @@ import {
     getCoordinatorDetails,
     exportStudentsToExcel,
     uploadStudentPhotos,
+    uploadStudents,
 } from "../../lib/user.api";
 import type { RootState } from "../../context/app/store";
 import { QuickActionCard } from "./DashboardCards";
@@ -132,6 +133,143 @@ const PhotoUploadModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     );
 };
 
+const UploadStudentSheetModal: React.FC<{
+    classes: any[];
+    onClose: () => void;
+    onSuccess: () => void;
+}> = ({ classes, onClose, onSuccess }) => {
+    const [selectedIdx, setSelectedIdx] = useState<number>(0);
+    const [file, setFile] = useState<File | null>(null);
+    const [uploading, setUploading] = useState(false);
+
+    const targetClass = classes[selectedIdx] || classes[0];
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!targetClass) {
+            toast.error("No assigned class available for upload");
+            return;
+        }
+        if (!(file instanceof File)) {
+            toast.error("Please select an Excel file (.xlsx or .xls)");
+            return;
+        }
+
+        const fd = new FormData();
+        fd.append("school", targetClass.school || "SOICT");
+        fd.append("department", targetClass.department || "CSE");
+        fd.append("program", targetClass.program || "");
+        fd.append("batch", targetClass.batch || "");
+        fd.append("specialization", targetClass.specialization || "None");
+        fd.append("file", file);
+
+        setUploading(true);
+        const t = toast.loading(`Uploading student sheet for ${targetClass.program} ${targetClass.batch}…`);
+        try {
+            const data = await uploadStudents(fd);
+            toast.success(
+                `Student sheet upload complete — ${data.inserted || 0} inserted, ${data.failed || 0} failed`,
+                { id: t, duration: 6000 }
+            );
+            setFile(null);
+            onSuccess();
+            onClose();
+        } catch (err: any) {
+            const r = err?.response?.data;
+            const msg = r?.message || err.message || "Upload failed";
+            toast.error(msg, { id: t, duration: 8000 });
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+            <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+            <div className="relative z-50 w-full max-w-md rounded bg-white shadow-lg max-h-[90vh] overflow-y-auto p-6">
+                <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-lg font-semibold text-gray-900 inline-flex items-center gap-2">
+                        <Upload size={18} /> Upload Student Sheet
+                    </h2>
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-900 cursor-pointer">
+                        <X size={18} />
+                    </button>
+                </div>
+                <p className="text-xs text-gray-500 mb-4">
+                    Select your assigned class and upload the student roster Excel sheet. The system will validate headers and import records into your class.
+                </p>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                            Target Assigned Class
+                        </label>
+                        <select
+                            value={selectedIdx}
+                            onChange={(e) => setSelectedIdx(Number(e.target.value))}
+                            className="w-full text-xs p-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7b3b5a]"
+                        >
+                            {classes.map((c, idx) => {
+                                const label = `${c.program || ""} (${c.specialization || "None"}) - ${c.batch || ""}`;
+                                return (
+                                    <option key={idx} value={idx}>
+                                        {label}
+                                    </option>
+                                );
+                            })}
+                        </select>
+                    </div>
+
+                    <div
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => {
+                            e.preventDefault();
+                            const f = e.dataTransfer.files?.[0];
+                            if (f) setFile(f);
+                        }}
+                        className="flex flex-col items-center justify-center rounded border-2 border-dashed border-gray-300 px-4 py-6 text-center cursor-pointer hover:border-black transition"
+                        onClick={() => document.getElementById("coordinator-student-sheet-file")?.click()}
+                    >
+                        <FileSpreadsheet size={24} className="text-gray-500 mb-1" />
+                        <p className="text-sm text-gray-600">Drag & drop the student Excel file here</p>
+                        <p className="text-xs text-gray-400 mt-1">or click to browse (.xlsx, .xls)</p>
+                        {file && (
+                            <p className="mt-2 text-xs text-green-600 font-semibold">Selected: {file.name}</p>
+                        )}
+                    </div>
+                    <input
+                        id="coordinator-student-sheet-file"
+                        type="file"
+                        accept=".xls,.xlsx"
+                        className="hidden"
+                        onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) setFile(f);
+                        }}
+                    />
+
+                    <div className="flex justify-end gap-2 pt-2">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2 text-xs border border-gray-300 rounded hover:bg-gray-50 cursor-pointer"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={uploading}
+                            className="px-4 py-2 text-xs bg-black text-white rounded hover:bg-gray-800 disabled:opacity-50 cursor-pointer font-medium"
+                        >
+                            {uploading ? "Uploading…" : "Upload & Reformat"}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
 const CoordinatorDashboardContent: React.FC = () => {
     const navigate = useNavigate();
     const user = useSelector((state: RootState) => state.admin);
@@ -140,6 +278,7 @@ const CoordinatorDashboardContent: React.FC = () => {
     const [coordinatorClasses, setCoordinatorClasses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showPhotoModal, setShowPhotoModal] = useState(false);
+    const [showUploadModal, setShowUploadModal] = useState(false);
 
     useEffect(() => {
         const fetchAll = async () => {
@@ -238,6 +377,13 @@ const CoordinatorDashboardContent: React.FC = () => {
     return (
         <div className="min-h-full w-full bg-[#f3f3f3] px-4 sm:px-6 lg:px-10 py-6">
             {showPhotoModal && <PhotoUploadModal onClose={() => setShowPhotoModal(false)} />}
+            {showUploadModal && (
+                <UploadStudentSheetModal
+                    classes={coordinatorAssignments}
+                    onClose={() => setShowUploadModal(false)}
+                    onSuccess={() => window.location.reload()}
+                />
+            )}
 
             <div className="mb-5">
                 <h1 className="text-2xl font-semibold">Coordinator Dashboard</h1>
@@ -341,7 +487,7 @@ const CoordinatorDashboardContent: React.FC = () => {
                                 icon={<Upload />}
                                 title="Upload Sheet"
                                 description="Bulk upload students via Excel"
-                                onClick={() => navigate("/coordinator/register-student")}
+                                onClick={() => setShowUploadModal(true)}
                             />
                             <QuickActionCard
                                 icon={<ImagePlus />}

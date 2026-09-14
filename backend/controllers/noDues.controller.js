@@ -9,6 +9,8 @@ import {
   User,
   ChangeLog,
 } from '../models/index.js';
+import { getCoordinatorAssignedClasses, isClassAssignedToCoordinator } from './student.controller.js';
+import { getChairpersonAssignments, isClassAssignedToChairperson } from './chairperson.controller.js';
 
 // Helper: Generate displayId
 function generateDisplayId(rollNo) {
@@ -446,12 +448,25 @@ export const getPendingClearances = asyncHandler(async (req, res) => {
   let stageFilter = { status: 'pending' };
 
   if (user.role === 'admin') {
-    // Admins see all pending stages (or filter by query)
+    // Admin / Department Clearance: only return academic verification stages (School Office, HOD) unless explicit gate requested
+    if (req.query.gate && req.query.gate !== 'ALL') {
+      stageFilter.stageCode = req.query.gate;
+    } else if (req.query.allGates !== 'true') {
+      stageFilter.stageCode = { [Op.in]: ['SCHOOL_OFFICE', 'HOD'] };
+    }
   } else if (user.role === 'chairperson') {
     // Chairperson acts as HOD
     stageFilter.stageCode = 'HOD';
   } else if (user.role === 'coordinator') {
     stageFilter.stageCode = 'SCHOOL_OFFICE';
+  } else if (user.role === 'officer') {
+    const userOffice = String(user.officeCode || '').toUpperCase().trim();
+    if (!userOffice) {
+      return res.status(403).json({ success: false, message: 'Officer has no assigned office code.' });
+    }
+    stageFilter.stageCode = userOffice;
+  } else {
+    return res.status(403).json({ success: false, message: 'Access denied.' });
   }
 
   const pendingStages = await NoDuesStage.findAll({
@@ -473,12 +488,27 @@ export const getPendingClearances = asyncHandler(async (req, res) => {
   });
 
   // Only return stages that are ready for active review (sequenceOrder <= application.currentStageOrder)
-  const readyStages = pendingStages.filter((st) => {
+  let readyStages = pendingStages.filter((st) => {
     const app = st.application;
     if (!app || app.status === 'rejected' || app.isCompleted) return false;
     const currentLvl = app.currentStageOrder || 1;
     return st.sequenceOrder <= currentLvl;
   });
+
+  // Filter by assigned classes for chairperson and coordinator
+  if (user.role === 'coordinator') {
+    const assignedClasses = await getCoordinatorAssignedClasses(user);
+    readyStages = readyStages.filter((st) => {
+      const student = st.application?.student;
+      return isClassAssignedToCoordinator(assignedClasses, student);
+    });
+  } else if (user.role === 'chairperson') {
+    const { assignments } = await getChairpersonAssignments(user);
+    readyStages = readyStages.filter((st) => {
+      const student = st.application?.student;
+      return isClassAssignedToChairperson(assignments, student);
+    });
+  }
 
   return res.json({
     success: true,
@@ -500,7 +530,13 @@ export const actionClearanceStage = asyncHandler(async (req, res) => {
   }
 
   const stage = await NoDuesStage.findByPk(stageId, {
-    include: [{ model: NoDuesApplication, as: 'application' }],
+    include: [
+      {
+        model: NoDuesApplication,
+        as: 'application',
+        include: [{ model: Student, as: 'student' }],
+      },
+    ],
   });
 
   if (!stage) {
@@ -510,6 +546,33 @@ export const actionClearanceStage = asyncHandler(async (req, res) => {
   let application = stage.application;
   if (!application) {
     return res.status(404).json({ success: false, message: 'Parent application not found.' });
+  }
+
+  // Authorization check per role
+  const student = application.student;
+  if (req.user.role === 'coordinator') {
+    if (stage.stageCode !== 'SCHOOL_OFFICE') {
+      return res.status(403).json({ success: false, message: 'Coordinators can only action School Administrative Office clearance stages.' });
+    }
+    const assignedClasses = await getCoordinatorAssignedClasses(req.user);
+    if (!isClassAssignedToCoordinator(assignedClasses, student)) {
+      return res.status(403).json({ success: false, message: 'Unauthorized: Student is not in your assigned coordinator classes.' });
+    }
+  } else if (req.user.role === 'chairperson') {
+    if (stage.stageCode !== 'HOD') {
+      return res.status(403).json({ success: false, message: 'Chairpersons can only action Head of Department (HOD) clearance stages.' });
+    }
+    const { assignments } = await getChairpersonAssignments(req.user);
+    if (!isClassAssignedToChairperson(assignments, student)) {
+      return res.status(403).json({ success: false, message: 'Unauthorized: Student is not in your assigned department/classes.' });
+    }
+  } else if (req.user.role === 'officer') {
+    const userOffice = String(req.user.officeCode || '').toUpperCase().trim();
+    if (!userOffice || stage.stageCode !== userOffice) {
+      return res.status(403).json({ success: false, message: `Unauthorized: You are assigned to [${userOffice || 'NONE'}] desk and cannot action [${stage.stageCode}] clearance.` });
+    }
+  } else if (req.user.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Unauthorized to review clearance stages.' });
   }
 
   // Enforce workflow level locking
@@ -799,6 +862,13 @@ export function validateDeskAccess(user, office) {
  * Overview of all 5 departmental clearance desks with live counts.
  */
 export const getAllOfficesOverview = asyncHandler(async (req, res) => {
+  if (req.user?.role === 'chairperson' || req.user?.role === 'coordinator') {
+    return res.status(403).json({
+      success: false,
+      message: 'Access Denied: Cross-departmental clearance desk overview is restricted to administrative officers and central administration.',
+    });
+  }
+
   const offices = Object.values(OFFICE_DEFINITIONS);
   const results = [];
 

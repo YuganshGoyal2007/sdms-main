@@ -26,13 +26,13 @@ router.get('/no-dues/certificate/:applicationId', isAuthenticated, getClearanceC
 router.get(
   '/no-dues/pending',
   isAuthenticated,
-  allowRoles('admin', 'chairperson', 'coordinator', 'faculty'),
+  allowRoles('admin', 'chairperson', 'coordinator', 'faculty', 'officer'),
   getPendingClearances
 );
 router.post(
   '/no-dues/stages/:id/action',
   isAuthenticated,
-  allowRoles('admin', 'chairperson', 'coordinator', 'faculty'),
+  allowRoles('admin', 'chairperson', 'coordinator', 'faculty', 'officer'),
   actionClearanceStage
 );
 

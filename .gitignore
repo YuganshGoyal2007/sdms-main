@@ -24,6 +24,7 @@
 *.sqlite
 *.sqlite3
 db_dumps/
+mysql_data/
 database/
 data/exports/
 data/dumps/
@@ -95,3 +96,5 @@ backend/database.sqlite
 
 # Archives
 *.zip
+e2e_evidence/
+

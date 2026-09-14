@@ -54,32 +54,199 @@ const stripHtml = (html) => {
 const SLOT_BY_INDEX = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'];
 
 /**
- * Parse a single <div class="training"> block.
- * Looks like:
- *   <div class="training training_type_lecture">
- *     CS385(<a href="tindex.php?id=28">RBS</a>)<br>
- *     <a href="rindex.php?id=209">IP102</a>
- *   </div>
- * Returns { code, faculty, room, group } or null if empty.
+ * Checks whether a code + parenthetical matches room pattern rather than a course
  */
-const parseTrainingBlock = (rawHtml) => {
-    const text = stripHtml(rawHtml);
-    if (!text || !text.trim()) return null;
+function isRoomPattern(code, paren) {
+    const cleanCode = (code || '').trim();
+    const cleanParen = (paren || '').trim();
 
-    // Split into "subject" + "room" lines (separated by " || " from <br>)
-    const parts = text.split('||').map((s) => s.trim()).filter(Boolean);
-    if (parts.length === 0) return null;
+    // 1. Room code prefixes: IL, IP, LP, LL, EP, EL, VP, VL, CCC, RL, LH, CR, LAB, ROOM, HALL
+    const roomCodePattern = /^(?:IL|IP|LP|LL|EP|EL|VP|VL|CCC|RL|LH|CR|LAB|ROOM|HALL)[\s\-_]?\d+/i;
+    // 2. Building / complex abbreviations
+    const buildingPattern = /^(?:CLT|RLT|SOICT|SOE|SOM|SOVSAS|SOHSS|SOLJG|SOBT|ADMIN|CCC|BLDG|BLOCK|LAB)$/i;
 
-    // First part: "CS385(RBS)" or "CS385(RBS) G-1"
-    const firstM = parts[0].match(/^([A-Z]{2,4}\d{2,4}[A-Z]?)\s*\(([A-Z]{2,4})\)\s*(.*)$/);
-    if (!firstM) return null;
-    const code = firstM[1];
-    const faculty = firstM[2];
-    const group = firstM[3].trim() || null;
+    if (roomCodePattern.test(cleanCode)) {
+        if (!cleanParen || buildingPattern.test(cleanParen)) {
+            return true;
+        }
+    }
 
-    // Second part is the room (if present)
-    const room = parts[1] || '';
-    return { code, faculty, room, group };
+    if (buildingPattern.test(cleanParen) && /^[A-Z]{1,4}[\s\-_]?\d+/i.test(cleanCode)) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Parse one or more training blocks or multi-lecture cells.
+ * Supports:
+ * - Codes of any length (e.g. AICTE101, ENV101, OPEN101, CS-301, CS385)
+ * - Faculty abbreviations/names of any length (e.g. VINOD, PRIYA, TBA, N/A, Dr. AS, digits)
+ * - Multi-lecture / multi-batch cells (e.g. G-1 and G-2 in the same slot)
+ * - Room detection with building parentheticals (e.g. IL-105 (CLT)) attached to entry.room
+ * Returns array of { code, faculty, room, group } objects (empty array if empty).
+ */
+export const parseTrainingBlock = (rawHtml) => {
+    if (!rawHtml || !rawHtml.trim()) return [];
+
+    // Replace <a ... href='*rindex.php*'>Room</a> with [[ROOM:Room]]
+    // and <a ... href='*tindex.php*'>Teacher</a> with [[TEACHER:Teacher]]
+    let annotated = rawHtml.replace(/<a\b[^>]*href=['"]?[^'"]*rindex[^>]*>([\s\S]*?)<\/a>/gi, (m, g1) => {
+        const text = g1.replace(/<[^>]+>/g, '').trim();
+        return ` [[ROOM:${text}]] `;
+    });
+
+    annotated = annotated.replace(/<a\b[^>]*href=['"]?[^'"]*tindex[^>]*>([\s\S]*?)<\/a>/gi, (m, g1) => {
+        const text = g1.replace(/<[^>]+>/g, '').trim();
+        return ` [[TEACHER:${text}]] `;
+    });
+
+    // Replace <br> with newline or split token
+    annotated = annotated.replace(/<br\s*\/?>/gi, '\n');
+    annotated = annotated.replace(/\|\|/g, '\n');
+    // Strip remaining HTML tags
+    annotated = annotated.replace(/<\/?[^>]+>/g, ' ');
+    annotated = annotated.replace(/&nbsp;/gi, ' ');
+    annotated = annotated.replace(/&amp;/gi, '&');
+    annotated = annotated.replace(/&lt;/gi, '<');
+    annotated = annotated.replace(/&gt;/gi, '>');
+
+    // Normalize lines
+    const rawLines = annotated.split('\n').map((s) => s.replace(/\s+/g, ' ').trim()).filter(Boolean);
+    if (rawLines.length === 0) return [];
+
+    // In case multiple lectures are concatenated on a single line with whitespace, split before each course code
+    const lines = [];
+    for (const rawLine of rawLines) {
+        const splitByCourse = rawLine.split(/(?<=\S)\s+(?=[A-Za-z0-9\-_./]+\s*\([^)]*\))/).map((s) => s.trim()).filter(Boolean);
+        lines.push(...splitByCourse);
+    }
+
+    const entries = [];
+    let current = null;
+
+    const extractDetails = (text, targetEntry) => {
+        let rem = text;
+
+        // Check for explicit [[ROOM:...]]
+        const roomTokenMatch = rem.match(/\[\[ROOM:([\s\S]*?)\]\]/);
+        if (roomTokenMatch) {
+            const foundRoom = roomTokenMatch[1].trim();
+            targetEntry.room = targetEntry.room ? `${targetEntry.room} ${foundRoom}`.trim() : foundRoom;
+            rem = rem.replace(roomTokenMatch[0], ' ').trim();
+        }
+
+        // Check for bracketed room e.g. [IP102], [SOICT-101]
+        const bracketRoomMatch = rem.match(/\[([^\]]+)\]/);
+        if (bracketRoomMatch && !bracketRoomMatch[1].startsWith('ROOM:') && !bracketRoomMatch[1].startsWith('TEACHER:')) {
+            const foundRoom = bracketRoomMatch[1].trim();
+            targetEntry.room = targetEntry.room ? `${targetEntry.room} ${foundRoom}`.trim() : foundRoom;
+            rem = rem.replace(bracketRoomMatch[0], ' ').trim();
+        }
+
+        // Check for group / batch / tutorial (G-1, G-2, Group A, Batch-1, T-1, etc.)
+        const groupMatch = rem.match(/\b(G(?:roup)?\s*[-#]?\s*[A-Za-z0-9]+|Batch\s*[-#]?\s*[A-Za-z0-9]+|T\s*[-#]?\s*\d+|G[-#][A-Za-z0-9]+)\b/i);
+        if (groupMatch) {
+            targetEntry.group = groupMatch[1].trim();
+            rem = rem.replace(groupMatch[0], ' ').trim();
+        }
+
+        // If rem still has remaining text
+        if (rem) {
+            if (!targetEntry.room) {
+                targetEntry.room = rem;
+            } else if (!targetEntry.room.includes(rem)) {
+                targetEntry.room = `${targetEntry.room} ${rem}`.trim();
+            }
+        }
+    };
+
+    for (const line of lines) {
+        const courseMatch = line.match(/^([A-Za-z0-9\-_./]+)\s*\(([^)]*)\)\s*(.*)$/);
+
+        if (courseMatch) {
+            let potentialCode = courseMatch[1].trim();
+            let potentialFaculty = courseMatch[2].trim();
+            let rest = courseMatch[3].trim();
+
+            const teacherMatch = potentialFaculty.match(/\[\[TEACHER:([\s\S]*?)\]\]/);
+            if (teacherMatch) {
+                potentialFaculty = teacherMatch[1].trim();
+            }
+
+            // Check if this is a room with building name in parens (e.g. "IL-105 (CLT)")
+            if (isRoomPattern(potentialCode, potentialFaculty)) {
+                const roomStr = `${potentialCode} (${potentialFaculty})`.trim();
+                if (current) {
+                    current.room = current.room ? `${current.room} ${roomStr}`.trim() : roomStr;
+                    if (rest) {
+                        extractDetails(rest, current);
+                    }
+                } else {
+                    current = { code: potentialCode, faculty: '', room: roomStr, group: null };
+                }
+                continue;
+            }
+
+            // Genuine course code
+            if (current) {
+                entries.push(current);
+            }
+
+            current = {
+                code: potentialCode,
+                faculty: potentialFaculty,
+                room: '',
+                group: null,
+            };
+
+            if (rest) {
+                extractDetails(rest, current);
+            }
+        } else if (current) {
+            extractDetails(line, current);
+        } else {
+            const plain = line.replace(/\[\[(?:ROOM|TEACHER):([\s\S]*?)\]\]/g, '$1').trim();
+            if (plain) {
+                current = { code: plain, faculty: '', room: '', group: null };
+            }
+        }
+    }
+
+    if (current) {
+        entries.push(current);
+    }
+
+    // Clean up rooms and faculty tokens
+    for (const entry of entries) {
+        if (entry.room) {
+            entry.room = entry.room
+                .replace(/\[\[ROOM:([\s\S]*?)\]\]/g, '$1')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+        if (entry.faculty) {
+            entry.faculty = entry.faculty
+                .replace(/\[\[TEACHER:([\s\S]*?)\]\]/g, '$1')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+    }
+
+    // Deduplicate identical entries in the same cell
+    const unique = [];
+    for (const entry of entries) {
+        const isDup = unique.some((u) =>
+            u.code === entry.code &&
+            u.faculty === entry.faculty &&
+            u.room === entry.room &&
+            u.group === entry.group
+        );
+        if (!isDup) unique.push(entry);
+    }
+
+    return unique;
 };
 
 /**
@@ -126,23 +293,37 @@ const parseTimetablePage = (html) => {
         result.entries[dayName] = {};
 
         // Each cell is <td class="lesson_cell day_1">...</td> where the number is the slot index (1..11)
-        const cellRegex = /<td[^>]*class=["']lesson_cell\s+day_(\d+)["'][^>]*>([\s\S]*?)<\/td>/gi;
+        const cellRegex = /<td[^>]*class=["'][^"']*\bday_(\d+)\b[^"']*["'][^>]*>([\s\S]*?)<\/td>/gi;
         let cellMatch;
         while ((cellMatch = cellRegex.exec(rowHtml)) !== null) {
             const slotIndex = parseInt(cellMatch[1], 10);
             if (slotIndex < 1 || slotIndex > SLOT_BY_INDEX.length) continue;
             const slot = SLOT_BY_INDEX[slotIndex - 1];
 
-            // Extract <div class="training">...</div> content (skip empty divs with class training_type_none)
-            const divMatch = cellMatch[2].match(/<div[^>]*class=["']training[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
-            if (!divMatch) continue;
-            const innerHtml = divMatch[1];
-            // Empty cells: <div class="training training_type_none"></div> with only &nbsp; whitespace
-            if (!innerHtml || /^\s*$/.test(innerHtml.replace(/&nbsp;/g, '').replace(/<[^>]+>/g, ''))) continue;
-            const entry = parseTrainingBlock(innerHtml);
-            if (entry) {
-                if (!result.entries[dayName][slot]) result.entries[dayName][slot] = [];
-                result.entries[dayName][slot].push(entry);
+            // Extract all <div class="training ..."> blocks inside this cell
+            const divRegex = /<div[^>]*class=["'][^"']*\btraining\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/gi;
+            let divMatch;
+            let foundDivs = false;
+            while ((divMatch = divRegex.exec(cellMatch[2])) !== null) {
+                foundDivs = true;
+                const innerHtml = divMatch[1];
+                if (!innerHtml || /^\s*$/.test(innerHtml.replace(/&nbsp;/g, '').replace(/<[^>]+>/g, ''))) continue;
+                const parsedEntries = parseTrainingBlock(innerHtml);
+                if (parsedEntries && parsedEntries.length > 0) {
+                    if (!result.entries[dayName][slot]) result.entries[dayName][slot] = [];
+                    result.entries[dayName][slot].push(...parsedEntries);
+                }
+            }
+            // If no training div was matched, but cell has content, parse cell content directly
+            if (!foundDivs) {
+                const cellContent = cellMatch[2];
+                if (cellContent && !/^\s*$/.test(cellContent.replace(/&nbsp;/g, '').replace(/<[^>]+>/g, ''))) {
+                    const parsedEntries = parseTrainingBlock(cellContent);
+                    if (parsedEntries && parsedEntries.length > 0) {
+                        if (!result.entries[dayName][slot]) result.entries[dayName][slot] = [];
+                        result.entries[dayName][slot].push(...parsedEntries);
+                    }
+                }
             }
         }
     }
@@ -158,7 +339,7 @@ const parseTimetablePage = (html) => {
             for (let i = 1; i < trs.length; i++) { // skip header row
                 const tds = (trs[i].match(/<td[^>]*>([\s\S]*?)<\/td>/gi) || []).map((td) => stripHtml(td));
                 if (tds.length < 5) continue;
-                if (!/^[A-Z]{2,4}\d{2,4}/.test(tds[0] || '')) continue;
+                if (!/^[A-Za-z0-9\-_./]+/.test(tds[0] || '')) continue;
                 result.subjects.push({
                     code: tds[0] || '',
                     name: (tds[1] || '').trim(),
@@ -218,10 +399,14 @@ export const fetchSection = async (section, { force = false } = {}) => {
         }
         const html = await res.text();
         const parsed = parseTimetablePage(html);
-        if (!parsed.entries || Object.keys(parsed.entries).every((d) => Object.keys(parsed.entries[d] || {}).length === 0)) {
-            return { ok: false, error: 'Could not parse timetable from HTML (empty grid)' };
+        if (!parsed.entries) {
+            return { ok: false, error: 'Could not parse timetable structure from HTML' };
         }
-        return { ok: true, ...parsed, sourceUrl: url };
+        const totalLectures = Object.values(parsed.entries).reduce((acc, dayObj) => {
+            if (!dayObj || typeof dayObj !== 'object') return acc;
+            return acc + Object.values(dayObj).reduce((sum, slotArr) => sum + (Array.isArray(slotArr) ? slotArr.length : 0), 0);
+        }, 0);
+        return { ok: true, ...parsed, totalLectures, isEmpty: totalLectures === 0, sourceUrl: url };
     } catch (err) {
         clearTimeout(timer);
         return { ok: false, error: err.name === 'AbortError' ? 'Request timed out' : err.message };
@@ -229,7 +414,39 @@ export const fetchSection = async (section, { force = false } = {}) => {
 };
 
 /**
+ * Extracts explicit section letter or identifier from specialization string.
+ * Examples:
+ *   "Core Sec- D" -> "D"
+ *   "Core Sec- A" -> "A"
+ *   "Core Section B" -> "B"
+ *   "AI Sec - A" -> "A"
+ *   "Core - D" -> "D"
+ *   "Core" -> null
+ */
+export const extractSectionLetter = (str) => {
+    if (!str) return null;
+    const s = String(str).trim();
+    // Explicit Section / Sec / Grp / Group / Batch (word-boundary delimited, supports letters or multi-digits e.g. Sec-A, Sec 01, Batch-2, Group 10)
+    const explicit = s.match(/\b(?:section|sec|grp|group|batch)[\s.\-_]*([A-Za-z0-9]+)\b/i);
+    if (explicit) {
+        const val = explicit[1].toUpperCase();
+        return /^\d+$/.test(val) ? String(parseInt(val, 10)) : val;
+    }
+
+    // Trailing isolated letter or 1-2 digits (e.g. "Core - D", "Core D", "BCS-III-A", "Core - 02")
+    const trailing = s.match(/(?:^|[\s\-_(])([A-Za-z]|\d{1,2})\)?$/i);
+    if (trailing) {
+        const val = trailing[1].toUpperCase();
+        return /^\d+$/.test(val) ? String(parseInt(val, 10)) : val;
+    }
+
+    return null;
+};
+
+/**
  * Find a section mapping for a given class key.
+ * Enforces strict section letter matching to prevent prefix collisions
+ * (e.g. Core Sec- D must never match Core Sec- A).
  */
 export const findSectionForClass = async (school, department, program, batch, specialization, academicYear) => {
     const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -259,28 +476,219 @@ export const findSectionForClass = async (school, department, program, batch, sp
     }
 
     const target = norm(specialization);
+    const targetLetter = extractSectionLetter(specialization);
 
     // 1. Exact normalized match (e.g. 'Core Sec-B' vs 'Core Sec- B')
     const match1 = all.find((s) => norm(s.specialization) === target);
     if (match1) return match1;
 
-    // 2. Starts-with match or prefix match (e.g. 'AI Sec - A' starts with 'AI', 'Cyber Security Sec - A' starts with 'Cyber Security')
-    const match2 = all.find((s) => {
-        const sNorm = norm(s.specialization);
-        if (target.startsWith(sNorm) || sNorm.startsWith(target)) {
-            const w1 = (s.specialization.split(/[\s\-]/)[0] || '').toLowerCase();
-            const w2 = (specialization.split(/[\s\-]/)[0] || '').toLowerCase();
-            return w1 === w2;
+    // Disqualify any candidate sections that have a conflicting explicit section letter.
+    // If target has letter 'D', candidate sections with letter 'A', 'B', 'C' are strictly dropped!
+    const eligibleSections = all.filter((s) => {
+        if (!targetLetter) return true;
+        const candLetter = extractSectionLetter(s.specialization);
+        if (candLetter && candLetter !== targetLetter) {
+            return false;
         }
-        return false;
+        return true;
     });
-    if (match2) return match2;
 
-    // 3. Fallback: section contains student keyword or student keyword contains section
-    return all.find((s) => {
+    const stripSectionPattern = /\b(?:section|sec|grp|group|batch)[\s.\-_]*[A-Za-z0-9]+\b|[\s\-_](?:[A-Za-z]|\d{1,2})\)?$/gi;
+
+    // 2. Candidate with same section letter and matching base specialization
+    if (targetLetter) {
+        const baseSpec = specialization.replace(stripSectionPattern, '').trim();
+        const baseTargetNorm = norm(baseSpec);
+
+        const matchLetter = eligibleSections.find((s) => {
+            const candLetter = extractSectionLetter(s.specialization);
+            if (candLetter !== targetLetter) return false;
+            if (!baseTargetNorm) return true;
+            const candBase = s.specialization.replace(stripSectionPattern, '').trim();
+            const candBaseNorm = norm(candBase);
+            return candBaseNorm === baseTargetNorm || candBaseNorm.includes(baseTargetNorm) || baseTargetNorm.includes(candBaseNorm);
+        });
+        if (matchLetter) return matchLetter;
+    }
+
+    // 3. Fallback normalized inclusion match among eligible candidates (only when no letter conflict)
+    const matchInclusion = eligibleSections.find((s) => {
         const sNorm = norm(s.specialization);
         return sNorm.includes(target) || target.includes(sNorm);
-    }) || null;
+    });
+    if (matchInclusion) return matchInclusion;
+
+    // 4. Auto-Discovery Fallback: Resolve canonical mygbu section ID by program, batch, and specialization
+    const autoResolved = autoResolveMygbuSection({ school, department, program, batch, specialization });
+    if (autoResolved) {
+        const resolvedLetter = extractSectionLetter(autoResolved.label);
+        if (targetLetter && resolvedLetter && targetLetter !== resolvedLetter) {
+            return null;
+        }
+        try {
+            const [persistedSection] = await TimetableSection.findOrCreate({
+                where: {
+                    school: (school || 'soict').toLowerCase(),
+                    department: (department || 'cse').toLowerCase(),
+                    program: program || 'B.Tech',
+                    batch: (batch || '').trim(),
+                    specialization: (specialization || '').trim(),
+                },
+                defaults: {
+                    mygbuSchool: autoResolved.mygbuSchool || 'SOICT',
+                    mygbuDepartment: autoResolved.mygbuDepartment || 'CSE',
+                    mygbuSectionId: String(autoResolved.mygbuSectionId),
+                    label: autoResolved.label,
+                    academicYear: academicYear || autoResolved.academicYear || '2026-27',
+                    semester: autoResolved.semester || 'Odd',
+                    active: true,
+                },
+            });
+            logger.info(
+                { class: `${school}/${department}/${program}/${batch}/${specialization}`, sectionId: autoResolved.mygbuSectionId, label: autoResolved.label },
+                'Auto-discovered and persisted timetable section mapping'
+            );
+            return persistedSection;
+        } catch (err) {
+            logger.warn({ err: err.message }, 'Failed to persist auto-discovered timetable section, using memory instance');
+            return TimetableSection.build({
+                school: (school || 'soict').toLowerCase(),
+                department: (department || 'cse').toLowerCase(),
+                program: program || 'B.Tech',
+                batch: (batch || '').trim(),
+                specialization: (specialization || '').trim(),
+                mygbuSchool: autoResolved.mygbuSchool || 'SOICT',
+                mygbuDepartment: autoResolved.mygbuDepartment || 'CSE',
+                mygbuSectionId: String(autoResolved.mygbuSectionId),
+                label: autoResolved.label,
+                academicYear: academicYear || autoResolved.academicYear || '2026-27',
+                semester: autoResolved.semester || 'Odd',
+                active: true,
+            });
+        }
+    }
+
+    return null;
+};
+
+/**
+ * Auto-discovery rule engine: resolves canonical mygbu section IDs and labels
+ * for university classes when explicit database mappings have not yet been manually entered.
+ */
+export const autoResolveMygbuSection = ({ school, department, program, batch, specialization }) => {
+    const sSchool = String(school || '').toLowerCase().trim();
+    const sDept = String(department || '').toLowerCase().trim();
+    const sProg = String(program || '').trim();
+    const sBatch = String(batch || '').trim();
+    const sSpec = String(specialization || '').trim();
+
+    const targetLetter = extractSectionLetter(sSpec);
+    const specNorm = sSpec.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    // 1. Integrated B.Tech-M.Tech (5-Year)
+    if (sProg.toLowerCase().includes('integrated') || sProg.includes('+') || sBatch.includes('2021-26') || sBatch.includes('2022-27') || sBatch.includes('2023-28') || sBatch.includes('2024-29') || sBatch.includes('2025-30')) {
+        if (sBatch.includes('2021-26')) {
+            if (specNorm.includes('air')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1333', label: 'MT-AIR-II-A', semester: 'Sem 9' };
+            if (specNorm.includes('data') || specNorm.includes('ds')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1377', label: 'MT-DS-II', semester: 'Sem 9' };
+            if (specNorm.includes('se') || specNorm.includes('software')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '31', label: 'MT-SE-II', semester: 'Sem 9' };
+            return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1333', label: 'MT-AIR-II-A', semester: 'Sem 9' };
+        }
+        if (sBatch.includes('2022-27')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '2433', label: 'CS-IV-A', semester: 'Sem 7' };
+        if (sBatch.includes('2023-28')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '19', label: 'CS-III-A', semester: 'Sem 5' };
+        if (sBatch.includes('2024-29')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '21', label: 'CS-II-A', semester: 'Sem 3' };
+        if (sBatch.includes('2025-30')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1311', label: 'CS-I-A', semester: 'Sem 1' };
+    }
+
+    // 2. M.Tech (2-Year)
+    if (sProg.toLowerCase().includes('m.tech') || sBatch.includes('2024-26') || sBatch.includes('2025-27')) {
+        if (sBatch.includes('2024-26')) {
+            if (specNorm.includes('ds') || specNorm.includes('data')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1377', label: 'MT-DS-II', semester: 'Sem 3' };
+            if (specNorm.includes('air')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1333', label: 'MT-AIR-II-A', semester: 'Sem 3' };
+            return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1333', label: 'MT-AIR-II-A', semester: 'Sem 3' };
+        }
+        if (sBatch.includes('2025-27')) {
+            return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1308', label: 'MT-SE-I', semester: 'Sem 1' };
+        }
+    }
+
+    // 3. B.Tech (4-Year) - By Batch
+    // Batch 2026-30 (Year 1 / Semester 1 & 2)
+    if (sBatch.includes('2026-30') || sBatch.includes('2026-2030')) {
+        if (specNorm.includes('ai')) {
+            if (targetLetter && targetLetter !== 'A' && targetLetter !== 'B') return null;
+            return targetLetter === 'B'
+                ? { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '2461', label: 'BAI-I-B', semester: 'Sem 1' }
+                : { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1249', label: 'BAI-I-A', semester: 'Sem 1' };
+        }
+        if (specNorm.includes('cyber') || specNorm.includes('cs')) {
+            return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1337', label: 'CSE-CS-I', semester: 'Sem 1' };
+        }
+        if (specNorm.includes('data') || specNorm.includes('ds')) {
+            return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1339', label: 'CSE-DS-I', semester: 'Sem 1' };
+        }
+        if (targetLetter === 'B') return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1239', label: 'BCS-I-B', semester: 'Sem 1' };
+        if (targetLetter === 'C') return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '2495', label: 'BCS-I-C', semester: 'Sem 1' };
+        if (!targetLetter || targetLetter === 'A') return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1', label: 'BCS-I-A', semester: 'Sem 1' };
+        return null;
+    }
+
+    // Batch 2025-29 (Year 2 / Semester 3 & 4)
+    if (sBatch.includes('2025-29') || sBatch.includes('2025-2029')) {
+        if (specNorm.includes('ai')) {
+            if (targetLetter && targetLetter !== 'A' && targetLetter !== 'B') return null;
+            return targetLetter === 'B'
+                ? { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '2541', label: 'BAI-II-B', semester: 'Sem 3' }
+                : { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1277', label: 'BAI-II', semester: 'Sem 3' };
+        }
+        if (specNorm.includes('cyber')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1400', label: 'CSE-CS-II', semester: 'Sem 3' };
+        if (specNorm.includes('data') || specNorm.includes('ds')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1401', label: 'CSE-DS-II', semester: 'Sem 3' };
+        if (targetLetter === 'B') return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1299', label: 'BCS-II B', semester: 'Sem 3' };
+        if (targetLetter === 'C') return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1309', label: 'BCS-II C', semester: 'Sem 3' };
+        if (targetLetter === 'D' || targetLetter === 'E') return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '2536', label: 'BCS-II D', semester: 'Sem 3' };
+        if (!targetLetter || targetLetter === 'A') return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1298', label: 'BCS-II A', semester: 'Sem 3' };
+        return null;
+    }
+
+    // Batch 2024-28 (Year 3 / Semester 5 & 6)
+    if (sBatch.includes('2024-28') || sBatch.includes('2024-2028')) {
+        if (specNorm.includes('ai')) {
+            if (targetLetter && targetLetter !== 'A' && targetLetter !== 'B') return null;
+            return targetLetter === 'B'
+                ? { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '2586', label: 'BAI-III-B', semester: 'Sem 5' }
+                : { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1278', label: 'BAI-III', semester: 'Sem 5' };
+        }
+        if (specNorm.includes('cyber')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '2439', label: 'CSE-CS-III', semester: 'Sem 5' };
+        if (specNorm.includes('data') || specNorm.includes('ds')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '2442', label: 'CSE-DS-III', semester: 'Sem 5' };
+        if (specNorm.includes('machine') || specNorm.includes('ml')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '2441', label: 'CSE-ML-III', semester: 'Sem 5' };
+        if (targetLetter === 'B') return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1327', label: 'BCS-III-B', semester: 'Sem 5' };
+        if (targetLetter === 'C') return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1328', label: 'BCS-III-C', semester: 'Sem 5' };
+        if (targetLetter === 'D') return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '2590', label: 'BCS-III-D', semester: 'Sem 5' };
+        if (!targetLetter || targetLetter === 'A') return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1282', label: 'BCS-III-A', semester: 'Sem 5' };
+        return null;
+    }
+
+    // Batch 2023-27 & 2022-26 (Year 4 / Semester 7 & 8)
+    if (sBatch.includes('2023-27') || sBatch.includes('2023-2027') || sBatch.includes('2022-26') || sBatch.includes('2022-2026')) {
+        if (specNorm.includes('ai')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1279', label: 'BAI-IV', semester: 'Sem 7' };
+        if (specNorm.includes('cyber')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '2486', label: 'CSE-CS-IV', semester: 'Sem 7' };
+        if (specNorm.includes('data') || specNorm.includes('ds')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '2487', label: 'CSE-DS-IV', semester: 'Sem 7' };
+        if (specNorm.includes('machine') || specNorm.includes('ml')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '2488', label: 'CSE-ML-IV', semester: 'Sem 7' };
+        if (targetLetter === 'B' || targetLetter === 'C' || targetLetter === 'D') {
+            return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1406', label: 'BCS-IV-B', semester: 'Sem 7' };
+        }
+        if (!targetLetter || targetLetter === 'A') return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1283', label: 'BCS-IV-A', semester: 'Sem 7' };
+        return null;
+    }
+
+    if (targetLetter && targetLetter !== 'A') return null;
+
+    // Generic fallbacks for SOICT/CSE
+    if (specNorm.includes('ai')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1279', label: 'BAI-IV', semester: 'Odd' };
+    if (specNorm.includes('data') || specNorm.includes('ds')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '2487', label: 'CSE-DS-IV', semester: 'Odd' };
+    if (specNorm.includes('cyber')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '2486', label: 'CSE-CS-IV', semester: 'Odd' };
+    if (specNorm.includes('machine') || specNorm.includes('ml')) return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '2488', label: 'CSE-ML-IV', semester: 'Odd' };
+
+    return { mygbuSchool: 'SOICT', mygbuDepartment: 'CSE', mygbuSectionId: '1283', label: 'BCS-IV-A', semester: 'Odd' };
 };
 
 /**
@@ -318,10 +726,22 @@ export const refreshTimetable = async ({ school, department, program, batch, spe
         }
     });
 
-    if (!force && existing && existing.lastFetchedAt) {
+    const currentSourceMarker = `section=${section.mygbuSectionId}`;
+    const isStaleMapping = Boolean(existing && existing.sourceUrl && !existing.sourceUrl.includes(currentSourceMarker));
+
+    let existingTotalLectures = 0;
+    if (existing && existing.entries) {
+        const rawEntries = typeof existing.entries === 'string' ? JSON.parse(existing.entries) : existing.entries;
+        existingTotalLectures = Object.values(rawEntries).reduce((acc, dayObj) => {
+            if (!dayObj || typeof dayObj !== 'object') return acc;
+            return acc + Object.values(dayObj).reduce((s, arr) => s + (Array.isArray(arr) ? arr.length : 0), 0);
+        }, 0);
+    }
+
+    if (!force && !isStaleMapping && existing && existing.lastFetchedAt && existingTotalLectures > 0) {
         const ageMin = (Date.now() - new Date(existing.lastFetchedAt).getTime()) / 60000;
         if (ageMin < TIMETABLE_CACHE_TTL_MIN && existing.fetchStatus === 'ok') {
-            return { ok: true, timetable: existing, cached: true };
+            return { ok: true, timetable: existing, cached: true, section, totalLectures: existingTotalLectures, isEmpty: false };
         }
     }
 
@@ -378,7 +798,7 @@ export const refreshTimetable = async ({ school, department, program, batch, spe
             });
         }
 
-        return { ok: true, timetable: existing, changed };
+        return { ok: true, timetable: existing, changed, totalLectures: result.totalLectures, isEmpty: result.totalLectures === 0, section };
     }
 
     const created = await Timetable.create({
@@ -399,14 +819,14 @@ export const refreshTimetable = async ({ school, department, program, batch, spe
         semester: section.semester,
         academicYear: section.academicYear,
     });
-    return { ok: true, timetable: created, changed: true };
+    return { ok: true, timetable: created, changed: true, totalLectures: result.totalLectures, isEmpty: result.totalLectures === 0, section };
 };
 
 /**
  * Refresh all active sections. Used by the cron + admin "Refresh all" button.
  */
-export const refreshAllTimetables = async () => {
-    const sections = await TimetableSection.findAll({ where: { active: true } });
+export const refreshAllTimetables = async ({ where = { active: true } } = {}) => {
+    const sections = await TimetableSection.findAll({ where });
     const results = [];
     for (const s of sections) {
         const r = await refreshTimetable({

@@ -21,21 +21,49 @@ const Timetable = sequelize.define('Timetable', {
     primaryKey: true,
     autoIncrement: true,
   },
-  school: { type: DataTypes.STRING, allowNull: false },
-  department: { type: DataTypes.STRING, allowNull: false },
-  program: { type: DataTypes.STRING, allowNull: false },
-  batch: { type: DataTypes.STRING, allowNull: false },
-  specialization: { type: DataTypes.STRING, allowNull: false },
+  school: { type: DataTypes.STRING(100), allowNull: false },
+  department: { type: DataTypes.STRING(100), allowNull: false },
+  program: { type: DataTypes.STRING(100), allowNull: false },
+  batch: { type: DataTypes.STRING(40), allowNull: false },
+  specialization: { type: DataTypes.STRING(100), allowNull: false },
   entries: {
     type: DataTypes.JSON,
     allowNull: false,
     defaultValue: {},
+    get() {
+      const rawValue = this.getDataValue('entries');
+      if (typeof rawValue === 'string') {
+        try {
+          return JSON.parse(rawValue);
+        } catch (e) {
+          return {};
+        }
+      }
+      return rawValue || {};
+    },
+    set(val) {
+      this.setDataValue('entries', typeof val === 'object' && val !== null ? val : {});
+    },
   },
   subjects: {
     type: DataTypes.JSON,
     allowNull: true,
     defaultValue: [],
     comment: 'Optional subject details parsed from Remarks table',
+    get() {
+      const rawValue = this.getDataValue('subjects');
+      if (typeof rawValue === 'string') {
+        try {
+          return JSON.parse(rawValue);
+        } catch (e) {
+          return [];
+        }
+      }
+      return Array.isArray(rawValue) ? rawValue : [];
+    },
+    set(val) {
+      this.setDataValue('subjects', Array.isArray(val) ? val : []);
+    },
   },
   semester: { type: DataTypes.STRING, allowNull: true },
   academicYear: { type: DataTypes.STRING, allowNull: true },
@@ -50,7 +78,7 @@ const Timetable = sequelize.define('Timetable', {
 }, {
   timestamps: true,
   indexes: [
-    { unique: true, fields: ['school', 'department', 'program', 'batch', 'specialization'] },
+    { name: 'idx_tt_unique', unique: true, fields: ['school', 'department', 'program', 'batch', 'specialization'] },
   ],
 });
 

@@ -20,6 +20,7 @@ import {
   type LeaveApplicationItem,
   type LeaveBalanceItem,
 } from '../../lib/leave.api';
+import AdminSideNav from '../../components/Admin/AdminSideNav';
 
 interface FacultyLeavesProps {
   isEmbedded?: boolean;
@@ -147,9 +148,8 @@ export const FacultyLeaves: React.FC<FacultyLeavesProps> = ({ isEmbedded = false
     return l.status === statusFilter;
   });
 
-  return (
-    <div className={isEmbedded ? "space-y-6 font-sans" : "min-h-screen bg-slate-50 p-4 md:p-8 font-sans"}>
-      <div className={isEmbedded ? "w-full space-y-6" : "max-w-6xl mx-auto space-y-6"}>
+  const pageContent = (
+    <div className={isEmbedded ? "w-full space-y-6" : "max-w-6xl mx-auto space-y-6"}>
         {/* Top bar */}
         <div className="flex items-center justify-between">
           {!isEmbedded ? (
@@ -438,7 +438,6 @@ export const FacultyLeaves: React.FC<FacultyLeavesProps> = ({ isEmbedded = false
             </table>
           </div>
         </div>
-      </div>
 
       {/* APPLY LEAVE MODAL */}
       {showApplyModal && (
@@ -618,6 +617,19 @@ export const FacultyLeaves: React.FC<FacultyLeavesProps> = ({ isEmbedded = false
           </div>
         </div>
       )}
+    </div>
+  );
+
+  if (isEmbedded) {
+    return <div className="space-y-6 font-sans">{pageContent}</div>;
+  }
+
+  return (
+    <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
+      <AdminSideNav activeTab="my-leaves" />
+      <main className="flex-1 overflow-y-auto p-4 md:p-8">
+        {pageContent}
+      </main>
     </div>
   );
 };

@@ -179,8 +179,9 @@ export const getFacultyProfile = asyncHandler(async (req, res) => {
     },
   });
 
+  const candidateFacultyIds = [req.user.id, faculty?.id].filter(Boolean);
   const assignments = await FacultyAssignment.findAll({
-    where: { facultyId: req.user.id, isActive: true },
+    where: { facultyId: { [Op.in]: candidateFacultyIds }, isActive: true },
     order: [["semester", "ASC"]],
   });
 

@@ -432,18 +432,60 @@ export const getStudentAttendanceSummary = asyncHandler(async (req, res) => {
 
   const recordedSubjectIds = [...new Set(sessions.map((s) => s.subjectId))];
 
-  // Fetch all curriculum subjects for this student's class + recorded subjects
-  const classSubjects = await Subject.findAll({
+  // Helper to infer subject type (lab, tutorial, theory)
+  const inferSubjectType = (s) => {
+    if (s?.type === 'lab' || s?.type === 'tutorial') return s.type;
+    const txt = `${s?.name || ''} ${s?.code || ''}`.toLowerCase();
+    if (txt.includes('lab') || txt.includes('laboratory') || txt.includes('practical')) return 'lab';
+    if (txt.includes('tutorial')) return 'tutorial';
+    return s?.type || 'theory';
+  };
+
+  // Fetch only curriculum subjects mapped to this student's class cohort + recorded subjects
+  let cohortSubjectIds = [];
+  const assignments = await FacultyAssignment.findAll({
     where: {
-      [Op.or]: [
-        ...(recordedSubjectIds.length > 0 ? [{ id: { [Op.in]: recordedSubjectIds } }] : []),
-        {
-          school: student.school,
-          department: student.department,
-          program: student.program,
-        },
-      ],
+      school: student.school,
+      department: student.department,
+      program: student.program,
+      batch: student.batch,
+      ...(student.specialization ? { specialization: student.specialization } : {}),
+      isActive: true,
     },
+    attributes: ['subjectId'],
+    raw: true,
+  });
+  cohortSubjectIds = assignments.map((a) => a.subjectId).filter(Boolean);
+
+  // If no assignments found with specialization, try without specialization
+  if (cohortSubjectIds.length === 0) {
+    const fallbackAssignments = await FacultyAssignment.findAll({
+      where: {
+        school: student.school,
+        department: student.department,
+        program: student.program,
+        batch: student.batch,
+        isActive: true,
+      },
+      attributes: ['subjectId'],
+      raw: true,
+    });
+    cohortSubjectIds = fallbackAssignments.map((a) => a.subjectId).filter(Boolean);
+  }
+
+  const candidateSubjectIds = [...new Set([...recordedSubjectIds, ...cohortSubjectIds])];
+
+  const subjectWhere = candidateSubjectIds.length > 0
+    ? { id: { [Op.in]: candidateSubjectIds } }
+    : {
+        school: student.school,
+        department: student.department,
+        program: student.program,
+        ...(student.semester ? { semester: student.semester } : {}),
+      };
+
+  const classSubjects = await Subject.findAll({
+    where: subjectWhere,
     attributes: ['id', 'name', 'code', 'semester', 'type'],
     raw: true,
   });
@@ -459,7 +501,7 @@ export const getStudentAttendanceSummary = asyncHandler(async (req, res) => {
       subjectName: cs.name || `Subject #${cs.id}`,
       subjectCode: cs.code || null,
       semester: cs.semester ?? null,
-      type: cs.type || null,
+      type: inferSubjectType(cs),
       total: 0,
       present: 0,
       absent: 0,
@@ -479,7 +521,7 @@ export const getStudentAttendanceSummary = asyncHandler(async (req, res) => {
         subjectName: subj?.name || `Subject #${s.subjectId}`,
         subjectCode: subj?.code || null,
         semester: subj?.semester ?? null,
-        type: subj?.type || null,
+        type: inferSubjectType(subj),
         total: 0,
         present: 0,
         absent: 0,

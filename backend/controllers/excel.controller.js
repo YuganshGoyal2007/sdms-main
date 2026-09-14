@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import XLSX from 'xlsx';
+import sequelize from '../lib/db.js';
 
 import { reformatExcel } from '../services/excelReformat.service.js';
 import { uploadStudentPhotos } from '../services/photoUpload.service.js';
@@ -107,7 +108,7 @@ const exactClassMatch = (student, assignment) =>
   );
 
 const buildExportRow = (student) => {
-  const raw = student.toJSON();
+  const raw = typeof student.toJSON === 'function' ? student.toJSON() : student;
 
   const row = {
     'Roll No': raw.rollNo,
@@ -137,17 +138,25 @@ const buildExportRow = (student) => {
     'Status': raw.status,
     'Created At': raw.createdAt ? new Date(raw.createdAt).toISOString() : '',
     'Updated At': raw.updatedAt ? new Date(raw.updatedAt).toISOString() : '',
-    'Photo Available': raw.photo ? 'Yes' : 'No'
+    'Photo Available': raw.hasPhoto ? 'Yes' : (raw.photo ? 'Yes' : 'No')
   };
 
-  const semesters = Array.isArray(raw.semesters) ? raw.semesters : [];
+  let semesters = raw.semesters;
+  if (typeof semesters === 'string') {
+    try { semesters = JSON.parse(semesters); } catch { semesters = []; }
+  }
+  semesters = Array.isArray(semesters) ? semesters : [];
   semesters.forEach((semester, index) => {
     const number = semester?.semester || index + 1;
     row[`Semester ${number} Registration`] = semester?.registered ?? '';
     row[`Semester ${number} SGPA`] = semester?.sgpa ?? '';
   });
 
-  const yearCGPA = Array.isArray(raw.yearCGPA) ? raw.yearCGPA : [];
+  let yearCGPA = raw.yearCGPA;
+  if (typeof yearCGPA === 'string') {
+    try { yearCGPA = JSON.parse(yearCGPA); } catch { yearCGPA = []; }
+  }
+  yearCGPA = Array.isArray(yearCGPA) ? yearCGPA : [];
   yearCGPA.forEach((year, index) => {
     const number = year?.year || index + 1;
     const suffix = number === 1 ? 'st' : number === 2 ? 'nd' : number === 3 ? 'rd' : 'th';
@@ -157,10 +166,16 @@ const buildExportRow = (student) => {
   return row;
 };
 
+const normVal = (v) => {
+  if (v === null || v === undefined) return '';
+  const s = String(v).trim().toLowerCase();
+  return (s === 'none' || s === 'n/a' || s === 'null') ? '' : s;
+};
+
 const sendWorkbook = (res, students, filename, metadata = {}) => {
   const rows = students.map(buildExportRow);
   const workbook = XLSX.utils.book_new();
-  const worksheet = XLSX.utils.json_to_sheet(rows);
+  const worksheet = XLSX.utils.json_to_sheet(rows.length ? rows : [{}]);
 
   worksheet['!cols'] = Object.keys(rows[0] || {}).map((key) => ({
     wch: Math.min(Math.max(key.length + 2, 12), 32)
@@ -187,6 +202,7 @@ const sendWorkbook = (res, students, filename, metadata = {}) => {
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   );
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
 
   return res.send(buffer);
 };
@@ -194,82 +210,109 @@ const sendWorkbook = (res, students, filename, metadata = {}) => {
 export const exportStudentsToExcel = asyncHandler(async (req, res) => {
   const { school, department, program, batch, specialization } = req.query;
 
-  const hasClassFilter = classFields.some((field) => req.query[field]);
+  const querySchool = school ? String(school).trim() : null;
+  const queryDept = department ? String(department).trim() : null;
+  const queryProg = program ? String(program).trim() : null;
+  const queryBatch = batch ? String(batch).trim() : null;
+  const querySpec = specialization ? String(specialization).trim() : null;
 
-  let where;
-  let metadata = { school, department, program, batch, specialization };
+  const hasFilter = Boolean(querySchool || queryDept || queryProg || queryBatch || querySpec);
+
+  let where = {};
+  let metadata = {
+    school: querySchool || undefined,
+    department: queryDept || undefined,
+    program: queryProg || undefined,
+    batch: queryBatch || undefined,
+    specialization: querySpec || undefined,
+  };
 
   logger.info(
     {
       userId: req.user?.id,
       role: req.user?.role,
-      filters: { school, department, program, batch, specialization },
+      filters: metadata,
     },
     'Export students to Excel'
   );
 
+  // Build base filter conditions supporting multi-tier hierarchy (dept, program, batch, class)
+  const baseFilter = {};
+  if (querySchool) {
+    baseFilter.school = { [Op.or]: [querySchool, querySchool.toLowerCase(), querySchool.toUpperCase()] };
+  }
+  if (queryDept) {
+    baseFilter.department = { [Op.or]: [queryDept, queryDept.toLowerCase(), queryDept.toUpperCase()] };
+  }
+  if (queryProg) {
+    baseFilter.program = queryProg;
+  }
+  if (queryBatch) {
+    baseFilter.batch = queryBatch;
+  }
+  if (querySpec) {
+    baseFilter.specialization = querySpec;
+  }
+
   if (req.user.role === 'admin') {
-    where = {};
-    classFields.forEach((field) => {
-      if (req.query[field]) where[field] = req.query[field];
-    });
+    where = baseFilter;
+  } else if (req.user.role === 'chairperson') {
+    const { assignments } = await getChairpersonAssignments(req.user);
+    if (!assignments || !assignments.length) {
+      return res.status(403).json({
+        success: false,
+        message: 'No classes or departments are assigned to this chairperson.'
+      });
+    }
+
+    const assignedDepts = [...new Set(assignments.map((a) => normVal(a.department)).filter(Boolean))];
+
+    // If department filter specified, verify it falls under chairperson purview
+    if (queryDept) {
+      const targetDeptNorm = normVal(queryDept);
+      const isDeptAllowed = assignedDepts.some((d) => d === targetDeptNorm) ||
+        assignments.some((a) => normVal(a.department) === targetDeptNorm);
+
+      if (!isDeptAllowed) {
+        return res.status(403).json({
+          success: false,
+          message: `Access denied: Department ${queryDept} is not under your purview.`
+        });
+      }
+    } else if (assignedDepts.length > 0) {
+      baseFilter.department = { [Op.in]: assignedDepts };
+    }
+
+    // If specific class filter requested, verify class compatibility
+    if (querySpec) {
+      const match = assignments.some((a) =>
+        (!queryDept || normVal(a.department) === normVal(queryDept)) &&
+        (!queryBatch || normVal(a.batch) === normVal(queryBatch)) &&
+        normVal(a.specialization) === normVal(querySpec)
+      );
+      if (!match) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied: this class is not assigned to you.'
+        });
+      }
+    }
+
+    where = baseFilter;
   } else if (req.user.role === 'coordinator') {
     const assignments = await getCoordinatorAssignedClasses(req.user);
-    if (!assignments.length) {
+    if (!assignments || !assignments.length) {
       return res.status(403).json({
         success: false,
         message: 'No classes are assigned to this coordinator.'
       });
     }
 
-    if (hasClassFilter) {
-      const target = { school, department, program, batch, specialization };
-      if (!isClassAssignedToCoordinator(assignments, target)) {
-        return res.status(403).json({
-          success: false,
-          message: 'Access denied: this class is not assigned to you.'
-        });
-      }
-      where = Object.fromEntries(
-        classFields
-          .filter((field) => req.query[field])
-          .map((field) => [field, req.query[field]])
-      );
+    const coordWhere = buildCoordinatorWhereClause(assignments);
+    if (hasFilter) {
+      where = { [Op.and]: [coordWhere, baseFilter] };
     } else {
-      where = buildCoordinatorWhereClause(assignments);
-      metadata = {};
-    }
-  } else if (req.user.role === 'chairperson') {
-    const { assignments } = await getChairpersonAssignments(req.user);
-    if (!assignments.length) {
-      return res.status(403).json({
-        success: false,
-        message: 'No classes are assigned to this chairperson.'
-      });
-    }
-
-    if (hasClassFilter) {
-      const target = { school, department, program, batch, specialization };
-      if (!isClassAssignedToCoordinator(assignments, target)) {
-        return res.status(403).json({
-          success: false,
-          message: 'Access denied: this class is not assigned to you.'
-        });
-      }
-      where = Object.fromEntries(
-        classFields
-          .filter((field) => req.query[field])
-          .map((field) => [field, req.query[field]])
-      );
-    } else {
-      where = {
-        [Op.or]: assignments.map((assignment) =>
-          Object.fromEntries(
-            classFields.map((field) => [field, assignment[field]])
-          )
-        )
-      };
-      metadata = {};
+      where = coordWhere;
     }
   } else {
     return res.status(403).json({
@@ -280,6 +323,16 @@ export const exportStudentsToExcel = asyncHandler(async (req, res) => {
 
   const students = await Student.findAll({
     where,
+    attributes: {
+      exclude: ['photo'],
+      include: [
+        [
+          sequelize.literal("CASE WHEN photo IS NOT NULL AND photo != '' THEN 1 ELSE 0 END"),
+          'hasPhoto'
+        ]
+      ]
+    },
+    raw: true,
     order: [
       ['school', 'ASC'],
       ['department', 'ASC'],
@@ -290,14 +343,25 @@ export const exportStudentsToExcel = asyncHandler(async (req, res) => {
     ]
   });
 
-  const prefix = req.user.role === 'admin'
-    ? 'all-student-records'
-    : req.user.role === 'chairperson'
-      ? 'chairperson-assigned-records'
-      : 'coordinator-assigned-records';
+  // Descriptive, clean filename reflecting the exact export tier
+  const parts = [];
+  if (querySchool) parts.push(querySchool.toUpperCase());
+  if (queryDept) parts.push(queryDept.toUpperCase());
+  if (queryProg) parts.push(queryProg.replace(/\s+/g, '_'));
+  if (queryBatch) parts.push(`Batch_${queryBatch}`);
+  if (querySpec) parts.push(querySpec.replace(/\s+/g, '_'));
 
-  const suffix = hasClassFilter ? '-class' : '';
-  const filename = `${prefix}${suffix}.xlsx`;
+  let fileBase = parts.join('_');
+  if (!fileBase) {
+    fileBase = req.user.role === 'admin'
+      ? 'All_Students'
+      : req.user.role === 'chairperson'
+        ? 'Chairperson_Assigned_Students'
+        : 'Coordinator_Assigned_Students';
+  }
+
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const filename = `${fileBase}_${dateStr}.xlsx`;
 
   logger.info(
     { recordCount: students.length, filename, role: req.user.role, userId: req.user.id },

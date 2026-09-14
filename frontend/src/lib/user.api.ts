@@ -399,7 +399,7 @@ export const getTimetableForClass = async (
     program: string,
     batch: string,
     specialization: string
-): Promise<{ success: boolean; timetable?: any; stale?: boolean; error?: string }> =>
+): Promise<{ success: boolean; timetable?: any; section?: any; stale?: boolean; error?: string }> =>
     (await api.get(`/timetable/section/${encodeURIComponent(school)}/${encodeURIComponent(department)}/${encodeURIComponent(program)}/${encodeURIComponent(batch)}/${encodeURIComponent(specialization)}`)).data;
 
 export const refreshClassTimetable = async (
@@ -425,6 +425,24 @@ export const getScrapeLiveStatus = async (): Promise<{
         checkedAt: string;
     }>;
 }> => (await api.get('/timetable/scrape-live-status')).data;
+
+export const previewTimetableSection = async (payload: {
+    mygbuSchool?: string;
+    mygbuDepartment?: string;
+    mygbuSectionId: string;
+}): Promise<{
+    success: boolean;
+    isDryRun: boolean;
+    mygbuSectionId: string;
+    label?: string;
+    entries?: Record<string, Record<string, TimetableEntry[]>>;
+    subjects?: TimetableSubject[];
+    totalLectures: number;
+    isEmpty: boolean;
+    sourceUrl?: string;
+    message?: string;
+    error?: string;
+}> => (await api.post('/timetable/preview-section', payload)).data;
 
 export const syncFacultyAssignments = async (payload: {
     school?: string;

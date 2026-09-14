@@ -9,11 +9,13 @@ import {
     Phone,
     Download,
     Search,
+    Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
 import AdminSideNav from "../../components/Admin/AdminSideNav";
 import Header from "../../components/Admin/Header";
 import Footer from "../../components/Admin/Footer";
+import { ClassTimetableModal } from "../../components/Admin/ClassTimetableModal";
 import {
     getChairpersonClasses,
     sendMessage,
@@ -70,7 +72,8 @@ const ClassRow: React.FC<{
     cls: ChairpersonClassInfo;
     onOpen: () => void;
     onExport: () => void;
-}> = ({ cls, onOpen, onExport }) => {
+    onViewTimetable: () => void;
+}> = ({ cls, onOpen, onExport, onViewTimetable }) => {
     const titleLine = `${cls.program} ${cls.batch} — ${cls.specialization}`;
     const subLine = `${cls.school?.toUpperCase()} / ${cls.department?.toUpperCase()}`;
 
@@ -132,14 +135,21 @@ const ClassRow: React.FC<{
 
                 <div className="flex flex-row lg:flex-col gap-2 lg:items-end shrink-0">
                     <button
+                        onClick={onViewTimetable}
+                        className="px-4 py-2 text-sm bg-indigo-50 text-indigo-700 border border-indigo-200 rounded hover:bg-indigo-100 inline-flex items-center gap-1.5 font-medium cursor-pointer"
+                        title="View and configure timetable"
+                    >
+                        <Calendar size={14} /> Timetable
+                    </button>
+                    <button
                         onClick={onOpen}
-                        className="px-4 py-2 text-sm bg-blue-600 text-white border border-blue-800 rounded hover:bg-blue-700"
+                        className="px-4 py-2 text-sm bg-blue-600 text-white border border-blue-800 rounded hover:bg-blue-700 cursor-pointer"
                     >
                         View Students
                     </button>
                     <button
                         onClick={onExport}
-                        className="px-4 py-2 text-sm bg-gray-200 border border-[#d9d9d9] rounded hover:bg-gray-300 inline-flex items-center gap-1.5"
+                        className="px-4 py-2 text-sm bg-gray-200 border border-[#d9d9d9] rounded hover:bg-gray-300 inline-flex items-center gap-1.5 cursor-pointer"
                     >
                         <Download size={14} /> Export Excel
                     </button>
@@ -154,6 +164,7 @@ const ChairpersonMyClasses = () => {
     const admin = useSelector((state: { admin: AdminState }) => state.admin);
     const [classes, setClasses] = useState<ChairpersonClassInfo[]>([]);
     const [chairperson, setChairperson] = useState<{ id: number; name: string; email: string } | null>(null);
+    const [selectedClassForTimetable, setSelectedClassForTimetable] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
 
@@ -285,6 +296,7 @@ const ChairpersonMyClasses = () => {
                                         cls={cls}
                                         onOpen={() => handleOpen(cls)}
                                         onExport={() => handleExport(cls)}
+                                        onViewTimetable={() => setSelectedClassForTimetable(cls)}
                                     />
                                 ))
                             )}
@@ -296,6 +308,14 @@ const ChairpersonMyClasses = () => {
                     <Footer />
                 </div>
             </div>
+
+            {/* Class Timetable Modal */}
+            <ClassTimetableModal
+                isOpen={Boolean(selectedClassForTimetable)}
+                onClose={() => setSelectedClassForTimetable(null)}
+                classInfo={selectedClassForTimetable}
+                onGoToMappings={() => navigate("/admin/timetable")}
+            />
         </div>
     );
 };

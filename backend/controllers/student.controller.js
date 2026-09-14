@@ -11,6 +11,8 @@ import { parseExcelDate } from "../services/parsing.service.js";
 import { reformatExcel } from "../services/excelReformat.service.js";
 import { Op, fn, col, where as seqWhere } from 'sequelize';
 import { getChairpersonAssignments } from './chairperson.controller.js';
+import Faculty from "../models/faculty.model.js";
+import FacultyAssignment from "../models/facultyAssignment.model.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
 import logger from "../lib/logger.js";
 
@@ -34,14 +36,20 @@ export const getCoordinatorAssignedClasses = async (user) => {
   }));
 };
 
+const normVal = (v) => {
+  if (v === null || v === undefined) return '';
+  const s = String(v).trim().toLowerCase();
+  return (s === 'none' || s === 'n/a' || s === 'null') ? '' : s;
+};
+
 export const isClassAssignedToCoordinator = (assignedClasses, target) => {
-  if (!assignedClasses || assignedClasses.length === 0) return false;
+  if (!assignedClasses || assignedClasses.length === 0 || !target) return false;
   return assignedClasses.some(c => {
-    const matchSchool = !c.school || !target.school || c.school.toLowerCase().trim() === target.school.toLowerCase().trim();
-    const matchDept = !c.department || !target.department || c.department.toLowerCase().trim() === target.department.toLowerCase().trim();
-    const matchProg = !c.program || !target.program || c.program.toLowerCase().trim() === target.program.toLowerCase().trim();
-    const matchBatch = !c.batch || !target.batch || c.batch.toLowerCase().trim() === target.batch.toLowerCase().trim();
-    const matchSpec = !c.specialization || !target.specialization || c.specialization.toLowerCase().trim() === target.specialization.toLowerCase().trim();
+    const matchSchool = !c.school || !target.school || normVal(c.school) === normVal(target.school);
+    const matchDept = !c.department || !target.department || normVal(c.department) === normVal(target.department);
+    const matchProg = !c.program || !target.program || normVal(c.program) === normVal(target.program);
+    const matchBatch = !c.batch || !target.batch || normVal(c.batch) === normVal(target.batch);
+    const matchSpec = normVal(c.specialization) === normVal(target.specialization);
     return matchSchool && matchDept && matchProg && matchBatch && matchSpec;
   });
 };
@@ -58,6 +66,56 @@ export const buildCoordinatorWhereClause = (assignedClasses) => {
     return cond;
   });
   return { [Op.or]: conditions };
+};
+
+export const getFacultyAssignedClasses = async (user) => {
+  if (!user || user.role !== 'faculty') return [];
+  try {
+    const faculty = await Faculty.findOne({
+      where: {
+        [Op.or]: [
+          { userId: user.id },
+          user.username ? { email: user.username } : null
+        ].filter(Boolean)
+      }
+    });
+    const candidateIds = [user.id, faculty?.id].filter(Boolean);
+    const assignments = await FacultyAssignment.findAll({
+      where: {
+        facultyId: { [Op.in]: candidateIds },
+        isActive: true
+      }
+    });
+    return assignments.map(a => ({
+      school: a.school,
+      department: a.department,
+      program: a.program,
+      batch: a.batch,
+      specialization: a.specialization
+    }));
+  } catch (err) {
+    logger.warn({ err: err.message }, 'Error fetching faculty assigned classes');
+    return [];
+  }
+};
+
+export const isStudentAccessibleByUser = async (user, student) => {
+  if (!user || !student) return false;
+  // Admin / HOD has full global access
+  if (user.role === 'admin') return true;
+  if (user.role === 'coordinator') {
+    const assignedClasses = await getCoordinatorAssignedClasses(user);
+    return isClassAssignedToCoordinator(assignedClasses, student);
+  }
+  if (user.role === 'chairperson') {
+    const { assignments } = await getChairpersonAssignments(user);
+    return isClassAssignedToCoordinator(assignments, student);
+  }
+  if (user.role === 'faculty') {
+    const assignedClasses = await getFacultyAssignedClasses(user);
+    return isClassAssignedToCoordinator(assignedClasses, student);
+  }
+  return false;
 };
 
 export const getProgramRule = (program, batch) => {
@@ -482,6 +540,10 @@ export const getStudentCount = asyncHandler(async (req, res) => {
       const { assignments } = await getChairpersonAssignments(req.user);
       const chairWhere = buildCoordinatorWhereClause(assignments);
       count = await Student.count({ where: chairWhere });
+    } else if (req.user && req.user.role === 'faculty') {
+      const assignedClasses = await getFacultyAssignedClasses(req.user);
+      const facWhere = buildCoordinatorWhereClause(assignedClasses);
+      count = await Student.count({ where: facWhere });
     } else {
       count = await Student.count();
     }
@@ -517,21 +579,15 @@ export const getStudentProfile = asyncHandler(async (req, res) => {
       });
     }
 
-    if (req.user && req.user.role === 'coordinator') {
-      const assignedClasses = await getCoordinatorAssignedClasses(req.user);
-      if (!isClassAssignedToCoordinator(assignedClasses, student)) {
+    // Role-based authorization: Admin / HOD has full global access.
+    // Coordinators, Chairpersons, and Faculty are strictly restricted to students in their assigned classes.
+    if (req.user && req.user.role !== 'admin') {
+      const allowed = await isStudentAccessibleByUser(req.user, student);
+      if (!allowed) {
         return res.status(403).json({
           success: false,
-          message: "Access denied: Student is not in your assigned class."
-        });
-      }
-    }
-    if (req.user && req.user.role === 'chairperson') {
-      const { assignments } = await getChairpersonAssignments(req.user);
-      if (!isClassAssignedToCoordinator(assignments, student)) {
-        return res.status(403).json({
-          success: false,
-          message: "Access denied: Student is not in your assigned class."
+          code: 'ACCESS_DENIED',
+          message: "Access denied: You are only authorized to view students in your assigned classes."
         });
       }
     }
@@ -548,6 +604,15 @@ export const searchStudents = asyncHandler(async (req, res) => {
       return res.status(400).json({ success: false, message: 'Query parameter `q` is required' });
     }
 
+    // Only admin (HOD), coordinator, chairperson, and faculty (class teachers) can search
+    if (!req.user || !['admin', 'coordinator', 'chairperson', 'faculty'].includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        code: 'ACCESS_DENIED',
+        message: 'Access denied: You are not authorized to search students.'
+      });
+    }
+
     const cleaned = removeSpaces(String(q).toLowerCase());
 
     let baseWhere = {
@@ -560,28 +625,26 @@ export const searchStudents = asyncHandler(async (req, res) => {
       ]
     };
 
-    if (req.user && req.user.role === 'coordinator') {
+    if (req.user.role === 'admin') {
+      // Full global access for admin / HOD
+    } else if (req.user.role === 'coordinator') {
       const assignedClasses = await getCoordinatorAssignedClasses(req.user);
       const coordWhere = buildCoordinatorWhereClause(assignedClasses);
       baseWhere = {
         [Op.and]: [baseWhere, coordWhere]
       };
-    } else if (req.user && req.user.role === 'chairperson') {
+    } else if (req.user.role === 'chairperson') {
       const { assignments } = await getChairpersonAssignments(req.user);
-      if (assignments && assignments.length) {
-        const chairWhere = {
-          [Op.or]: assignments.map((a) => ({
-            school: a.school,
-            department: a.department,
-            program: a.program,
-            batch: a.batch,
-            specialization: a.specialization,
-          })),
-        };
-        baseWhere = {
-          [Op.and]: [baseWhere, chairWhere]
-        };
-      }
+      const chairWhere = buildCoordinatorWhereClause(assignments);
+      baseWhere = {
+        [Op.and]: [baseWhere, chairWhere]
+      };
+    } else if (req.user.role === 'faculty') {
+      const assignedClasses = await getFacultyAssignedClasses(req.user);
+      const facWhere = buildCoordinatorWhereClause(assignedClasses);
+      baseWhere = {
+        [Op.and]: [baseWhere, facWhere]
+      };
     }
 
     const students = await Student.findAll({
@@ -681,6 +744,29 @@ export const getFilteredStudents = asyncHandler(async (req, res) => {
       } else {
         const coordWhere = buildCoordinatorWhereClause(assignedClasses);
         const students = await Student.findAll({ where: coordWhere, order: [['rollNo', 'ASC']] });
+        return res.status(200).json({ success: true, count: students.length, students });
+      }
+    } else if (req.user && req.user.role === 'faculty') {
+      const assignedClasses = await getFacultyAssignedClasses(req.user);
+      if (hasParams) {
+        const targetClass = { school, department, program, batch, specialization };
+        if (!isClassAssignedToCoordinator(assignedClasses, targetClass)) {
+          return res.status(403).json({
+            success: false,
+            message: "Access denied: You are not assigned to manage or view this class."
+          });
+        }
+        const where = {};
+        if (school) where.school = school;
+        if (department) where.department = department;
+        if (program) where.program = program;
+        if (batch) where.batch = batch;
+        if (specialization) where.specialization = specialization;
+        const students = await Student.findAll({ where, order: [['rollNo', 'ASC']] });
+        return res.status(200).json({ success: true, count: students.length, students });
+      } else {
+        const facWhere = buildCoordinatorWhereClause(assignedClasses);
+        const students = await Student.findAll({ where: facWhere, order: [['rollNo', 'ASC']] });
         return res.status(200).json({ success: true, count: students.length, students });
       }
     } else {

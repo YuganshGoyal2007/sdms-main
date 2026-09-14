@@ -385,6 +385,60 @@ const Classes = () => {
     }
   };
 
+  const uniqueBatches = useMemo(() => {
+    return Array.from(new Set(classes.map((c) => c.batch).filter(Boolean))).sort((a, b) => b.localeCompare(a));
+  }, [classes]);
+
+  const [selectedExportBatch, setSelectedExportBatch] = useState<string>("");
+  const [exportingDept, setExportingDept] = useState(false);
+  const [exportingBatch, setExportingBatch] = useState(false);
+
+  const exportDepartment = async () => {
+    setExportingDept(true);
+    const t = toast.loading("Exporting all students in CSE Department…");
+    try {
+      const blob = await exportStudentsToExcel({ school: "soict", department: "cse" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `SOICT_CSE_all_students_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Excel downloaded (all CSE department students)", { id: t });
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || "Export failed", { id: t });
+    } finally {
+      setExportingDept(false);
+    }
+  };
+
+  const exportBatch = async (batch: string) => {
+    if (!batch) {
+      toast.error("Please select a batch first");
+      return;
+    }
+    setExportingBatch(true);
+    const t = toast.loading(`Exporting all students in Batch ${batch}…`);
+    try {
+      const blob = await exportStudentsToExcel({ school: "soict", department: "cse", batch });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `SOICT_CSE_Batch_${batch}_students_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success(`Excel downloaded (Batch ${batch})`, { id: t });
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || "Export failed", { id: t });
+    } finally {
+      setExportingBatch(false);
+    }
+  };
+
   const totalStudents = useMemo(() => {
     return classes.reduce((acc, c) => acc + (c.studentCount || 0), 0);
   }, [classes]);
@@ -411,10 +465,45 @@ const Classes = () => {
                   {user.role === "chairperson" ? "Classes you oversee" : user.role === "coordinator" ? "Classes assigned to you" : "All classes"}
                 </p>
               </div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <div className="text-xs text-gray-600">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <div className="text-xs text-gray-600 mr-1">
                   {classes.length} class{classes.length === 1 ? "" : "es"} · {totalStudents} student{totalStudents === 1 ? "" : "s"}
                 </div>
+
+                {/* Export Entire Department */}
+                <button
+                  onClick={exportDepartment}
+                  disabled={exportingDept}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 text-purple-800 cursor-pointer shadow-2xs transition disabled:opacity-50"
+                  title="Export all students in the CSE Department"
+                >
+                  <FileSpreadsheet size={13} /> {exportingDept ? "Exporting..." : "Export All CSE"}
+                </button>
+
+                {/* Batch Export Selector */}
+                {uniqueBatches.length > 0 && (
+                  <div className="inline-flex items-center border border-indigo-200 rounded overflow-hidden shadow-2xs text-xs bg-indigo-50">
+                    <select
+                      value={selectedExportBatch}
+                      onChange={(e) => setSelectedExportBatch(e.target.value)}
+                      className="px-2 py-1.5 bg-indigo-50 text-indigo-900 font-medium outline-none border-r border-indigo-200 cursor-pointer text-xs"
+                    >
+                      <option value="">Select Batch...</option>
+                      {uniqueBatches.map((b) => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => exportBatch(selectedExportBatch)}
+                      disabled={exportingBatch || !selectedExportBatch}
+                      className="px-2.5 py-1.5 font-semibold text-indigo-800 hover:bg-indigo-100 transition disabled:opacity-50 cursor-pointer flex items-center gap-1"
+                      title="Export all students in the selected batch across all sections"
+                    >
+                      <FileSpreadsheet size={12} /> {exportingBatch ? "..." : "Export Batch"}
+                    </button>
+                  </div>
+                )}
+
                 {user.role === "admin" && (
                   <button
                     onClick={() => navigate("/admin/timetable")}

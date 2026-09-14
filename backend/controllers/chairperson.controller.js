@@ -12,6 +12,24 @@ import logger from '../lib/logger.js';
 
 const classFields = ['school', 'department', 'program', 'batch', 'specialization'];
 
+const normVal = (v) => {
+  if (v === null || v === undefined) return '';
+  const s = String(v).trim().toLowerCase();
+  return (s === 'none' || s === 'n/a' || s === 'null') ? '' : s;
+};
+
+export const isClassAssignedToChairperson = (assignments, target) => {
+  if (!assignments || !assignments.length || !target) return false;
+  return assignments.some((a) =>
+    classFields.every((field) => {
+      const aVal = normVal(a[field]);
+      const tVal = normVal(target[field]);
+      if (!aVal) return true;
+      return aVal === tVal;
+    })
+  );
+};
+
 const classMatches = (assignment, target) => classFields.every((field) =>
   !assignment[field] || !target?.[field] || String(assignment[field]).trim().toLowerCase() === String(target[field]).trim().toLowerCase()
 );

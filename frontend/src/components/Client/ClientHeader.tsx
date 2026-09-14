@@ -35,6 +35,7 @@ export function ClientHeader({
     const { unread, timetableChanged, markTimetableSeen } = useNotifications(30_000);
     const navigate = useNavigate();
     const student = useSelector((state: RootState) => state.user.student);
+    const [imgError, setImgError] = useState(false);
 
     const handleLogout = () => {
         logout();
@@ -193,8 +194,13 @@ export function ClientHeader({
                     {student && (
                         <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-gray-50 border border-gray-200">
                             <div className="w-7 h-7 rounded-full bg-[#faf7f9] border border-[#e5d5df] flex items-center justify-center overflow-hidden shrink-0">
-                                {student.photo ? (
-                                    <img src={student.photo} alt={student.fullName} className="w-full h-full object-cover" />
+                                {student.photo && !imgError ? (
+                                    <img
+                                        src={student.photo}
+                                        alt={student.fullName}
+                                        className="w-full h-full object-cover"
+                                        onError={() => setImgError(true)}
+                                    />
                                 ) : (
                                     <span className="text-[11px] font-bold text-[#7b3b5a]">{student.fullName?.charAt(0) || "S"}</span>
                                 )}

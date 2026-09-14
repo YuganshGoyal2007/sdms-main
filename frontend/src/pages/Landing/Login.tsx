@@ -22,6 +22,9 @@ const StudentLogin = () => {
       const data = await userLogin(username, password);
       if (data) {
         localStorage.setItem('authToken', data.accessToken);
+        localStorage.setItem('token', data.accessToken);
+        localStorage.setItem('role', data.role);
+        if (data.officeCode) localStorage.setItem('officeCode', data.officeCode);
         switch (data.role) {
           case 'student':
             navigate("/student");
@@ -45,6 +48,7 @@ const StudentLogin = () => {
               SPT: "sports",
               DEAN: "dean",
               ICT: "ict",
+              ACC: "accounts",
             };
             const targetSlug = codeMap[data.officeCode || ""] || "library";
             navigate(`/no-dues/portal/${targetSlug}`);

@@ -6,6 +6,7 @@ import AdminSideNav from "../../components/Admin/AdminSideNav";
 import Header from "../../components/Admin/Header";
 import Footer from "../../components/Admin/Footer";
 import { ClassTimetableModal } from "../../components/Admin/ClassTimetableModal";
+import TimetableSnapshotsView from "../../components/Admin/TimetableSnapshotsView";
 import {
     listTimetableSections,
     createTimetableSection,
@@ -44,6 +45,7 @@ const TimetableAdmin = () => {
     const [discovering, setDiscovering] = useState(false);
     const [missing, setMissing] = useState<any[] | null>(null);
     const [selectedClassForTimetable, setSelectedClassForTimetable] = useState<any | null>(null);
+    const [adminTab, setAdminTab] = useState<"mappings" | "snapshots">("mappings");
 
     // Live University Timetable & Faculty Sync Engine State
     const [liveStatus, setLiveStatus] = useState<any | null>(null);
@@ -327,6 +329,34 @@ soict,cse,B.Tech,2026-30,AI,SOICT,CSE,1249,BAI-I-A,2026-27,Odd`;
                 </div>
                 <main className="flex-1 overflow-y-auto bg-[#f3f3f3] min-h-0">
                     <div className="px-4 sm:px-6 lg:px-10 py-6 space-y-4">
+                        {/* Tab Switcher */}
+                        <div className="flex items-center gap-2 border-b border-gray-300 pb-2">
+                            <button
+                                onClick={() => setAdminTab("mappings")}
+                                className={`px-4 py-2 text-xs font-bold rounded-lg transition cursor-pointer ${
+                                    adminTab === "mappings"
+                                        ? "bg-[#7b3b5a] text-white shadow-xs"
+                                        : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+                                }`}
+                            >
+                                Live Mappings & Scraper
+                            </button>
+                            <button
+                                onClick={() => setAdminTab("snapshots")}
+                                className={`px-4 py-2 text-xs font-bold rounded-lg transition flex items-center gap-1.5 cursor-pointer ${
+                                    adminTab === "snapshots"
+                                        ? "bg-[#7b3b5a] text-white shadow-xs"
+                                        : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+                                }`}
+                            >
+                                <History size={14} /> Semester Snapshots Archive
+                            </button>
+                        </div>
+
+                        {adminTab === "snapshots" ? (
+                            <TimetableSnapshotsView />
+                        ) : (
+                            <>
                         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
                             <div>
                                 <h1 className="text-2xl font-semibold text-gray-900 flex items-center gap-2">
@@ -512,9 +542,15 @@ soict,cse,B.Tech,2026-30,AI,SOICT,CSE,1249,BAI-I-A,2026-27,Odd`;
                             {/* Latest Sync Result Preview */}
                             {syncResult && (
                                 <div className="mt-4 p-4 rounded-lg bg-slate-50 border border-slate-200">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <CheckCircle2 size={16} className="text-emerald-600" />
+                                    <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {syncResult.dryRun ? (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800 border border-purple-300">
+                                                    🧪 Dry Run Test Mode (Database Unmodified)
+                                                </span>
+                                            ) : (
+                                                <CheckCircle2 size={16} className="text-emerald-600" />
+                                            )}
                                             <span className="text-xs font-semibold text-gray-900">
                                                 Sync Execution Report ({syncResult.school} - {syncResult.department})
                                             </span>
@@ -534,6 +570,18 @@ soict,cse,B.Tech,2026-30,AI,SOICT,CSE,1249,BAI-I-A,2026-27,Odd`;
                                             </span>
                                         </div>
                                     </div>
+                                    {syncResult.dryRun && (
+                                        <div className="mb-2.5 px-3 py-1.5 rounded bg-purple-50/80 border border-purple-200 text-purple-800 text-[11px] flex items-center justify-between">
+                                            <span><strong>Test Preview Only:</strong> Parsed live allocations from samay.mygbu.in. <em>Zero data modified in database.</em></span>
+                                            <button
+                                                onClick={() => handleFacultySync(false)}
+                                                disabled={syncingFaculty}
+                                                className="ml-2 font-semibold text-purple-900 underline hover:no-underline cursor-pointer"
+                                            >
+                                                Apply Live Sync
+                                            </button>
+                                        </div>
+                                    )}
                                     {syncResult.changes && syncResult.changes.length > 0 ? (
                                         <div className="mt-2 space-y-1.5 max-h-48 overflow-y-auto">
                                             {syncResult.changes.map((ch: any, i: number) => (
@@ -911,6 +959,7 @@ soict,cse,B.Tech,2026-30,AI,SOICT,CSE,1249,BAI-I-A,2026-27,Odd`;
                                 </div>
                             )}
                         </div>
+                        </>)}
                     </div>
                 </main>
                 <div className="shrink-0 z-10 border-t border-[#d9d9d9] bg-[#f8f9fa]">

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LayoutDashboard, Menu, Power, Table2, UserCog, UsersRound, X, CalendarDays, ClipboardCheck, UserRound, ShieldCheck, Calendar, CreditCard, Building } from 'lucide-react';
+import { LayoutDashboard, Menu, Power, Table2, UserCog, UsersRound, X, CalendarDays, ClipboardCheck, UserRound, ShieldCheck, Calendar, CreditCard } from 'lucide-react';
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../context/app/store";
@@ -204,7 +204,7 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                                 </>
                             )}
 
-                            {(user.role === 'admin' || user.role === 'coordinator' || user.role === 'chairperson') && (
+                            {user.role === 'admin' && (
                                 <>
                                     <Link to={feesPath} className="block">
                                         <button className="w-full flex items-center justify-start gap-3 cursor-pointer">
@@ -219,21 +219,16 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                                             {menu && <h1 className={activeTab === 'nodues' ? 'text-black font-bold' : ''}>No-Dues Clearance</h1>}
                                         </button>
                                     </Link>
-
-                                    <Link to="/no-dues/portals" className="block">
-                                        <button className="w-full flex items-center justify-start gap-3 cursor-pointer">
-                                            <Building size={20} />
-                                            {menu && <h1 className={activeTab === 'nodues-desks' ? 'text-black font-bold' : ''}>Clearance Desks</h1>}
-                                        </button>
-                                    </Link>
-
-                                    <Link to={leavesPath} className="block">
-                                        <button className="w-full flex items-center justify-start gap-3 cursor-pointer">
-                                            <Calendar size={20} />
-                                            {menu && <h1 className={activeTab === 'leaves' ? 'text-black font-bold' : ''}>Leave Management</h1>}
-                                        </button>
-                                    </Link>
                                 </>
+                            )}
+
+                            {(user.role === 'admin' || user.role === 'coordinator' || user.role === 'chairperson') && (
+                                <Link to={leavesPath} className="block">
+                                    <button className="w-full flex items-center justify-start gap-3 cursor-pointer">
+                                        <Calendar size={20} />
+                                        {menu && <h1 className={activeTab === 'leaves' ? 'text-black font-bold' : ''}>Leave Management</h1>}
+                                    </button>
+                                </Link>
                             )}
 
                             {isChair && (
@@ -461,7 +456,7 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                                 </>
                             )}
 
-                            {(user.role === 'admin' || user.role === 'coordinator' || user.role === 'chairperson') && (
+                            {user.role === 'admin' && (
                                 <>
                                     <Link to={feesPath} className="block">
                                         <button className="w-full flex items-center gap-3 cursor-pointer">
@@ -476,21 +471,16 @@ const userSideNav = ({ activeTab }: { activeTab: string }) => {
                                             {!menu && <h1 className={activeTab === 'nodues' ? 'text-black font-bold' : ''}>No-Dues Clearance</h1>}
                                         </button>
                                     </Link>
-
-                                    <Link to="/no-dues/portals" className="block">
-                                        <button className="w-full flex items-center gap-3 cursor-pointer">
-                                            <Building size={20} />
-                                            {!menu && <h1 className={activeTab === 'nodues-desks' ? 'text-black font-bold' : ''}>Clearance Desks</h1>}
-                                        </button>
-                                    </Link>
-
-                                    <Link to={leavesPath} className="block">
-                                        <button className="w-full flex items-center gap-3 cursor-pointer">
-                                            <Calendar size={20} />
-                                            {!menu && <h1 className={activeTab === 'leaves' ? 'text-black font-bold' : ''}>Leave Management</h1>}
-                                        </button>
-                                    </Link>
                                 </>
+                            )}
+
+                            {(user.role === 'admin' || user.role === 'coordinator' || user.role === 'chairperson') && (
+                                <Link to={leavesPath} className="block">
+                                    <button className="w-full flex items-center gap-3 cursor-pointer">
+                                        <Calendar size={20} />
+                                        {!menu && <h1 className={activeTab === 'leaves' ? 'text-black font-bold' : ''}>Leave Management</h1>}
+                                    </button>
+                                </Link>
                             )}
 
                             {isChair && (

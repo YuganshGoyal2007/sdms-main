@@ -7,6 +7,7 @@ const router = express.Router();
 router.post('/validate-username', authLimiter, validateUsername);
 router.post('/user-register', authLimiter, userRegister);
 router.post('/user-login', loginLimiter, userLogin);
+router.post('/login', loginLimiter, userLogin);
 router.post('/officer-login', loginLimiter, officerLogin);
 router.post('/send-otp', otpLimiter, sendOtp);
 router.post('/verify-otp', otpLimiter, verifyOtp);

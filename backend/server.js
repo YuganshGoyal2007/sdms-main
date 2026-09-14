@@ -97,6 +97,9 @@ app.get('/health', (req, res) => {
 app.use('/auth', authRoute)
 app.use('/admin', specializationRoute);
 app.use('/admin', studentRoute)
+app.use('/coordinator', studentRoute)
+app.use('/chairperson', studentRoute)
+app.use('/faculty', studentRoute)
 app.use('/admin', coordinatorRoute)
 app.use('/coordinator', coordinatorRoute)
 app.use('/chairperson', chairpersonRoute)

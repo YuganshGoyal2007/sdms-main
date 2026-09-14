@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { User, ClipboardCheck, Landmark, ClipboardPen, MessageCircle, CalendarDays } from "lucide-react";
+import { User, ClipboardCheck, Landmark, ClipboardPen, MessageCircle, CalendarDays, FileText, NotebookText, Megaphone, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getUnreadCount, hasTimetableChangesSince } from "../../lib/user.api";
 import { useSelector } from "react-redux";
@@ -19,12 +19,17 @@ const navItems = [
   { id: "timetable", label: "Timetable", icon: CalendarDays },
   { id: "fees", label: "Fees", icon: Landmark },
   { id: "messages", label: "Messages", icon: MessageCircle },
+  { id: "exams", label: "Exams", icon: FileText, comingSoon: true },
+  { id: "syllabus", label: "Syllabus", icon: NotebookText, comingSoon: true },
+  { id: "notices", label: "Notices", icon: Megaphone, comingSoon: true },
+  { id: "results", label: "Results", icon: BarChart3, comingSoon: true },
 ];
 
 export function Sidebar({ activeView, setActiveView, isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
   const [unread, setUnread] = useState(0);
   const [ttChanged, setTtChanged] = useState(false);
   const student = useSelector((state: RootState) => state.user.student);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     const lastSeenKey = "ttLastSeenAt";
@@ -78,8 +83,13 @@ export function Sidebar({ activeView, setActiveView, isSidebarOpen, setIsSidebar
         {student && (
           <div className="bg-[#faf7f9] rounded-xl p-3.5 mb-5 border border-[#e5d5df] flex items-center gap-3 shadow-xs">
             <div className="w-11 h-11 rounded-xl bg-white border border-[#e5d5df] flex items-center justify-center overflow-hidden shrink-0">
-              {student.photo ? (
-                <img src={student.photo} alt={student.fullName} className="w-full h-full object-cover" />
+              {student.photo && !imgError ? (
+                <img
+                  src={student.photo}
+                  alt={student.fullName}
+                  className="w-full h-full object-cover"
+                  onError={() => setImgError(true)}
+                />
               ) : (
                 <span className="text-sm font-bold text-[#7b3b5a]">{student.fullName?.charAt(0) || "S"}</span>
               )}
@@ -116,6 +126,11 @@ export function Sidebar({ activeView, setActiveView, isSidebarOpen, setIsSidebar
                 {item.id === "timetable" && ttChanged && (
                   <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center">
                     NEW
+                  </span>
+                )}
+                {item.comingSoon && (
+                  <span className="text-[10px] text-gray-400 font-medium px-1.5 py-0.5 bg-gray-100 rounded">
+                    Soon
                   </span>
                 )}
               </button>

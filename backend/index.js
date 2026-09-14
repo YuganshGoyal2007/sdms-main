@@ -107,6 +107,94 @@ connectDB().then((ok) => {
     // Then repeat every 30 minutes
     setInterval(runAutoSync, SYNC_INTERVAL_MS);
     logger.info({ intervalMinutes: 30 }, 'Auto-sync: faculty reassignment background job scheduled');
+
+    // ── Semester Boundary Timetable Snapshot Trigger ────────────────
+    // Milestone boundaries:
+    // 1. Odd Term Start: August 1
+    // 2. Odd Term End: Nov 30 / Dec 1
+    // 3. Even Term Start: Jan 15
+    // 4. Even Term End: April 30 / May 1
+    const runSemesterSnapshotCheck = async () => {
+      try {
+        const now = new Date();
+        const month = now.getMonth();
+        const date = now.getDate();
+
+        let triggerType = null;
+        let semesterTerm = null;
+
+        if (month === 7 && date === 1) { // August 1
+          triggerType = 'term_start';
+          semesterTerm = 'odd';
+        } else if ((month === 10 && date === 30) || (month === 11 && date === 1)) { // Nov 30 / Dec 1
+          triggerType = 'term_end';
+          semesterTerm = 'odd';
+        } else if (month === 0 && date === 15) { // Jan 15
+          triggerType = 'term_start';
+          semesterTerm = 'even';
+        } else if ((month === 3 && date === 30) || (month === 4 && date === 1)) { // Apr 30 / May 1
+          triggerType = 'term_end';
+          semesterTerm = 'even';
+        }
+
+        if (triggerType) {
+          logger.info({ triggerType, semesterTerm }, 'Semester boundary reached: Triggering automated timetable snapshots');
+          const TimetableSnapshot = (await import('./models/timetableSnapshot.model.js')).default;
+          const Timetable = (await import('./models/timetable.model.js')).default;
+          const FacultyAssignment = (await import('./models/facultyAssignment.model.js')).default;
+
+          const year = now.getFullYear();
+          const academicYear = semesterTerm === 'odd' ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+
+          const activeTimetables = await Timetable.findAll();
+          const facultyAssignments = await FacultyAssignment.findAll({ raw: true }).catch(() => []);
+
+          let capturedCount = 0;
+          for (const tt of activeTimetables) {
+            const existing = await TimetableSnapshot.findOne({
+              where: {
+                academicYear,
+                semesterTerm,
+                snapshotType: triggerType,
+                school: tt.school,
+                department: tt.department,
+                program: tt.program,
+                batch: tt.batch,
+                specialization: tt.specialization,
+              },
+            });
+            if (!existing) {
+              const matchingAssignments = facultyAssignments.filter(
+                (fa) => (!fa.program || fa.program === tt.program) && (!fa.batch || fa.batch === tt.batch)
+              );
+              await TimetableSnapshot.create({
+                academicYear,
+                semesterTerm,
+                snapshotType: triggerType,
+                school: tt.school,
+                department: tt.department,
+                program: tt.program,
+                batch: tt.batch,
+                specialization: tt.specialization || 'None',
+                timetableData: tt.entries || {},
+                facultyAssignments: matchingAssignments,
+                capturedAt: new Date(),
+                capturedBy: 'system-cron',
+                remarks: `Automated semester milestone snapshot (${triggerType})`,
+              });
+              capturedCount++;
+            }
+          }
+          logger.info({ capturedCount, triggerType, semesterTerm }, 'Automated semester snapshot trigger complete');
+        }
+      } catch (err) {
+        logger.error({ err: err.message }, 'Error in automated semester snapshot trigger');
+      }
+    };
+
+    setTimeout(runSemesterSnapshotCheck, 90 * 1000);
+    setInterval(runSemesterSnapshotCheck, 24 * 60 * 60 * 1000);
+    logger.info('Auto-snapshot: semester boundary timetable scheduler initialized');
   });
 
   server.on('error', (err) => {

@@ -881,12 +881,22 @@ export const StudentFeesAndNoDuesView: React.FC = () => {
                 </div>
 
                 {/* ---------------- BRIDGE: SPINE TO PARALLEL BUS ---------------- */}
-                <div className="w-full max-w-4xl relative mt-1 mb-8">
+                <div className="w-full max-w-5xl relative mt-2 mb-6">
                   {/* Top distribution bus line */}
-                  <div className="hidden md:block absolute top-0 left-[6%] right-[6%] h-0.5 bg-slate-300 transition-colors" />
+                  <div
+                    className="hidden md:block absolute top-0 h-0.5 bg-slate-300 transition-colors"
+                    style={{
+                      left: workflow.parallel.length > 0 ? `${100 / (2 * workflow.parallel.length)}%` : '10%',
+                      right: workflow.parallel.length > 0 ? `${100 / (2 * workflow.parallel.length)}%` : '10%',
+                    }}
+                  />
 
                   {/* ---------------- TIER 2: PARALLEL AUXILIARY BUS ---------------- */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 md:gap-3 pt-6">
+                  <div
+                    className={`grid grid-cols-2 sm:grid-cols-3 ${
+                      workflow.parallel.length >= 6 ? 'md:grid-cols-6' : 'md:grid-cols-5'
+                    } gap-4 md:gap-2 pt-6 pb-8`}
+                  >
                     {workflow.parallel.map((stage, pIdx) => {
                       const isApproved = stage.status === 'approved';
                       const isPending = stage.status === 'pending' && !stage.isLocked;
@@ -901,13 +911,13 @@ export const StudentFeesAndNoDuesView: React.FC = () => {
                           <WorkflowNode
                             stage={stage}
                             isSmall
-                            position={pIdx < 2 ? 'right' : 'left'}
+                            position={pIdx < Math.ceil(workflow.parallel.length / 2) ? 'right' : 'left'}
                             activeTooltipId={activeTooltipId}
                             setActiveTooltipId={setActiveTooltipId}
                           />
                           {/* Stem from node down to bottom collector */}
                           <div
-                            className={`hidden md:block absolute -bottom-6 w-0.5 h-6 transition-colors duration-500 ${
+                            className={`hidden md:block absolute -bottom-8 w-0.5 h-8 transition-colors duration-500 ${
                               isApproved ? 'bg-emerald-500' : isPending ? 'bg-blue-400' : 'bg-slate-300'
                             }`}
                           />
@@ -917,11 +927,17 @@ export const StudentFeesAndNoDuesView: React.FC = () => {
                   </div>
 
                   {/* Bottom collector bus line */}
-                  <div className="hidden md:block absolute -bottom-6 left-[6%] right-[6%] h-0.5 bg-slate-300" />
+                  <div
+                    className="hidden md:block absolute -bottom-8 h-0.5 bg-slate-300"
+                    style={{
+                      left: workflow.parallel.length > 0 ? `${100 / (2 * workflow.parallel.length)}%` : '10%',
+                      right: workflow.parallel.length > 0 ? `${100 / (2 * workflow.parallel.length)}%` : '10%',
+                    }}
+                  />
                 </div>
 
                 {/* Stem from collector down into Tier 3 */}
-                <div className="flex flex-col items-center my-4 h-12 relative">
+                <div className="flex flex-col items-center my-6 h-12 relative">
                   <div
                     className={`w-0.5 h-full ${
                       workflow.parallel.length > 0 && workflow.parallel.every((s) => s.status === 'approved')
@@ -954,7 +970,7 @@ export const StudentFeesAndNoDuesView: React.FC = () => {
               </div>
 
               {/* Real-time IST Engine Status Ribbon */}
-              <div className="mt-12 pt-4 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 gap-2">
+              <div className="mt-16 pt-4 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 gap-2">
                 <div className="flex items-center gap-2 font-medium">
                   <Sparkles size={13} className="text-red-700" />
                   <span>Strict DAG Execution • Automated Level Advancement on All-Branch Clearance</span>

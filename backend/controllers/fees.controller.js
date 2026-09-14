@@ -2,6 +2,28 @@ import { Op } from 'sequelize';
 import asyncHandler from '../lib/asyncHandler.js';
 import logger from '../lib/logger.js';
 import { FeeRecord, Student, ChangeLog } from '../models/index.js';
+import { getCoordinatorAssignedClasses, buildCoordinatorWhereClause, isClassAssignedToCoordinator } from './student.controller.js';
+import { getChairpersonAssignments, isClassAssignedToChairperson } from './chairperson.controller.js';
+
+const normVal = (v) => {
+  if (v === null || v === undefined) return '';
+  const s = String(v).trim().toLowerCase();
+  return (s === 'none' || s === 'n/a' || s === 'null') ? '' : s;
+};
+
+function buildChairpersonStudentWhere(assignments) {
+  if (!assignments || assignments.length === 0) return { id: -1 };
+  const conditions = assignments.map((c) => {
+    const cond = {};
+    if (c.school) cond.school = c.school;
+    if (c.department) cond.department = c.department;
+    if (c.program) cond.program = c.program;
+    if (c.batch) cond.batch = c.batch;
+    if (c.specialization && normVal(c.specialization)) cond.specialization = c.specialization;
+    return cond;
+  });
+  return { [Op.or]: conditions };
+}
 
 /**
  * GET /fees/my
@@ -154,6 +176,19 @@ export const getStudentFees = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'Student not found.' });
   }
 
+  // Authorization check per role
+  if (req.user?.role === 'coordinator') {
+    const assignedClasses = await getCoordinatorAssignedClasses(req.user);
+    if (!isClassAssignedToCoordinator(assignedClasses, student)) {
+      return res.status(403).json({ success: false, message: 'Unauthorized: Student is not in your assigned coordinator classes.' });
+    }
+  } else if (req.user?.role === 'chairperson') {
+    const { assignments } = await getChairpersonAssignments(req.user);
+    if (!isClassAssignedToChairperson(assignments, student)) {
+      return res.status(403).json({ success: false, message: 'Unauthorized: Student is not in your assigned department/classes.' });
+    }
+  }
+
   const feeRecords = await FeeRecord.findAll({
     where: {
       [Op.or]: [{ studentId: student.id }, { rollNo: student.rollNo }],
@@ -271,17 +306,29 @@ export const getAllFeesAdmin = asyncHandler(async (req, res) => {
 
   const studentInclude = {
     model: Student,
+    as: 'student',
     attributes: ['id', 'rollNo', 'enrollmentNo', 'fullName', 'school', 'department', 'program', 'batch'],
     required: false,
   };
+
+  // Scope to assigned classes for Coordinator or Chairperson
+  if (req.user?.role === 'coordinator') {
+    const assignedClasses = await getCoordinatorAssignedClasses(req.user);
+    studentInclude.where = buildCoordinatorWhereClause(assignedClasses);
+    studentInclude.required = true;
+  } else if (req.user?.role === 'chairperson') {
+    const { assignments } = await getChairpersonAssignments(req.user);
+    studentInclude.where = buildChairpersonStudentWhere(assignments);
+    studentInclude.required = true;
+  }
 
   if (query && query.trim()) {
     const q = `%${query.trim()}%`;
     where[Op.or] = [
       { rollNo: { [Op.like]: q } },
       { transactionRef: { [Op.like]: q } },
-      { '$Student.fullName$': { [Op.like]: q } },
-      { '$Student.enrollmentNo$': { [Op.like]: q } },
+      { '$student.fullName$': { [Op.like]: q } },
+      { '$student.enrollmentNo$': { [Op.like]: q } },
     ];
   }
 
@@ -293,14 +340,32 @@ export const getAllFeesAdmin = asyncHandler(async (req, res) => {
     offset,
   });
 
-  // Global aggregates across all students
-  const totalAssessed = (await FeeRecord.sum('amount')) || 0;
-  const totalCollected = (await FeeRecord.sum('paidAmount')) || 0;
-  const totalOutstanding = (await FeeRecord.sum('dueAmount')) || 0;
+  // Aggregates scoped to the same student authorization
+  let aggWhere = { ...where };
+  if (studentInclude.where) {
+    const matchedStudents = await Student.findAll({
+      where: studentInclude.where,
+      attributes: ['id', 'rollNo'],
+      raw: true,
+    });
+    const matchedIds = matchedStudents.map((s) => s.id);
+    const matchedRolls = matchedStudents.map((s) => s.rollNo).filter(Boolean);
+    const studentCond = {
+      [Op.or]: [
+        { studentId: { [Op.in]: matchedIds.length ? matchedIds : [-1] } },
+        { rollNo: { [Op.in]: matchedRolls.length ? matchedRolls : ['__NONE__'] } },
+      ],
+    };
+    aggWhere = { [Op.and]: [aggWhere, studentCond] };
+  }
+
+  const totalAssessed = (await FeeRecord.sum('amount', { where: aggWhere })) || 0;
+  const totalCollected = (await FeeRecord.sum('paidAmount', { where: aggWhere })) || 0;
+  const totalOutstanding = (await FeeRecord.sum('dueAmount', { where: aggWhere })) || 0;
   const studentsWithDues = await FeeRecord.count({
     distinct: true,
     col: 'rollNo',
-    where: { dueAmount: { [Op.gt]: 0 } },
+    where: { ...aggWhere, dueAmount: { [Op.gt]: 0 } },
   });
 
   return res.json({
@@ -338,6 +403,20 @@ export const assessStudentFee = asyncHandler(async (req, res) => {
     },
   });
 
+  if (req.user?.role === 'coordinator') {
+    if (!student) return res.status(404).json({ success: false, message: 'Student record not found.' });
+    const assignedClasses = await getCoordinatorAssignedClasses(req.user);
+    if (!isClassAssignedToCoordinator(assignedClasses, student)) {
+      return res.status(403).json({ success: false, message: 'Unauthorized: Student is not in your assigned coordinator classes.' });
+    }
+  } else if (req.user?.role === 'chairperson') {
+    if (!student) return res.status(404).json({ success: false, message: 'Student record not found.' });
+    const { assignments } = await getChairpersonAssignments(req.user);
+    if (!isClassAssignedToChairperson(assignments, student)) {
+      return res.status(403).json({ success: false, message: 'Unauthorized: Student is not in your assigned chairperson classes/department.' });
+    }
+  }
+
   const parsedAmount = Number(amount);
   if (parsedAmount <= 0) {
     return res.status(400).json({ success: false, message: 'Amount must be greater than 0.' });
@@ -372,9 +451,23 @@ export const updateFeeRecord = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { paidAmount, dueAmount, status, remarks, transactionRef } = req.body;
 
-  const fee = await FeeRecord.findByPk(id);
+  const fee = await FeeRecord.findByPk(id, {
+    include: [{ model: Student, as: 'student' }],
+  });
   if (!fee) {
     return res.status(404).json({ success: false, message: 'Fee record not found.' });
+  }
+
+  if (req.user?.role === 'coordinator' && fee.student) {
+    const assignedClasses = await getCoordinatorAssignedClasses(req.user);
+    if (!isClassAssignedToCoordinator(assignedClasses, fee.student)) {
+      return res.status(403).json({ success: false, message: 'Unauthorized: Student is not in your assigned coordinator classes.' });
+    }
+  } else if (req.user?.role === 'chairperson' && fee.student) {
+    const { assignments } = await getChairpersonAssignments(req.user);
+    if (!isClassAssignedToChairperson(assignments, fee.student)) {
+      return res.status(403).json({ success: false, message: 'Unauthorized: Student is not in your assigned chairperson classes/department.' });
+    }
   }
 
   const updates = {};
@@ -401,8 +494,25 @@ export const updateFeeRecord = asyncHandler(async (req, res) => {
  * Download CSV of all fee records.
  */
 export const exportFeesCsv = asyncHandler(async (req, res) => {
+  const studentInclude = {
+    model: Student,
+    as: 'student',
+    attributes: ['fullName', 'program', 'school'],
+    required: false,
+  };
+
+  if (req.user?.role === 'coordinator') {
+    const assignedClasses = await getCoordinatorAssignedClasses(req.user);
+    studentInclude.where = buildCoordinatorWhereClause(assignedClasses);
+    studentInclude.required = true;
+  } else if (req.user?.role === 'chairperson') {
+    const { assignments } = await getChairpersonAssignments(req.user);
+    studentInclude.where = buildChairpersonStudentWhere(assignments);
+    studentInclude.required = true;
+  }
+
   const records = await FeeRecord.findAll({
-    include: [{ model: Student, attributes: ['fullName', 'program', 'school'] }],
+    include: [studentInclude],
     order: [['rollNo', 'ASC'], ['semester', 'DESC']],
     limit: 5000,
   });
@@ -410,9 +520,9 @@ export const exportFeesCsv = asyncHandler(async (req, res) => {
   let csv = 'Roll No,Student Name,Program,School,Semester,Fee Type,Assessed (INR),Paid (INR),Due (INR),Status,Transaction Ref,Due Date\n';
 
   for (const r of records) {
-    const name = (r.Student?.fullName || '').replace(/,/g, ' ');
-    const prog = (r.Student?.program || '').replace(/,/g, ' ');
-    const sch = (r.Student?.school || '').replace(/,/g, ' ');
+    const name = (r.student?.fullName || '').replace(/,/g, ' ');
+    const prog = (r.student?.program || '').replace(/,/g, ' ');
+    const sch = (r.student?.school || '').replace(/,/g, ' ');
     csv += `${r.rollNo},"${name}","${prog}","${sch}",Sem ${r.semester},"${r.feeType}",${r.amount},${r.paidAmount},${r.dueAmount},${r.status},${r.transactionRef || 'N/A'},${r.dueDate || 'N/A'}\n`;
   }
 

@@ -31,16 +31,37 @@ const AddStudentForm: React.FC = () => {
     const [batches, setBatches] = useState<string[]>([]);
     const [specializations, setSpecializations] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string>("");
-    const [form, setForm] = useState<StudentProps>(() => ({
-        ...initialStudentForm,
-        ...(state?.student ?? {}),
-        dob: state?.student?.dob
-            ? new Date(state.student.dob).toISOString().split("T")[0]
-            : "",
-    }));
+    const parseArrayField = (val: any) => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val;
+        if (typeof val === 'string') {
+            try {
+                const p = JSON.parse(val);
+                return Array.isArray(p) ? p : [];
+            } catch {
+                return [];
+            }
+        }
+        return [];
+    };
+
+    const [form, setForm] = useState<StudentProps>(() => {
+        const studentData = state?.student ?? {};
+        const safeYearCGPA = parseArrayField(studentData.yearCGPA);
+        const safeSemesters = parseArrayField(studentData.semesters);
+        return {
+            ...initialStudentForm,
+            ...studentData,
+            yearCGPA: safeYearCGPA.length > 0 ? safeYearCGPA : initialStudentForm.yearCGPA,
+            semesters: safeSemesters.length > 0 ? safeSemesters : initialStudentForm.semesters,
+            dob: studentData.dob
+                ? new Date(studentData.dob).toISOString().split("T")[0]
+                : "",
+        };
+    });
 
     const AdminUser = useSelector((state: RootState) => state.admin);
+    const [error, setError] = useState<string | null>(null);
 
     const validateForm = (): boolean => {
         if (!form.fullName?.trim()) {

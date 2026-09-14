@@ -163,6 +163,7 @@ export default function DeskLogin() {
       });
 
       if (res.accessToken) {
+        localStorage.setItem("authToken", res.accessToken);
         localStorage.setItem("token", res.accessToken);
         localStorage.setItem("role", res.role);
         localStorage.setItem("officeCode", res.officeCode || desk.code);

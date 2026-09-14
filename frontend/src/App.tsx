@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AppErrorBoundary } from "./components/AppErrorBoundary";
 
@@ -17,6 +17,7 @@ import AddStudent from "./pages/Admin/AddStudent";
 import Specialization from "./pages/Admin/Specialization";
 import TimetableAdmin from "./pages/Admin/TimetableAdmin";
 import NotFound from "./utils/NotFound";
+import Forbidden from "./utils/Forbidden";
 import ProtectedRoute from "./utils/ProtectedRoute";
 import DeveloperPage from "./pages/Landing/DeveloperPage";
 import Roles from "./pages/Admin/Roles";
@@ -91,9 +92,9 @@ const App = () => {
             <Route path="/coordinator/records/:school/:department/:program/:batch/:specialization" element={<CategoryView />} />
             <Route path="/coordinator/records/:rollNo" element={<StudentDetail />} />
             <Route path="/coordinator/register-student" element={<AddStudent />} />
-            <Route path="/coordinator/no-dues" element={<NoDuesAdmin />} />
+            <Route path="/coordinator/no-dues" element={<Navigate to="/coordinator/dashboard" replace />} />
             <Route path="/coordinator/leaves" element={<LeaveAdmin />} />
-            <Route path="/coordinator/fees" element={<FeesAdmin />} />
+            <Route path="/coordinator/fees" element={<Navigate to="/coordinator/dashboard" replace />} />
 
             {/* Chairperson */}
             <Route path="/chairperson/dashboard" element={<ChairpersonDashboard />} />
@@ -104,9 +105,9 @@ const App = () => {
             <Route path="/chairperson/records/:school/:department/:program/:batch/:specialization" element={<ChairpersonCategoryView />} />
             <Route path="/chairperson/records/:rollNo" element={<ChairpersonStudentDetail />} />
             <Route path="/chairperson/register-student" element={<AddStudent />} />
-            <Route path="/chairperson/no-dues" element={<NoDuesAdmin />} />
+            <Route path="/chairperson/no-dues" element={<Navigate to="/chairperson/dashboard" replace />} />
             <Route path="/chairperson/leaves" element={<LeaveAdmin />} />
-            <Route path="/chairperson/fees" element={<FeesAdmin />} />
+            <Route path="/chairperson/fees" element={<Navigate to="/chairperson/dashboard" replace />} />
 
             {/* Faculty & Teaching portal */}
             <Route path="/faculty/dashboard" element={<TeachingDashboard />} />
@@ -115,6 +116,7 @@ const App = () => {
             <Route path="/faculty/messages" element={<FacultyMessages />} />
             <Route path="/faculty/leaves" element={<FacultyLeaves />} />
             <Route path="/officer/my-leaves" element={<FacultyLeaves />} />
+            <Route path="/faculty/records/:rollNo" element={<StudentDetail />} />
             <Route path="/faculty/mark-attendance" element={<TeachingDashboard />} />
             <Route path="/faculty/mark-attendance/:classKey/:subjectId" element={<MarkAttendance />} />
 
@@ -136,8 +138,10 @@ const App = () => {
 
             {/* Student */}
             <Route path="/student" element={<StudentDashboard />} />
+            <Route path="/student/:tab" element={<StudentDashboard />} />
           </Route>
 
+          <Route path="/forbidden" element={<Forbidden />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Toaster richColors position="top-center" expand={false} />

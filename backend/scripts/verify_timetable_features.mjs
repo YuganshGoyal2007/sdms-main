@@ -4,8 +4,15 @@ import path from 'path';
 import dotenv from 'dotenv';
 dotenv.config({ path: path.resolve('backend/.env') });
 
-const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const SCREENSHOT_DIR = 'C:\\Users\\yugansh\\.gemini\\antigravity\\brain\\4c81a6d3-32e0-4450-80e8-1051fda13b78\\screenshots\\timetable_audit';
+const possibleBrowsers = [
+  (process.env.LOCALAPPDATA || '') + '\\Google\\Chrome\\Application\\chrome.exe',
+  'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+  'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+  'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+];
+
+const CHROME_PATH = possibleBrowsers.find(p => fs.existsSync(p));
+const SCREENSHOT_DIR = path.resolve('e2e_evidence/screenshots/timetable_audit');
 
 fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
 
@@ -92,14 +99,40 @@ async function verify() {
       console.log('  -> Missing scan executed!');
     }
 
-    // 6. Test View Timetable Modal
-    console.log('[6/6] Clicking eye button to view specific class timetable modal...');
+    // 6. Test View Timetable Modal for BAI-II-B (Section 2541)
+    console.log('[6/6] Searching for Section 2541 (BAI-II-B) and opening timetable modal...');
+    const searchInput = await page.$('input[placeholder*="Filter by batch"]') || await page.$('input[placeholder*="Search"]');
+    if (searchInput) {
+      await searchInput.type('2541');
+      await new Promise(r => setTimeout(r, 1000));
+    }
+
     const viewTimetableBtn = await page.$('tbody tr td button[title="View timetable schedule"]');
     if (viewTimetableBtn) {
       await viewTimetableBtn.click();
       await new Promise(r => setTimeout(r, 3000));
       await page.screenshot({ path: path.join(SCREENSHOT_DIR, '06_class_timetable_modal_open.png') });
       console.log('  -> Captured Class Timetable Modal screenshot!');
+
+      // Click Refresh button
+      console.log('  -> Clicking Refresh button in modal...');
+      const refreshBtn = await page.$('xpath///button[contains(., "Refresh")]') || await page.$('div.fixed button:has(svg.lucide-refresh-cw)');
+      if (refreshBtn) {
+        await refreshBtn.click();
+        await new Promise(r => setTimeout(r, 3500));
+        await page.screenshot({ path: path.join(SCREENSHOT_DIR, '07_modal_after_refresh.png') });
+        console.log('  -> Captured modal after refresh screenshot!');
+      }
+
+      // Scroll modal body to view Subject & Faculty Reference table
+      console.log('  -> Scrolling to view Subject Details table...');
+      await page.evaluate(() => {
+        const modalBody = document.querySelector('div.fixed div.flex-1.overflow-y-auto');
+        if (modalBody) modalBody.scrollTop = modalBody.scrollHeight;
+      });
+      await new Promise(r => setTimeout(r, 1200));
+      await page.screenshot({ path: path.join(SCREENSHOT_DIR, '08_modal_subjects_table.png') });
+      console.log('  -> Captured Subject Details table screenshot!');
       
       // Close modal
       const closeBtn = await page.$('xpath///button[contains(., "Close")]') || await page.$('div.fixed button:has(svg.lucide-x)');

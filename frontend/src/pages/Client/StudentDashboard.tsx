@@ -12,14 +12,26 @@ import NotificationPermissionBanner from "../../components/Client/NotificationPe
 import { getStudentDetails, getMyTimetable } from "../../lib/user.api";
 import { useDispatch } from "react-redux";
 import { setUser } from "../../context/features/userSlice";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
 
 import StudentAttendanceView from "../../components/Client/StudentAttendanceView";
 import StudentFeesAndNoDuesView from "../../components/Client/StudentFeesAndNoDuesView";
+import { ComingSoon } from "../../utils/ComingSoon";
 
 const StudentDashboard = () => {
-    const [activeView, setActiveView] = useState("profile");
+    const { tab } = useParams<{ tab?: string }>();
+    const [searchParams] = useSearchParams();
+    const queryTab = searchParams.get("tab");
+
+    const [activeView, setActiveView] = useState(tab || queryTab || "profile");
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    useEffect(() => {
+        if (tab || queryTab) {
+            setActiveView(tab || queryTab || "profile");
+        }
+    }, [tab, queryTab]);
 
     const auth = useAuth();
     const dispatch = useDispatch();
@@ -84,18 +96,18 @@ const StudentDashboard = () => {
                             {/* {activeView === "directory" && <ComingSoon feature={'directory'} />} */}
                             {/* {activeView === "documents" && <ComingSoon feature={'documents'} />} */}
                             {/* {activeView === "events" && <ComingSoon feature={'events'} />} */}
-                            {/* {activeView === "exams" && <ComingSoon feature={'exams'} />} */}
+                            {activeView === "exams" && <ComingSoon feature={'Exams'} />}
                             {activeView === "fees" && <StudentFeesAndNoDuesView />}
                             {/* {activeView === "academics" && <ComingSoon feature={'GBU Academics'} />} */}
                             {/* {activeView === "faculty" && <ComingSoon feature={'Know Your Faculty'} />} */}
                             {/* {activeView === "library" && <ComingSoon feature={'Library'} />} */}
-                            {/* {activeView === "notices" && <ComingSoon feature={'Notices'} />} */}
+                            {activeView === "notices" && <ComingSoon feature={'Notices'} />}
                             {/* {activeView === "smartCards" && <ComingSoon feature={'Smart Cards'} />} */}
-                            {/* {activeView === "syllabus" && <ComingSoon feature={'Syllabus'} />} */}
+                            {activeView === "syllabus" && <ComingSoon feature={'Syllabus'} />}
                             {activeView === "timetable" && <TimetableView />}
                             {activeView === "registration" && <RegistrationView />}
                             {activeView === "messages" && <StudentMessagesView />}
-                            {/* {activeView === "results" && <ComingSoon feature={'Results'} />} */}
+                            {activeView === "results" && <ComingSoon feature={'Results'} />}
                         </motion.div>
                     </AnimatePresence>
                 </main>

@@ -64,7 +64,38 @@ interface MessagesCenterProps {
 }
 
 const MessagesCenter: React.FC<MessagesCenterProps> = ({ initialTab = "inbox" }) => {
-    const admin = useSelector((state: { admin: AdminState }) => state.admin);
+    const admin = useSelector((state: { admin: AdminState; user?: any }) => state.admin);
+    const studentUser = useSelector((state: any) => state.user?.student);
+    const currentRole = admin?.role || (studentUser ? "student" : "");
+
+    const availableBroadcastRoles = useMemo<{ id: "admin" | "coordinator" | "chairperson" | "student"; label: string }[]>(() => {
+        if (currentRole === "student") {
+            return [
+                { id: "admin", label: "All Admins / HOD" },
+                { id: "coordinator", label: "Class Coordinators" },
+            ];
+        }
+        if (currentRole === "chairperson") {
+            return [
+                { id: "admin", label: "All Admins / HOD" },
+                { id: "coordinator", label: "Class Coordinators" },
+            ];
+        }
+        if (currentRole === "coordinator") {
+            return [
+                { id: "admin", label: "All Admins / HOD" },
+                { id: "chairperson", label: "All Chairpersons" },
+                { id: "coordinator", label: "All Coordinators" },
+                { id: "student", label: "All Students" },
+            ];
+        }
+        return [
+            { id: "admin", label: "All Admins / HOD" },
+            { id: "coordinator", label: "All Coordinators" },
+            { id: "chairperson", label: "All Chairpersons" },
+            { id: "student", label: "All Students" },
+        ];
+    }, [currentRole]);
 
     const [tab, setTab] = useState<"inbox" | "compose" | "sent">(initialTab);
     const [inbox, setInbox] = useState<MessageNotification[]>([]);
@@ -77,9 +108,16 @@ const MessagesCenter: React.FC<MessagesCenterProps> = ({ initialTab = "inbox" })
     // Compose form state
     const [mode, setMode] = useState<Mode>("users");
     const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
-    const [selectedRole, setSelectedRole] = useState<"admin" | "coordinator" | "chairperson" | "student">("coordinator");
+    const [selectedRole, setSelectedRole] = useState<"admin" | "coordinator" | "chairperson" | "student">("admin");
     const [selectedClassKey, setSelectedClassKey] = useState<string>("");
     const [content, setContent] = useState("");
+
+    // Ensure selectedRole is valid for current role
+    useEffect(() => {
+        if (availableBroadcastRoles.length > 0 && !availableBroadcastRoles.some((r) => r.id === selectedRole)) {
+            setSelectedRole(availableBroadcastRoles[0].id);
+        }
+    }, [availableBroadcastRoles, selectedRole]);
 
     // Section toggles
     const [sections, setSections] = useState({
@@ -594,18 +632,18 @@ const MessagesCenter: React.FC<MessagesCenterProps> = ({ initialTab = "inbox" })
                             {mode === "role" && (
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-gray-700">Pick a role to broadcast to</label>
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                        {(["admin", "coordinator", "chairperson", "student"] as const).map((r) => (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+                                        {availableBroadcastRoles.map((r) => (
                                             <button
-                                                key={r}
-                                                onClick={() => setSelectedRole(r)}
-                                                className={`text-sm px-3 py-2 border rounded ${
-                                                    selectedRole === r
-                                                        ? "bg-indigo-50 border-indigo-300 text-indigo-900"
-                                                        : "bg-white border-[#d9d9d9] hover:border-gray-400"
+                                                key={r.id}
+                                                onClick={() => setSelectedRole(r.id)}
+                                                className={`text-sm px-3 py-2 border rounded font-medium ${
+                                                    selectedRole === r.id
+                                                        ? "bg-indigo-50 border-indigo-300 text-indigo-900 shadow-xs"
+                                                        : "bg-white border-[#d9d9d9] text-gray-700 hover:border-gray-400"
                                                 }`}
                                             >
-                                                All {r}s
+                                                {r.label}
                                             </button>
                                         ))}
                                     </div>

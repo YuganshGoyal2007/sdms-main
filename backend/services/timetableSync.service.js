@@ -49,8 +49,13 @@ export async function getScrapeLiveStatus() {
 
       let recordCount = null;
       if (src.type === 'json' && res.ok) {
-        const data = await res.json();
-        recordCount = Array.isArray(data) ? data.length : null;
+        try {
+          const text = await res.text();
+          const data = JSON.parse(text);
+          recordCount = Array.isArray(data) ? data.length : null;
+        } catch {
+          recordCount = null;
+        }
       }
 
       results.push({
@@ -100,7 +105,15 @@ export async function fetchLiveTimetable({ school = 'SOICT', department = 'CSE' 
       throw new Error(`Samay API returned HTTP ${res.status}`);
     }
 
-    const rawData = await res.json();
+    const contentType = res.headers.get('content-type') || '';
+    const rawText = await res.text();
+    let rawData;
+    try {
+      rawData = JSON.parse(rawText);
+    } catch {
+      throw new Error(`Upstream returned non-JSON response (${contentType.split(';')[0] || 'text/html'}): ${rawText.slice(0, 100)}`);
+    }
+
     if (!Array.isArray(rawData)) {
       throw new Error('Invalid timetable payload from API: expected array');
     }
@@ -131,7 +144,7 @@ export async function fetchLiveTimetable({ school = 'SOICT', department = 'CSE' 
 /**
  * Finds or creates a faculty member and linked User account.
  */
-async function resolveOrCreateFaculty(teacherName, facultyIdStr, homeSchool = 'SOICT', department = 'CSE', transaction) {
+async function resolveOrCreateFaculty(teacherName, facultyIdStr, homeSchool = 'SOICT', department = 'CSE', transaction = null, dryRun = false) {
   const cleanName = String(teacherName || '').trim();
   if (!cleanName || cleanName === 'TBA' || cleanName.toLowerCase() === 'null') {
     return null;
@@ -142,11 +155,11 @@ async function resolveOrCreateFaculty(teacherName, facultyIdStr, homeSchool = 'S
     where: {
       name: { [Op.like]: `%${cleanName}%` },
     },
-    transaction,
+    transaction: transaction || undefined,
   });
 
   if (faculty && faculty.userId) {
-    const user = await User.findByPk(faculty.userId, { transaction });
+    const user = await User.findByPk(faculty.userId, { transaction: transaction || undefined });
     if (user) return { faculty, user };
   }
 
@@ -158,18 +171,18 @@ async function resolveOrCreateFaculty(teacherName, facultyIdStr, homeSchool = 'S
     where: {
       [Op.or]: [{ username: generatedEmail }, { name: cleanName }],
     },
-    transaction,
+    transaction: transaction || undefined,
   });
 
   if (user) {
     if (!faculty) {
-      faculty = await Faculty.findOne({ where: { userId: user.id }, transaction });
+      faculty = await Faculty.findOne({ where: { userId: user.id }, transaction: transaction || undefined });
     }
-  } else {
+  } else if (!dryRun) {
     const hashedPassword = await bcrypt.hash('faculty123', 10);
     let finalUsername = generatedEmail;
     let counter = 1;
-    while (await User.findOne({ where: { username: finalUsername }, transaction })) {
+    while (await User.findOne({ where: { username: finalUsername }, transaction: transaction || undefined })) {
       finalUsername = `${usernameSlug}${counter}@gbu.ac.in`;
       counter++;
     }
@@ -182,16 +195,18 @@ async function resolveOrCreateFaculty(teacherName, facultyIdStr, homeSchool = 'S
       },
       { transaction }
     );
+  } else {
+    user = { id: 0, name: cleanName, username: generatedEmail, role: 'faculty' };
   }
 
   if (!faculty) {
-    const existingByEmail = await Faculty.findOne({ where: { email: user.username }, transaction });
+    const existingByEmail = user?.username ? await Faculty.findOne({ where: { email: user.username }, transaction: transaction || undefined }) : null;
     if (existingByEmail) {
       faculty = existingByEmail;
-      if (!faculty.userId) {
+      if (!faculty.userId && !dryRun && transaction) {
         await faculty.update({ userId: user.id }, { transaction });
       }
-    } else {
+    } else if (!dryRun && transaction) {
       const uniqueFacId = facultyIdStr || `FAC-${user.id}-${Date.now().toString().slice(-4)}`;
       faculty = await Faculty.create(
         {
@@ -205,8 +220,10 @@ async function resolveOrCreateFaculty(teacherName, facultyIdStr, homeSchool = 'S
         },
         { transaction }
       );
+    } else {
+      faculty = { id: 0, userId: user?.id || 0, name: cleanName, email: user?.username || '' };
     }
-  } else if (!faculty.userId) {
+  } else if (!faculty.userId && !dryRun && transaction) {
     await faculty.update({ userId: user.id }, { transaction });
   }
 
@@ -216,32 +233,36 @@ async function resolveOrCreateFaculty(teacherName, facultyIdStr, homeSchool = 'S
 /**
  * Finds or creates a Subject record matching course code and title.
  */
-async function resolveOrCreateSubject(subjectCode, subjectName, coords = {}, transaction) {
+async function resolveOrCreateSubject(subjectCode, subjectName, coords = {}, transaction = null, dryRun = false) {
   const cleanCode = String(subjectCode || '').trim().toUpperCase();
   if (!cleanCode) return null;
 
   let subject = await Subject.findOne({
     where: { code: cleanCode },
-    transaction,
+    transaction: transaction || undefined,
   });
 
   if (!subject) {
-    const isLab = cleanCode.toLowerCase().includes('lab') || cleanCode.toLowerCase().includes('p');
-    subject = await Subject.create(
-      {
-        school: coords.school || 'SOICT',
-        department: coords.department || 'CSE',
-        program: coords.program || 'B.Tech (CS)',
-        batch: coords.batch || '2024-28',
-        specialization: coords.specialization || 'Core Sec- A',
-        code: cleanCode,
-        name: String(subjectName || cleanCode).trim(),
-        credits: 3,
-        type: isLab ? 'lab' : 'theory',
-        semester: coords.semester || 1,
-      },
-      { transaction }
-    );
+    if (!dryRun && transaction) {
+      const isLab = cleanCode.toLowerCase().includes('lab') || cleanCode.toLowerCase().includes('p');
+      subject = await Subject.create(
+        {
+          school: coords.school || 'SOICT',
+          department: coords.department || 'CSE',
+          program: coords.program || 'B.Tech (CS)',
+          batch: coords.batch || '2024-28',
+          specialization: coords.specialization || 'Core Sec- A',
+          code: cleanCode,
+          name: String(subjectName || cleanCode).trim(),
+          credits: 3,
+          type: isLab ? 'lab' : 'theory',
+          semester: coords.semester || 1,
+        },
+        { transaction }
+      );
+    } else {
+      subject = { id: 0, code: cleanCode, name: String(subjectName || cleanCode).trim() };
+    }
   }
 
   return subject;
@@ -363,14 +384,14 @@ export async function syncFacultyAssignments({
   let newAssignmentCount = 0;
   let unchangedCount = 0;
 
-  const transaction = await sequelize.transaction();
+  const transaction = dryRun ? null : await sequelize.transaction();
 
   try {
     for (const [key, item] of allocationMap.entries()) {
       const rawSecId = String(item.Section_Id || '').trim();
       const mappedSection = sectionIdMap.get(rawSecId) || null;
       const coords = resolveClassCoordinates(item, mappedSection);
-      const subject = await resolveOrCreateSubject(item.Subject_Code, item.subject_name, coords, transaction);
+      const subject = await resolveOrCreateSubject(item.Subject_Code, item.subject_name, coords, transaction, dryRun);
       if (!subject) continue;
 
       const facultyObj = await resolveOrCreateFaculty(
@@ -378,14 +399,15 @@ export async function syncFacultyAssignments({
         item.faculty_id,
         coords.school,
         coords.department,
-        transaction
+        transaction,
+        dryRun
       );
       if (!facultyObj || !facultyObj.user) continue;
 
       const newTeacherUser = facultyObj.user;
 
       // Find existing active assignments for this class & subject
-      const existingAssignments = await FacultyAssignment.findAll({
+      const existingAssignments = subject.id > 0 ? await FacultyAssignment.findAll({
         where: {
           subjectId: subject.id,
           school: coords.school,
@@ -396,14 +418,14 @@ export async function syncFacultyAssignments({
           isActive: true,
         },
         include: [{ model: User, as: 'faculty', attributes: ['id', 'name', 'username'] }],
-        transaction,
-      });
+        transaction: transaction || undefined,
+      }) : [];
 
       const currentActive = existingAssignments[0] || null;
 
       if (!currentActive) {
         // Brand new assignment
-        if (!dryRun) {
+        if (!dryRun && transaction) {
           const created = await FacultyAssignment.create(
             {
               facultyId: newTeacherUser.id,
@@ -449,13 +471,15 @@ export async function syncFacultyAssignments({
           class: `${coords.program} ${coords.batch} (${coords.specialization})`,
           newTeacher: newTeacherUser.name,
           previousTeacher: null,
-          details: `Class newly assigned to ${newTeacherUser.name}. Student roster and attendance unlocked for this teacher.`,
+          details: dryRun
+            ? `[Dry Run Simulation] Class would be assigned to ${newTeacherUser.name}. (Database unmodified)`
+            : `Class newly assigned to ${newTeacherUser.name}. Student roster and attendance unlocked for this teacher.`,
         });
       } else if (currentActive.facultyId !== newTeacherUser.id) {
         // Dynamic Teacher Reassignment Detected!
         const prevTeacherName = currentActive.faculty?.name || `Faculty #${currentActive.facultyId}`;
 
-        if (!dryRun) {
+        if (!dryRun && transaction) {
           // 1. Deactivate former teacher assignment for this class
           await currentActive.update({ isActive: false }, { transaction });
 
@@ -513,21 +537,22 @@ export async function syncFacultyAssignments({
           class: `${coords.program} ${coords.batch} (${coords.specialization})`,
           newTeacher: newTeacherUser.name,
           previousTeacher: prevTeacherName,
-          details: `Teacher changed in timetable: Class student roster transferred to ${newTeacherUser.name}. ${prevTeacherName} no longer has access to this class.`,
+          details: dryRun
+            ? `[Dry Run Simulation] Teacher would be reassigned: Class student roster would transfer from ${prevTeacherName} to ${newTeacherUser.name}. (Database unmodified)`
+            : `Teacher changed in timetable: Class student roster transferred to ${newTeacherUser.name}. ${prevTeacherName} no longer has access to this class.`,
         });
       } else {
         unchangedCount++;
       }
     }
 
-    if (dryRun) {
-      await transaction.rollback();
-    } else {
+    if (!dryRun && transaction) {
       await transaction.commit();
     }
 
     return {
       success: true,
+      dryRun: Boolean(dryRun),
       timestamp: new Date().toISOString(),
       school,
       department,
@@ -536,11 +561,17 @@ export async function syncFacultyAssignments({
         reassignedCount,
         newAssignmentCount,
         unchangedCount,
+        isDryRun: Boolean(dryRun),
+        note: dryRun
+          ? 'Simulation mode: Database unchanged. No data was manipulated or modified.'
+          : 'Live sync: Database updated successfully.',
       },
       changes,
     };
   } catch (err) {
-    try { await transaction.rollback(); } catch (e) {}
+    if (!dryRun && transaction) {
+      try { await transaction.rollback(); } catch (e) {}
+    }
     const detailMsg = err.errors ? err.errors.map(e => `${e.path}: ${e.message}`).join('; ') : err.message;
     logger.error({ error: detailMsg }, 'Failed during timetable sync faculty assignment execution');
     return {

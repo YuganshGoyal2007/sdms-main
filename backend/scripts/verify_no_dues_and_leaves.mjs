@@ -81,7 +81,7 @@ async function runVerification() {
 
     // 4. Admin Clearance Review Queue
     console.log('\n[4/7] Logging in as Admin (hod.cs@gbu.ac.in)...');
-    const adminAuth = await login('hod.cs@gbu.ac.in', 'TestPass@123');
+    const adminAuth = await login('hod.cs@gbu.ac.in', 'admin123');
     console.log('✓ Admin logged in');
 
     console.log('Testing Clearance Queue (GET /no-dues/pending)...');

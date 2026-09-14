@@ -28,6 +28,8 @@ const Header = () => {
         };
     }, []);
 
+    const isSearchAllowed = ['admin', 'chairperson', 'coordinator', 'faculty'].includes(role || '');
+
     const submit = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         const query = q.trim();
@@ -35,6 +37,7 @@ const Header = () => {
         let base = '/admin';
         if (role === 'chairperson') base = '/chairperson';
         else if (role === 'coordinator') base = '/coordinator';
+        else if (role === 'faculty') base = '/faculty';
         navigate(`${base}/records/${encodeURIComponent(query)}`);
         setQ('');
     };
@@ -43,23 +46,26 @@ const Header = () => {
         role === 'chairperson' ? '/chairperson/messages' :
         role === 'coordinator' ? '/coordinator/messages' :
         role === 'student' ? '/student/messages' :
+        role === 'faculty' ? '/faculty/messages' :
         '/admin/messages';
 
     return (
         <>
             <div className={`min-h-[7vh] sm:min-h-[10vh] flex items-center justify-between px-4 transition-all batch-300 bg-[#f8f9fa] border-b border-[#d9d9d9] sm:w-[80vw] w-[85vw]`}>
-                <p className='text-xl font-semibold '>GBU-SDMS {role === 'chairperson' ? 'Chairperson' : role === 'coordinator' ? 'Coordinator' : 'Admin'} Panel</p>
+                <p className='text-xl font-semibold '>GBU-SDMS {role === 'chairperson' ? 'Chairperson' : role === 'coordinator' ? 'Coordinator' : role === 'faculty' ? 'Faculty' : role === 'officer' ? 'Clearance' : 'Admin'} Panel</p>
                 <div className="flex items-center gap-3">
-                    <form onSubmit={submit} className="flex items-center gap-2">
-                        <input
-                            value={q}
-                            onChange={(e) => setQ(e.target.value)}
-                            placeholder="Search roll no or enrollment"
-                            className="input-text"
-                            aria-label="Search students"
-                        />
-                        <button type="submit" className="px-3 py-1 bg-black text-white text-sm rounded">Go</button>
-                    </form>
+                    {isSearchAllowed && (
+                        <form onSubmit={submit} className="flex items-center gap-2">
+                            <input
+                                value={q}
+                                onChange={(e) => setQ(e.target.value)}
+                                placeholder={role === 'admin' ? "Search roll no or enrollment" : "Search roll no (Assigned classes)"}
+                                className="input-text"
+                                aria-label="Search students"
+                            />
+                            <button type="submit" className="px-3 py-1 bg-black text-white text-sm rounded">Go</button>
+                        </form>
+                    )}
                     <button
                         onClick={() => navigate(messagesPath)}
                         className="relative p-2 rounded hover:bg-gray-100 transition"

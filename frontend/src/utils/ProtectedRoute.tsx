@@ -4,8 +4,18 @@ import api from "../lib/api";
 import { useDispatch } from "react-redux";
 import { setAdmin } from "../context/features/adminSlice";
 
+const OFFICE_CODE_TO_SLUG: Record<string, string> = {
+    LIB: "library",
+    HST: "hostel",
+    SPT: "sports",
+    DEAN: "dean",
+    ICT: "ict",
+    ACC: "accounts",
+};
+
 const ProtectedRoute = () => {
     const [role, setRole] = useState<string | null>(null);
+    const [officeCode, setOfficeCode] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const location = useLocation();
 
@@ -19,14 +29,16 @@ const ProtectedRoute = () => {
                 if (!isMounted) return;
                 const fetchedRole = data.role || data.user?.role;
                 setRole(fetchedRole);
+                const fetchedOfficeCode = data.officeCode || data.user?.officeCode || localStorage.getItem("officeCode");
+                setOfficeCode(fetchedOfficeCode);
 
                 if (data.user && isMounted) {
-                    dispatch(setAdmin({ ...data.user, role: fetchedRole }));
+                    dispatch(setAdmin({ ...data.user, role: fetchedRole, officeCode: fetchedOfficeCode }));
                 } else if (fetchedRole) {
                     const ep = fetchedRole === "faculty" ? "/faculty/me" : `/${fetchedRole}/get-admin-details`;
                     const res = await api.get(ep).catch(() => null);
                     if (res?.data?.user && isMounted) {
-                        dispatch(setAdmin({ ...res.data.user, role: fetchedRole }));
+                        dispatch(setAdmin({ ...res.data.user, role: fetchedRole, officeCode: fetchedOfficeCode }));
                     }
                 }
             } catch {
@@ -67,11 +79,13 @@ const ProtectedRoute = () => {
         return <Navigate to="/faculty/dashboard" replace />;
     }
     if (role === "officer") {
-        const allowedPrefixes = ["/no-dues/portal", "/portal"];
-        const isLeavesAllowed = location.pathname.startsWith("/admin/leaves");
-        const isAllowed = allowedPrefixes.some((p) => location.pathname.startsWith(p)) || isLeavesAllowed;
+        const allowedPrefixes = ["/no-dues/portal", "/portal", "/officer/my-leaves"];
+        const isLeavesAllowed = location.pathname.startsWith("/admin/leaves") || location.pathname.startsWith("/officer/my-leaves");
+        const isFeesAllowed = officeCode === "ACC" && location.pathname.startsWith("/admin/fees");
+        const isAllowed = allowedPrefixes.some((p) => location.pathname.startsWith(p)) || isLeavesAllowed || isFeesAllowed;
         if (!isAllowed) {
-            return <Navigate to="/no-dues/portal/library" replace />;
+            const targetDesk = (officeCode && OFFICE_CODE_TO_SLUG[officeCode]) || "library";
+            return <Navigate to={`/no-dues/portal/${targetDesk}`} replace />;
         }
     }
 

@@ -107,11 +107,37 @@ const Student = sequelize.define('Student', {
     type: DataTypes.JSON,
     allowNull: false,
     defaultValue: [],
+    get() {
+      const raw = this.getDataValue('semesters');
+      if (!raw) return [];
+      if (typeof raw === 'string') {
+        try {
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      }
+      return Array.isArray(raw) ? raw : [];
+    },
   },
   yearCGPA: {
     type: DataTypes.JSON,
     allowNull: false,
     defaultValue: [],
+    get() {
+      const raw = this.getDataValue('yearCGPA');
+      if (!raw) return [];
+      if (typeof raw === 'string') {
+        try {
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      }
+      return Array.isArray(raw) ? raw : [];
+    },
   },
   internshipStatus: {
     type: DataTypes.STRING,

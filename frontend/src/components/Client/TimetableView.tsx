@@ -42,7 +42,7 @@ class TimetableErrorBoundary extends React.Component<{ children: React.ReactNode
 const TIME_SLOTS = [
     { id: "I", time: "8:30-9:30" },
     { id: "II", time: "9:30-10:30" },
-    { id: "III", time: "10:30-11:00" },
+    { id: "III", time: "10:30-11:30" },
     { id: "IV", time: "11:30-12:30" },
     { id: "V", time: "12:30-1:30" },
     { id: "VI", time: "1:30-2:30" },
@@ -77,7 +77,14 @@ const formatRelative = (iso: string | null) => {
 
 const Entry: React.FC<{ entry: TimetableEntry }> = ({ entry }) => (
     <div className={`text-[10px] sm:text-xs p-1.5 rounded border leading-tight ${colorFor(entry.code)}`}>
-        <div className="font-semibold truncate" title={entry.code}>{entry.code}</div>
+        <div className="font-semibold flex items-center justify-between gap-1">
+            <span className="truncate" title={entry.code}>{entry.code}</span>
+            {entry.group && (
+                <span className="shrink-0 px-1 py-0.2 rounded text-[9px] font-bold bg-white/80 border border-current/20">
+                    {entry.group}
+                </span>
+            )}
+        </div>
         {entry.faculty && (
             <div className="text-[10px] opacity-80 inline-flex items-center gap-0.5">
                 <UserIcon size={9} /> {entry.faculty}
@@ -86,7 +93,6 @@ const Entry: React.FC<{ entry: TimetableEntry }> = ({ entry }) => (
         {entry.room && (
             <div className="text-[10px] opacity-80 inline-flex items-center gap-0.5">
                 <MapPin size={9} /> {entry.room}
-                {entry.group ? ` ${entry.group}` : ""}
             </div>
         )}
     </div>
@@ -164,6 +170,22 @@ export function TimetableView() {
         return () => { mounted = false; clearInterval(id); };
     }, [lastChangedAt]);
 
+    const safeEntries = React.useMemo(() => {
+        if (!data?.entries) return {};
+        if (typeof data.entries === "string") {
+            try { return JSON.parse(data.entries); } catch { return {}; }
+        }
+        return data.entries;
+    }, [data?.entries]);
+
+    const safeSubjects = React.useMemo(() => {
+        if (!data?.subjects) return [];
+        if (typeof data.subjects === "string") {
+            try { return JSON.parse(data.subjects); } catch { return []; }
+        }
+        return Array.isArray(data.subjects) ? data.subjects : [];
+    }, [data?.subjects]);
+
     const onRefresh = async () => {
         setRefreshing(true);
         try {
@@ -191,7 +213,7 @@ export function TimetableView() {
         if (!data) return;
         const slots = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI"];
         const slotTimes = {
-            I: "8:30-9:30", II: "9:30-10:30", III: "10:30-11:00", IV: "11:30-12:30", V: "12:30-1:30",
+            I: "8:30-9:30", II: "9:30-10:30", III: "10:30-11:30", IV: "11:30-12:30", V: "12:30-1:30",
             VI: "1:30-2:30", VII: "2:30-3:30", VIII: "3:30-4:30", IX: "4:30-5:30", X: "5:30-6:30", XI: "6:30-7:30",
         } as Record<string, string>;
         const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -204,16 +226,16 @@ export function TimetableView() {
             slots.map((s) => `<div class="head">${s}<br><span style="font-size:9px;color:#555;">${slotTimes[s]}</span></div>`).join("") +
             `</div>` +
             days.map((d) => {
-                const dayObj = (data.entries || {})[d] || {};
+                const dayObj = (safeEntries || {})[d] || {};
                 return `<div class="grid"><div class="head">${d}</div>` +
                     slots.map((s) => `<div>${entryPills(dayObj[s])}</div>`).join("") +
                     `</div>`;
             }).join("") +
             `</div>`;
-        const subjectsHtml = (data.subjects || []).length === 0 ? "" :
+        const subjectsHtml = (safeSubjects || []).length === 0 ? "" :
             `<div class="section"><h2>Subject Details</h2>` +
             `<table><thead><tr><th>Code</th><th>Subject Name</th><th>Credits</th><th>Faculty ABR</th><th>Faculty</th><th>Load</th></tr></thead><tbody>` +
-            data.subjects.map((s) =>
+            safeSubjects.map((s: any) =>
                 `<tr><td><strong>${s.code}</strong></td><td>${s.name}</td><td>${s.credits}</td><td>${s.facultyABR}</td><td>${s.facultyName}</td><td>${s.load}</td></tr>`
             ).join("") +
             `</tbody></table></div>`;
@@ -348,7 +370,7 @@ export function TimetableView() {
                             </thead>
                             <tbody>
                                 {DAYS.map((day) => {
-                                    const dayObj = (data?.entries as any)?.[day] || {};
+                                    const dayObj = (safeEntries as any)?.[day] || {};
                                     return (
                                         <tr key={day} className="border-b border-gray-300">
                                             <td className="p-2 font-semibold text-gray-700 bg-gray-50 border border-gray-300 sticky left-0 z-10 text-xs md:text-sm">
@@ -377,9 +399,9 @@ export function TimetableView() {
             )}
 
             {/* Subject Details */}
-            {data?.subjects && data.subjects.length > 0 && (
+            {safeSubjects && safeSubjects.length > 0 && (
                 <div className="bg-white rounded-lg shadow-sm p-4 md:p-6">
-                    <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">Subject Details</h2>
+                    <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">Subject Details ({safeSubjects.length} subjects)</h2>
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-150">
                             <thead>
@@ -393,7 +415,7 @@ export function TimetableView() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {data.subjects.map((subject, index) => (
+                                {safeSubjects.map((subject: any, index: number) => (
                                     <tr key={subject.code} className={`border-b border-gray-100 ${index % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
                                         <td className="py-2 px-2 md:px-4 text-xs md:text-sm text-gray-900 font-mono">{subject.code}</td>
                                         <td className="py-2 px-2 md:px-4 text-xs md:text-sm text-gray-900">{subject.name}</td>

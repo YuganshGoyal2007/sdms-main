@@ -8,6 +8,9 @@ import AttendanceSession from '../models/attendanceSession.model.js';
 import AttendanceRecord from '../models/attendanceRecord.model.js';
 import Student from '../models/student.model.js';
 import User from '../models/user.model.js';
+import Faculty from '../models/faculty.model.js';
+import Chairperson from '../models/chairperson.model.js';
+import ChairpersonClass from '../models/chairpersonClass.model.js';
 import ChangeLog from '../models/changeLog.model.js';
 
 const TEACHING_ROLES = ['faculty', 'coordinator', 'chairperson'];
@@ -22,10 +25,36 @@ const todayDateOnly = () => {
 
 const isTeachingUser = (user) => Boolean(user) && TEACHING_ROLES.includes(user.role);
 
+export const resolveTeachingCandidateIds = async (user) => {
+  if (!user) return [];
+  const ids = new Set([user.id]);
+  try {
+    const faculty = await Faculty.findOne({
+      where: {
+        [Op.or]: [
+          { userId: user.id },
+          sequelize.where(sequelize.fn('LOWER', sequelize.col('email')), String(user.email || user.username || '').toLowerCase().trim()),
+        ],
+      },
+      attributes: ['id', 'userId'],
+    });
+    if (faculty) {
+      ids.add(faculty.id);
+      if (faculty.userId) ids.add(faculty.userId);
+    }
+  } catch (err) {
+    logger.warn({ err: err.message }, 'Error resolving faculty candidate ids');
+  }
+  return Array.from(ids);
+};
+
 const findOwnedAssignment = async (user, { subjectId, school, department, program, batch, specialization, semester }) => {
-  if (!isTeachingUser(user)) return null;
+  if (!isTeachingUser(user) && user.role !== 'admin') return null;
+  const candidateFacultyIds = await resolveTeachingCandidateIds(user);
+  const specNorm = String(specialization || '').trim();
+
   const where = {
-    facultyId: user.id,
+    facultyId: { [Op.in]: candidateFacultyIds },
     subjectId,
     isActive: true,
     [Op.and]: [
@@ -33,14 +62,72 @@ const findOwnedAssignment = async (user, { subjectId, school, department, progra
       sequelize.where(sequelize.fn('LOWER', sequelize.col('department')), String(department || '').trim().toLowerCase()),
       sequelize.where(sequelize.fn('LOWER', sequelize.col('program')), String(program || '').trim().toLowerCase()),
       sequelize.where(sequelize.fn('LOWER', sequelize.col('batch')), String(batch || '').trim().toLowerCase()),
-      sequelize.where(sequelize.fn('LOWER', sequelize.col('specialization')), String(specialization || '').trim().toLowerCase()),
+      sequelize.where(
+        sequelize.fn('REPLACE', sequelize.fn('LOWER', sequelize.col('specialization')), ' ', ''),
+        specNorm.toLowerCase().replace(/\s+/g, '')
+      ),
     ],
   };
-  if (semester !== undefined && semester !== null) {
-    where.semester = semester;
+  if (semester !== undefined && semester !== null && Number(semester) > 0) {
+    where.semester = Number(semester);
   }
-  const assignment = await FacultyAssignment.findOne({ where });
-  return assignment;
+  let assignment = await FacultyAssignment.findOne({ where });
+  if (assignment) return assignment;
+
+  // Fallback for Admin: departmental/global authority
+  if (user.role === 'admin') {
+    assignment = await FacultyAssignment.findOne({
+      where: {
+        subjectId,
+        isActive: true,
+        [Op.and]: [
+          sequelize.where(sequelize.fn('LOWER', sequelize.col('school')), String(school || '').trim().toLowerCase()),
+          sequelize.where(sequelize.fn('LOWER', sequelize.col('department')), String(department || '').trim().toLowerCase()),
+          sequelize.where(sequelize.fn('LOWER', sequelize.col('program')), String(program || '').trim().toLowerCase()),
+          sequelize.where(sequelize.fn('LOWER', sequelize.col('batch')), String(batch || '').trim().toLowerCase()),
+        ],
+      },
+    });
+    if (assignment) return assignment;
+  }
+
+  // Fallback for Chairperson: departmental oversight
+  if (user.role === 'chairperson') {
+    const chairRecord = await Chairperson.findOne({
+      where: {
+        [Op.or]: [
+          { userId: user.id },
+          sequelize.where(sequelize.fn('LOWER', sequelize.col('email')), String(user.email || user.username || '').toLowerCase().trim()),
+        ],
+      },
+    });
+    if (chairRecord) {
+      const overseen = await ChairpersonClass.findOne({
+        where: {
+          chairpersonId: chairRecord.id,
+          [Op.and]: [
+            sequelize.where(sequelize.fn('LOWER', sequelize.col('program')), String(program || '').trim().toLowerCase()),
+            sequelize.where(sequelize.fn('LOWER', sequelize.col('batch')), String(batch || '').trim().toLowerCase()),
+          ],
+        },
+      });
+      if (overseen) {
+        assignment = await FacultyAssignment.findOne({
+          where: {
+            subjectId,
+            isActive: true,
+            [Op.and]: [
+              sequelize.where(sequelize.fn('LOWER', sequelize.col('program')), String(program || '').trim().toLowerCase()),
+              sequelize.where(sequelize.fn('LOWER', sequelize.col('batch')), String(batch || '').trim().toLowerCase()),
+            ],
+          },
+        });
+        if (assignment) return assignment;
+      }
+    }
+  }
+
+  return null;
 };
 
 const enrichAssignmentWithSubject = async (row) => {
@@ -79,8 +166,10 @@ export const getMyClasses = asyncHandler(async (req, res) => {
     return res.status(403).json({ success: false, message: 'Only teaching users can view their classes.' });
   }
 
-  const assignments = await FacultyAssignment.findAll({
-    where: { facultyId: req.user.id, isActive: true },
+  const candidateFacultyIds = await resolveTeachingCandidateIds(req.user);
+
+  let assignments = await FacultyAssignment.findAll({
+    where: { facultyId: { [Op.in]: candidateFacultyIds }, isActive: true },
     order: [
       ['school', 'ASC'],
       ['department', 'ASC'],
@@ -90,6 +179,46 @@ export const getMyClasses = asyncHandler(async (req, res) => {
       ['semester', 'ASC'],
     ],
   });
+
+  // If user is chairperson and has no direct teaching assignments, load from overseen classes
+  if (!assignments.length && req.user.role === 'chairperson') {
+    const chairRecord = await Chairperson.findOne({
+      where: {
+        [Op.or]: [
+          { userId: req.user.id },
+          sequelize.where(sequelize.fn('LOWER', sequelize.col('email')), String(req.user.email || req.user.username || '').toLowerCase().trim()),
+        ],
+      },
+    });
+    if (chairRecord) {
+      const classes = await ChairpersonClass.findAll({
+        where: { chairpersonId: chairRecord.id },
+      });
+      if (classes.length) {
+        const classConditions = classes.map((c) => ({
+          school: c.school,
+          department: c.department,
+          program: c.program,
+          batch: c.batch,
+          specialization: c.specialization,
+        }));
+        assignments = await FacultyAssignment.findAll({
+          where: {
+            isActive: true,
+            [Op.or]: classConditions,
+          },
+          order: [
+            ['school', 'ASC'],
+            ['department', 'ASC'],
+            ['program', 'ASC'],
+            ['batch', 'ASC'],
+            ['specialization', 'ASC'],
+            ['semester', 'ASC'],
+          ],
+        });
+      }
+    }
+  }
 
   if (!assignments.length) {
     return res.json({
@@ -114,10 +243,9 @@ export const getMyClasses = asyncHandler(async (req, res) => {
   const sessions = await AttendanceSession.findAll({
     where: {
       subjectId: { [Op.in]: subjectIds },
-      facultyId: req.user.id,
       date: today,
     },
-    attributes: ['id', 'status', 'sessionType', 'topic', 'subjectId', 'school', 'department', 'program', 'batch', 'specialization'],
+    attributes: ['id', 'status', 'sessionType', 'topic', 'subjectId', 'school', 'department', 'program', 'batch', 'specialization', 'facultyId'],
     order: [['createdAt', 'DESC']],
   });
   const sessionMap = new Map();
@@ -213,7 +341,14 @@ export const getTodaySession = asyncHandler(async (req, res) => {
   const subject = await Subject.findByPk(subjId, { attributes: ['id', 'name', 'code', 'semester', 'credits', 'type'] });
   const today = todayDateOnly();
   const session = await AttendanceSession.findOne({
-    where: { subjectId: subjId, facultyId: req.user.id, date: today },
+    where: {
+      subjectId: subjId,
+      date: today,
+      school,
+      department,
+      program,
+      batch,
+    },
     order: [['createdAt', 'DESC']],
   });
 
@@ -318,7 +453,10 @@ export const updateSession = asyncHandler(async (req, res) => {
 
   const session = await AttendanceSession.findByPk(id);
   if (!session) return res.status(404).json({ success: false, message: 'Session not found.' });
-  if (session.facultyId !== req.user.id) {
+
+  const candidateIds = await resolveTeachingCandidateIds(req.user);
+  const isOwner = candidateIds.includes(session.facultyId) || req.user.role === 'admin' || req.user.role === 'chairperson';
+  if (!isOwner) {
     return res.status(403).json({ success: false, message: 'You can only edit your own sessions.' });
   }
   if (session.status !== 'draft') {
@@ -339,7 +477,7 @@ export const updateSession = asyncHandler(async (req, res) => {
 
 /**
  * POST /teaching/sessions/:id/submit
- * Lock the session. Owner only.
+ * Lock the session. Owner, chairperson, or admin.
  */
 export const submitSession = asyncHandler(async (req, res) => {
   if (!req.user || !isTeachingUser(req.user)) {
@@ -350,7 +488,10 @@ export const submitSession = asyncHandler(async (req, res) => {
 
   const session = await AttendanceSession.findByPk(id);
   if (!session) return res.status(404).json({ success: false, message: 'Session not found.' });
-  if (session.facultyId !== req.user.id) {
+
+  const candidateIds = await resolveTeachingCandidateIds(req.user);
+  const isOwner = candidateIds.includes(session.facultyId) || req.user.role === 'admin' || req.user.role === 'chairperson';
+  if (!isOwner) {
     return res.status(403).json({ success: false, message: 'You can only submit your own sessions.' });
   }
   if (session.status === 'locked') {
@@ -384,7 +525,7 @@ export const submitSession = asyncHandler(async (req, res) => {
 /**
  * GET /teaching/sessions/:id/records
  * Fetch all attendance records for a session, plus the roster (students in this class).
- * Owner OR admin.
+ * Owner, chairperson, OR admin.
  */
 export const getSessionRecords = asyncHandler(async (req, res) => {
   if (!req.user) return res.status(401).json({ success: false, message: 'Auth required.' });
@@ -394,9 +535,11 @@ export const getSessionRecords = asyncHandler(async (req, res) => {
   const session = await AttendanceSession.findByPk(id);
   if (!session) return res.status(404).json({ success: false, message: 'Session not found.' });
 
-  const isOwner = session.facultyId === req.user.id;
+  const candidateIds = await resolveTeachingCandidateIds(req.user);
+  const isOwner = candidateIds.includes(session.facultyId);
   const isAdmin = req.user.role === 'admin';
-  if (!isOwner && !isAdmin) {
+  const isChairperson = req.user.role === 'chairperson';
+  if (!isOwner && !isAdmin && !isChairperson) {
     return res.status(403).json({ success: false, message: 'You are not authorized to view these records.' });
   }
 
@@ -412,7 +555,12 @@ export const getSessionRecords = asyncHandler(async (req, res) => {
         department: session.department,
         program: session.program,
         batch: session.batch,
-        specialization: session.specialization,
+        [Op.and]: [
+          sequelize.where(
+            sequelize.fn('REPLACE', sequelize.fn('LOWER', sequelize.col('specialization')), ' ', ''),
+            String(session.specialization || '').toLowerCase().replace(/\s+/g, '')
+          ),
+        ],
       },
       attributes: ['id', 'rollNo', 'enrollmentNo', 'fullName', 'email', 'photo', 'status'],
       order: [['rollNo', 'ASC']],
@@ -487,7 +635,12 @@ export const getClassRoster = asyncHandler(async (req, res) => {
       department: String(department),
       program: String(program),
       batch: String(batch),
-      specialization: String(specialization),
+      [Op.and]: [
+        sequelize.where(
+          sequelize.fn('REPLACE', sequelize.fn('LOWER', sequelize.col('specialization')), ' ', ''),
+          String(specialization || '').toLowerCase().replace(/\s+/g, '')
+        ),
+      ],
     },
     attributes: ['id', 'rollNo', 'enrollmentNo', 'fullName', 'email', 'photo', 'status'],
     order: [['rollNo', 'ASC']],
@@ -515,7 +668,7 @@ export const getClassRoster = asyncHandler(async (req, res) => {
 
 /**
  * PUT /teaching/sessions/:id/records
- * Upsert attendance records. Owner OR admin (admin can edit locked via unlock).
+ * Upsert attendance records. Owner, chairperson, OR admin.
  * Body: { records: [{ studentId, rollNo, status, remarks? }] }
  */
 export const upsertAttendanceRecords = asyncHandler(async (req, res) => {
@@ -526,13 +679,15 @@ export const upsertAttendanceRecords = asyncHandler(async (req, res) => {
   const session = await AttendanceSession.findByPk(id);
   if (!session) return res.status(404).json({ success: false, message: 'Session not found.' });
 
-  const isOwner = session.facultyId === req.user.id;
+  const candidateIds = await resolveTeachingCandidateIds(req.user);
+  const isOwner = candidateIds.includes(session.facultyId);
   const isAdmin = req.user.role === 'admin';
-  if (!isOwner && !isAdmin) {
+  const isChairperson = req.user.role === 'chairperson';
+  if (!isOwner && !isAdmin && !isChairperson) {
     return res.status(403).json({ success: false, message: 'You are not authorized to modify these records.' });
   }
 
-  if (!isAdmin && session.status === 'locked') {
+  if (!isAdmin && !isChairperson && session.status === 'locked') {
     return res.status(409).json({ success: false, message: 'Session is locked. Ask an admin to unlock it.' });
   }
 
@@ -556,7 +711,12 @@ export const upsertAttendanceRecords = asyncHandler(async (req, res) => {
       department: session.department,
       program: session.program,
       batch: session.batch,
-      specialization: session.specialization,
+      [Op.and]: [
+        sequelize.where(
+          sequelize.fn('REPLACE', sequelize.fn('LOWER', sequelize.col('specialization')), ' ', ''),
+          String(session.specialization || '').toLowerCase().replace(/\s+/g, '')
+        ),
+      ],
     },
     attributes: ['id', 'rollNo'],
   });

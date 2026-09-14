@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { User, Phone, FileText, NotebookText, Briefcase, Building2 } from "lucide-react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../context/app/store";
 export function ProfileView() {
-
+  const [imgError, setImgError] = useState(false);
   const student = useSelector((state: RootState) => state.user.student);
 
   const getOrdinal = (n: number) => {
@@ -19,15 +20,12 @@ export function ProfileView() {
         <div className="flex items-start gap-4 md:gap-6 flex-wrap lg:flex-nowrap">
           <div className="flex items-start gap-4 md:gap-6 flex-1 min-w-0 flex-wrap sm:flex-nowrap">
             <div className="w-20 h-20 md:w-24 md:h-24 bg-[#faf7f9] rounded-xl flex items-center justify-center shrink-0 border border-[#e5d5df] overflow-hidden shadow-xs">
-              {student?.photo ? (
+              {student?.photo && !imgError ? (
                 <img
                   src={student.photo}
                   alt={student.fullName}
                   className="w-full h-full object-cover rounded-xl"
-                  onError={(e) => {
-                    // Fallback to initials if photo fails to render
-                    (e.target as HTMLElement).style.display = "none";
-                  }}
+                  onError={() => setImgError(true)}
                 />
               ) : (
                 <span className="text-[#7b3b5a] text-2xl md:text-3xl font-medium">
@@ -84,28 +82,48 @@ export function ProfileView() {
             </div>
           </div>
           <div className="p-6 grid grid-cols-2 gap-4">
-            {student?.yearCGPA.map((item) => {
-              const isCompleted = item.cgpa !== null;
+            {(() => {
+              let cgpaList: any[] = [];
+              if (Array.isArray(student?.yearCGPA)) {
+                cgpaList = student.yearCGPA;
+              } else if (typeof (student?.yearCGPA as any) === 'string') {
+                try {
+                  const parsed = JSON.parse(student!.yearCGPA as unknown as string);
+                  if (Array.isArray(parsed)) cgpaList = parsed;
+                } catch {
+                  cgpaList = [];
+                }
+              }
+              if (cgpaList.length === 0) {
+                return (
+                  <div className="col-span-2 text-sm text-gray-500 italic py-2">
+                    No CGPA records available yet.
+                  </div>
+                );
+              }
+              return cgpaList.map((item: any) => {
+                const isCompleted = item?.cgpa !== null && item?.cgpa !== undefined && item?.cgpa !== '';
 
-              return (
-                <div
-                  key={item.year}
-                  className={`flex items-center justify-between p-4 border rounded-lg bg-gray-50 border-gray-200`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-gray-900">
-                      {item.year}{getOrdinal(item.year)} Year
+                return (
+                  <div
+                    key={item.year}
+                    className={`flex items-center justify-between p-4 border rounded-lg bg-gray-50 border-gray-200`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-gray-900">
+                        {item.year}{getOrdinal(item.year)} Year
+                      </span>
+                    </div>
+                    <span
+                      className={`text-sm font-semibold ${isCompleted ? "text-[#7b3b5a]" : "text-gray-500"
+                        }`}
+                    >
+                      {isCompleted ? `${item.cgpa}` : "N/A"}
                     </span>
                   </div>
-                  <span
-                    className={`text-sm font-semibold ${isCompleted ? "text-[#7b3b5a]" : "text-gray-500"
-                      }`}
-                  >
-                    {isCompleted ? `${item.cgpa}` : "N/A"}
-                  </span>
-                </div>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
         </div>
 

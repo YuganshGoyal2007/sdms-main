@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ClipboardCheck } from 'lucide-react';
 import type { StudentProps, StudentAttendanceSummaryResponse } from '../../types/types';
@@ -15,6 +15,7 @@ const StudentDetailComponent = () => {
     const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
     const [attendanceSummary, setAttendanceSummary] = useState<StudentAttendanceSummaryResponse | null>(null);
     const [attendanceLoading, setAttendanceLoading] = useState(false);
+    const [accessError, setAccessError] = useState<string | null>(null);
 
     const { school, department, program, batch, rollNo } = useParams();
 
@@ -34,6 +35,20 @@ const StudentDetailComponent = () => {
         if (n === 3) return "rd";
         return "th";
     };
+
+    const parsedYearCGPA = useMemo(() => {
+        if (!student?.yearCGPA) return [];
+        if (Array.isArray(student.yearCGPA)) return student.yearCGPA;
+        if (typeof (student.yearCGPA as any) === 'string') {
+            try {
+                const parsed = JSON.parse(student.yearCGPA as unknown as string);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch {
+                return [];
+            }
+        }
+        return [];
+    }, [student?.yearCGPA]);
 
     const fileToDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -112,10 +127,15 @@ const StudentDetailComponent = () => {
     useEffect(() => {
         const fetchStudent = async () => {
             try {
+                setAccessError(null);
                 const data = await getStudentProfile(rollNo);
                 setStudent(data.student);
-            } catch (error) {
-                alert('Student not found!')
+            } catch (error: any) {
+                if (error?.response?.status === 403 || error?.status === 403) {
+                    setAccessError(error?.response?.data?.message || 'Access Restricted: You are only authorized to view students in your assigned classes.');
+                } else {
+                    setStudent(null);
+                }
             }
         };
 
@@ -137,6 +157,26 @@ const StudentDetailComponent = () => {
         fetchStudent();
         fetchAttendance();
     }, [rollNo]);
+
+    if (accessError) {
+        return (
+            <div className='flex justify-center flex-col items-center h-[70vh] w-full text-center px-4'>
+                <div className="bg-red-50 border border-red-200 rounded-xl p-8 max-w-md shadow-sm">
+                    <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-xl">
+                        ✕
+                    </div>
+                    <h2 className="text-lg font-bold text-gray-900 mb-2">Access Restricted</h2>
+                    <p className="text-sm text-gray-600 mb-6">{accessError}</p>
+                    <button 
+                        className='px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition font-medium text-sm'
+                        onClick={() => navigate(-1)}
+                    >
+                        Go Back
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     if (!student) {
         return (
@@ -192,6 +232,9 @@ const StudentDetailComponent = () => {
                                 src={student?.photo || user}
                                 alt={student?.fullName}
                                 className="w-52 h-52 object-cover rounded-none bg-white border border-gray-300"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).src = user;
+                                }}
                             />
                             <div className="flex flex-col gap-2 w-full">
                                 <input
@@ -291,8 +334,8 @@ const StudentDetailComponent = () => {
                         {renderField("12th Compartment", student?.twelfthCompartment)}
                         {renderField("Admission Year", student?.admissionYear)}
                         {renderField("Admission Type", student?.admissionType)}
-                        {student?.yearCGPA?.map((item, index) =>
-                            renderField(`${item.year}${getOrdinal(item.year)} Year CGPA`, item.cgpa, index)
+                        {parsedYearCGPA.map((item: any, index: number) =>
+                            renderField(`${item?.year ?? (index + 1)}${getOrdinal(Number(item?.year) || (index + 1))} Year CGPA`, item?.cgpa, index)
                         )}
                     </div>
                 </div>

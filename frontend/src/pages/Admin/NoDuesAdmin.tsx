@@ -11,12 +11,23 @@ import {
 } from 'lucide-react';
 import AdminSideNav from '../../components/Admin/AdminSideNav';
 import { getPendingClearances, actionClearanceStage } from '../../lib/noDues.api';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../context/app/store';
 
 export const NoDuesAdmin: React.FC = () => {
+  const user = useSelector((state: RootState) => state.admin);
+  const isChair = user?.role === 'chairperson';
+  const isCoord = user?.role === 'coordinator';
+
   const [stages, setStages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [gateFilter, setGateFilter] = useState('ALL');
+  const [gateFilter, setGateFilter] = useState(() => {
+    if (user?.role === 'chairperson') return 'HOD';
+    if (user?.role === 'coordinator') return 'SCHOOL_OFFICE';
+    if (user?.role === 'officer' && user?.officeCode) return user.officeCode.toUpperCase();
+    return 'ALL';
+  });
 
   // Action Modal State
   const [selectedStage, setSelectedStage] = useState<any | null>(null);
@@ -77,7 +88,15 @@ export const NoDuesAdmin: React.FC = () => {
     }
   };
 
+  const isOfficer = user?.role === 'officer';
+  const EXTERNAL_DESKS = ['DEAN', 'LIB', 'HST', 'ACC', 'SPT', 'ICT', 'CRC', 'LAB'];
+
   const filteredStages = stages.filter((st) => {
+    // Non-officer users (Admin, Chairperson, Coordinator) only review department/school academic stages
+    if (!isOfficer && EXTERNAL_DESKS.includes((st.stageCode || '').toUpperCase())) {
+      return false;
+    }
+
     const student = st.application?.student;
     const matchSearch =
       !searchQuery ||
@@ -109,7 +128,7 @@ export const NoDuesAdmin: React.FC = () => {
                 <ShieldCheck className="w-6 h-6 text-red-700" /> No-Dues Approval & Verification Queue
               </h1>
               <p className="text-xs md:text-sm text-slate-500 mt-0.5">
-                Review and certify student clearance requests across School Office, HOD, Dean, Central Library, Hostel, and Accounts gates.
+                Review and certify student clearance requests across School Office and Head of Department (HOD) verification stages.
               </p>
             </div>
 
@@ -155,15 +174,18 @@ export const NoDuesAdmin: React.FC = () => {
 
             <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
               <Filter className="w-4 h-4 text-slate-400 shrink-0" />
-              {[
-                { label: 'All Gates', value: 'ALL' },
-                { label: 'School Office', value: 'SCHOOL_OFFICE' },
-                { label: 'HOD', value: 'HOD' },
-                { label: 'Dean', value: 'DEAN' },
-                { label: 'Library', value: 'LIB' },
-                { label: 'Hostel', value: 'HST' },
-                { label: 'Accounts', value: 'ACC' },
-              ].map((g) => (
+              {(isChair
+                ? [{ label: 'HOD Clearance', value: 'HOD' }]
+                : isCoord
+                ? [{ label: 'School Office', value: 'SCHOOL_OFFICE' }]
+                : user?.role === 'officer' && user?.officeCode
+                ? [{ label: `${user.officeCode} Clearance`, value: user.officeCode.toUpperCase() }]
+                : [
+                    { label: 'All Academic Stages', value: 'ALL' },
+                    { label: 'School Office', value: 'SCHOOL_OFFICE' },
+                    { label: 'HOD Clearance', value: 'HOD' },
+                  ]
+              ).map((g) => (
                 <button
                   key={g.value}
                   onClick={() => setGateFilter(g.value)}

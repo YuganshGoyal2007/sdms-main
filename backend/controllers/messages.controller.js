@@ -68,7 +68,7 @@ const resolveRecipients = async (req) => {
 
     // Broadcast to a whole role
     if (recipientType === 'role' && recipientRole) {
-        if (!['admin', 'coordinator', 'chairperson'].includes(recipientRole)) return null;
+        if (!['admin', 'coordinator', 'chairperson', 'student', 'faculty'].includes(recipientRole)) return null;
         return { userIds: [], role: recipientRole, scope: 'broadcast' };
     }
 
@@ -163,32 +163,11 @@ const authorizeSend = async (sender, recipient) => {
     }
 
     if (isCoord(sender)) {
-        // coordinator can send to admin, chairperson (of assigned class), or students of assigned class
+        // coordinator can send to admin, chairperson, other coordinators, or students
         if (rRole === 'admin') return true;
-        if (rRole === 'student' && scope === 'class') return true;
-        if (rRole === 'chairperson' && userIds.length > 0) {
-            const assignments = await getCoordinatorAssignedClasses(sender);
-            if (!assignments.length) return false;
-            const chairs = await ChairpersonClass.findAll({
-                where: {
-                    [Op.or]: assignments.map((a) => ({
-                        school: a.school, department: a.department, program: a.program,
-                        batch: a.batch, specialization: a.specialization,
-                    })),
-                },
-                attributes: ['chairpersonId'],
-            });
-            const chairIds = new Set();
-            for (const cc of chairs) {
-                const ch = await Chairperson.findByPk(cc.chairpersonId, { attributes: ['userId'] });
-                if (ch?.userId) chairIds.add(ch.userId);
-            }
-            return userIds.every((id) => chairIds.has(id));
-        }
-        if (rRole === 'chairperson' && scope === 'broadcast') {
-            const assignments = await getCoordinatorAssignedClasses(sender);
-            return assignments.length > 0;
-        }
+        if (rRole === 'student') return true;
+        if (rRole === 'coordinator') return true;
+        if (rRole === 'chairperson') return true;
         return false;
     }
 
@@ -196,60 +175,14 @@ const authorizeSend = async (sender, recipient) => {
         // faculty can send to admin, to coordinator of assigned class, or to students of assigned class(es)
         if (rRole === 'admin') return true;
         if (rRole === 'student') return true;
-        if (rRole === 'coordinator') {
-            const assignments = await FacultyAssignment.findAll({
-                where: { facultyId: sender.id, isActive: true },
-            });
-            if (!assignments.length) return false;
-            const coords = await Coordinator.findAll({
-                where: {
-                    [Op.or]: assignments.map((a) => ({
-                        school: a.school, department: a.department, program: a.program,
-                        batch: a.batch, specialization: a.specialization,
-                    })),
-                },
-                attributes: ['userId'],
-            });
-            const allowedIds = new Set(coords.map((c) => c.userId).filter(Boolean));
-            if (scope === 'class') return coords.length > 0;
-            return userIds.every((id) => allowedIds.has(id));
-        }
+        if (rRole === 'coordinator') return true;
         return false;
     }
 
     if (isStudent(sender)) {
+        // student can send/broadcast to admin or their coordinator
         if (rRole === 'admin') return true;
-
-        const myStudent = await Student.findOne({
-            where: {
-                [Op.or]: [
-                    { userId: sender.id },
-                    ...(sender.username ? [{ rollNo: sender.username }, { enrollmentNo: sender.username }] : []),
-                ],
-            },
-        });
-        if (!myStudent) return false;
-
-        if (rRole === 'coordinator') {
-            const coords = await Coordinator.findAll({
-                where: {
-                    school: myStudent.school,
-                    department: myStudent.department,
-                    program: myStudent.program,
-                    batch: myStudent.batch,
-                    specialization: myStudent.specialization,
-                },
-                attributes: ['userId'],
-            });
-            const allowedIds = new Set(coords.map((c) => c.userId).filter(Boolean));
-            if (scope === 'class') {
-                return coords.length > 0;
-            }
-            if (userIds && userIds.length > 0) {
-                return userIds.every((id) => allowedIds.has(id));
-            }
-            return true;
-        }
+        if (rRole === 'coordinator') return true;
         return false;
     }
 
@@ -339,13 +272,9 @@ export const getInbox = asyncHandler(async (req, res) => {
     const where = {
         [Op.or]: [
             { toUserId: me.id },
+            { toUserId: null, toRole: me.role },
         ],
     };
-
-    // For non-admin, also include role-broadcasts to my role
-    if (!isAdmin(me)) {
-        where[Op.or].push({ toUserId: null, toRole: me.role });
-    }
 
     const messages = await Notification.findAll({
         where,
@@ -394,11 +323,11 @@ export const unreadCount = asyncHandler(async (req, res) => {
     const me = req.user;
     const where = {
         read: false,
-        [Op.or]: [{ toUserId: me.id }],
+        [Op.or]: [
+            { toUserId: me.id },
+            { toUserId: null, toRole: me.role },
+        ],
     };
-    if (!isAdmin(me)) {
-        where[Op.or].push({ toUserId: null, toRole: me.role });
-    }
     const count = await Notification.count({ where });
     return res.status(200).json({ success: true, count });
 });
@@ -407,11 +336,11 @@ export const unreadCount = asyncHandler(async (req, res) => {
 
 const buildInboxWhere = (me) => {
     const where = {
-        [Op.or]: [{ toUserId: me.id }],
+        [Op.or]: [
+            { toUserId: me.id },
+            { toUserId: null, toRole: me.role },
+        ],
     };
-    if (!isAdmin(me)) {
-        where[Op.or].push({ toUserId: null, toRole: me.role });
-    }
     return where;
 };
 
