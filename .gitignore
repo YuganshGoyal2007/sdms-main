@@ -15,7 +15,7 @@
 !.env.sample
 !.env.dist
 
-# ─── Database dumps / seed data ──────────────────────
+# ─── Database dumps, seeds & runtime storage ────────
 *.sql
 *.sql.gz
 *.sql.bak
@@ -23,11 +23,17 @@
 *.db
 *.sqlite
 *.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+dump.rdb
 db_dumps/
 mysql_data/
 database/
 data/exports/
 data/dumps/
+backups/
+backend/backups/
 scripts/seed-*.js
 scripts/seed-*.mjs
 !backend/scripts/migrate-*.js    # migrations are code, not data
@@ -39,6 +45,37 @@ sdms_*.sql
 database_*.sql
 **/dump-*.sql
 **/backup-*.sql
+backend/database.sqlite
+**/database.sqlite*
+
+# ─── Test outputs, evidence & coverage ──────────────
+coverage/
+.nyc_output/
+*.lcov
+test-results/
+playwright-report/
+e2e_evidence/
+screenshots/
+backend/screenshots/
+*.test.log
+test.log
+junit.xml
+.jest/
+*REPORT.json
+*report.json
+*.test.json
+tmp_*.mjs
+tmp_*.js
+
+# ─── User Uploads & Media Storage ───────────────────
+uploads/
+backend/uploads/
+storage/
+media_storage/
+tmp/
+temp/
+scratch/
+*.tmp
 
 # ─── Backup / runtime artifacts ──────────────────────
 *.log
@@ -87,14 +124,8 @@ $RECYCLE.BIN/
 .idea_modules/
 *.iml
 
-# Database files (prevent any DB from being committed)
-*.sqlite
-*.sqlite3
-*.db
-backend/database.sqlite
-**/database.sqlite*
-
 # Archives
 *.zip
-e2e_evidence/
+*.tar
+*.tar.gz
 
