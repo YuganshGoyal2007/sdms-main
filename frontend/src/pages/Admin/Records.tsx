@@ -108,6 +108,7 @@ const Records = () => {
     };
 
     const [exporting, setExporting] = useState(false);
+    const [withPhotos, setWithPhotos] = useState(false);
 
     const triggerExcelDownload = (blob: Blob, filename: string) => {
         const url = URL.createObjectURL(blob);
@@ -159,6 +160,10 @@ const Records = () => {
                 specialization: form.specialization,
             };
             label = `Class ${form.specialization}`;
+        }
+
+        if (withPhotos) {
+            params.withPhotos = 'true';
         }
 
         setExporting(true);
@@ -355,6 +360,10 @@ const Records = () => {
                                         </div>
 
                                         <div className="flex items-center gap-2 flex-wrap">
+                                            <label className="flex items-center gap-1.5 text-sm mr-2 cursor-pointer">
+                                                <input type="checkbox" checked={withPhotos} onChange={(e) => setWithPhotos(e.target.checked)} className="cursor-pointer" />
+                                                Include Photos
+                                            </label>
                                             {/* Department-level export */}
                                             {form.department && (
                                                 <button

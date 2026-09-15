@@ -2,7 +2,7 @@ import { Op } from "sequelize";
 import User from "../models/user.model.js";
 import Student from "../models/student.model.js";
 import bcrypt from "bcryptjs";
-import { removeSpaces } from '../services/whitespace.service.js';
+import { removeSpaces, normalizeIdentifier } from '../services/whitespace.service.js';
 import { verifyPassword } from "../services/hashing.service.js";
 import { generateAccessToken } from "../services/token.service.js";
 import Coordinator from "../models/coordinator.model.js";
@@ -207,7 +207,7 @@ export const userRegister = asyncHandler(async (req, res) => {
             return { status: 201, body: { message: 'Faculty registered successfully', user: { id: newFaculty.id, username: facultyRecord.email } } };
         }
 
-        const studentRecord = await Student.findOne({ where: { enrollmentNo: username }, transaction: t });
+        const studentRecord = await Student.findOne({ where: { enrollmentNo: normalizeIdentifier(username) }, transaction: t });
         if (!studentRecord) {
             return {
                 status: 404,
@@ -226,7 +226,7 @@ export const userRegister = asyncHandler(async (req, res) => {
 
         await Student.update(
             { userId: newStudent.id },
-            { where: { enrollmentNo: username }, transaction: t }
+            { where: { enrollmentNo: normalizeIdentifier(username) }, transaction: t }
         );
 
         return {
@@ -261,8 +261,8 @@ export const userLogin = asyncHandler(async (req, res) => {
         const student = await Student.findOne({
             where: {
                 [Op.or]: [
-                    { enrollmentNo: newUsername },
-                    { rollNo: newUsername },
+                    { enrollmentNo: normalizeIdentifier(username) },
+                    { rollNo: normalizeIdentifier(username) },
                     { email: newUsername },
                 ],
             },

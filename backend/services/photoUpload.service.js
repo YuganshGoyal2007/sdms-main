@@ -1,10 +1,14 @@
-﻿import fs from 'fs';
 import path from 'path';
-import http from 'http';
-import https from 'https';
 import XLSX from 'xlsx';
 import AdmZip from 'adm-zip';
 import { XMLParser } from 'fast-xml-parser';
+
+const getMimeFromPath = (filePath) => {
+  const ext = path.extname(filePath || '').toLowerCase();
+  if (ext === '.png') return 'image/png';
+  if (ext === '.gif') return 'image/gif';
+  return 'image/jpeg';
+};
 
 const createDataUriFromBase64 = (base64String, mime = 'image/jpeg') => {
   if (!base64String || typeof base64String !== 'string') return null;
@@ -13,84 +17,11 @@ const createDataUriFromBase64 = (base64String, mime = 'image/jpeg') => {
   return 'data:' + mime + ';base64,' + cleaned;
 };
 
-const isHttpUrl = (value) => typeof value === 'string' && /^https?:\/\//i.test(value.trim());
-const isLocalFilePath = (value) => {
-  if (typeof value !== 'string') return false;
-  const trimmed = value.trim();
-  return !!trimmed && /[\\/]/.test(trimmed) && /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(trimmed);
-};
-
-const getMimeFromPath = (value) => {
-  const ext = path.extname(value || '').toLowerCase().replace('.', '');
-  if (ext === 'png') return 'image/png';
-  if (ext === 'gif') return 'image/gif';
-  if (ext === 'webp') return 'image/webp';
-  if (ext === 'bmp') return 'image/bmp';
-  if (ext === 'svg') return 'image/svg+xml';
-  return 'image/jpeg';
-};
-
-const getLocalImageDataUri = (value) => {
-  if (!isLocalFilePath(value)) return null;
-  const candidates = [
-    value,
-    path.resolve(value),
-    path.resolve(process.cwd(), value),
-    path.resolve(process.cwd(), 'backend', value),
-    path.resolve(process.cwd(), 'backend', 'uploads', value),
-  ];
-
-  for (const candidate of candidates) {
-    try {
-      if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
-        const buffer = fs.readFileSync(candidate);
-        return 'data:' + getMimeFromPath(candidate) + ';base64,' + buffer.toString('base64');
-      }
-    } catch (err) {
-      // ignore invalid candidate
-    }
-  }
-
-  return null;
-};
-
-const getRemoteImageDataUri = async (value) => {
-  const urlString = String(value || '').trim();
-  if (!isHttpUrl(urlString)) return null;
-
-  try {
-    const url = new URL(urlString);
-    const client = url.protocol === 'https:' ? https : http;
-
-    return await new Promise((resolve) => {
-      const request = client.get(url, (response) => {
-        if (response.statusCode < 200 || response.statusCode >= 300) {
-          response.resume();
-          return resolve(null);
-        }
-        const contentType = response.headers['content-type'] || 'image/jpeg';
-        const chunks = [];
-        response.on('data', (chunk) => chunks.push(chunk));
-        response.on('end', () => {
-          const buffer = Buffer.concat(chunks);
-          resolve('data:' + contentType + ';base64,' + buffer.toString('base64'));
-        });
-      });
-      request.on('error', () => resolve(null));
-      request.end();
-    });
-  } catch (err) {
-    return null;
-  }
-};
-
 const getDataUriFromCell = async (imageCell) => {
   if (imageCell === undefined || imageCell === null) return null;
   const value = String(imageCell).trim();
   if (!value) return null;
   if (value.startsWith('data:image/')) return value;
-  if (isHttpUrl(value)) return await getRemoteImageDataUri(value);
-  if (isLocalFilePath(value)) return getLocalImageDataUri(value);
   return createDataUriFromBase64(value);
 };
 

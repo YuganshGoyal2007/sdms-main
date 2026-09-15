@@ -6,8 +6,9 @@ import { reformatExcel } from '../services/excelReformat.service.js';
 import { uploadStudentPhotos } from '../services/photoUpload.service.js';
 import Student from '../models/student.model.js';
 import Coordinator from '../models/coordinator.model.js';
-import { removeSpaces } from '../services/whitespace.service.js';
+import { removeSpaces, normalizeIdentifier } from '../services/whitespace.service.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
+import sharp from 'sharp';
 import logger from '../lib/logger.js';
 import { getChairpersonAssignments } from './chairperson.controller.js';
 import {
@@ -56,11 +57,29 @@ export const uploadStudentPhotosController = asyncHandler(async (req, res) => {
 
   let updatedCount = 0;
   for (const result of results) {
-    const normalizedRollNo = removeSpaces(String(result.rollNo).toLowerCase());
+    const normalizedRollNo = normalizeIdentifier(result.rollNo);
+    let photoData = result.photoData;
+    if (photoData) {
+      try {
+        const base64Data = photoData.split(',')[1] || photoData;
+        const pngBuffer = await sharp(Buffer.from(base64Data, 'base64')).png().toBuffer();
+        photoData = 'data:image/png;base64,' + pngBuffer.toString('base64');
+      } catch (err) {
+        logger.warn({ err: err.message }, 'Failed to convert photo to PNG');
+      }
+    }
+
     try {
       const [updated] = await Student.update(
-        { photo: result.photoData },
-        { where: { rollNo: normalizedRollNo } }
+        { photo: photoData },
+        { 
+          where: { 
+            [Op.or]: [
+              { rollNo: normalizedRollNo },
+              { enrollmentNo: normalizedRollNo }
+            ]
+          } 
+        }
       );
       if (updated > 0) {
         updatedCount += 1;
@@ -107,7 +126,7 @@ const exactClassMatch = (student, assignment) =>
       normalizeClass(assignment[field])
   );
 
-const buildExportRow = (student) => {
+const buildExportRow = (student, withPhoto = false) => {
   const raw = typeof student.toJSON === 'function' ? student.toJSON() : student;
 
   const row = {
@@ -141,6 +160,10 @@ const buildExportRow = (student) => {
     'Photo Available': raw.hasPhoto ? 'Yes' : (raw.photo ? 'Yes' : 'No')
   };
 
+  if (withPhoto) {
+    row['Photo'] = raw.photo || '';
+  }
+
   let semesters = raw.semesters;
   if (typeof semesters === 'string') {
     try { semesters = JSON.parse(semesters); } catch { semesters = []; }
@@ -172,8 +195,8 @@ const normVal = (v) => {
   return (s === 'none' || s === 'n/a' || s === 'null') ? '' : s;
 };
 
-const sendWorkbook = (res, students, filename, metadata = {}) => {
-  const rows = students.map(buildExportRow);
+const sendWorkbook = (res, students, filename, metadata = {}, withPhoto = false) => {
+  const rows = students.map(s => buildExportRow(s, withPhoto));
   const workbook = XLSX.utils.book_new();
   const worksheet = XLSX.utils.json_to_sheet(rows.length ? rows : [{}]);
 
@@ -208,13 +231,14 @@ const sendWorkbook = (res, students, filename, metadata = {}) => {
 };
 
 export const exportStudentsToExcel = asyncHandler(async (req, res) => {
-  const { school, department, program, batch, specialization } = req.query;
+  const { school, department, program, batch, specialization, withPhotos } = req.query;
 
   const querySchool = school ? String(school).trim() : null;
   const queryDept = department ? String(department).trim() : null;
   const queryProg = program ? String(program).trim() : null;
   const queryBatch = batch ? String(batch).trim() : null;
   const querySpec = specialization ? String(specialization).trim() : null;
+  const includePhotos = withPhotos === 'true';
 
   const hasFilter = Boolean(querySchool || queryDept || queryProg || queryBatch || querySpec);
 
@@ -321,17 +345,19 @@ export const exportStudentsToExcel = asyncHandler(async (req, res) => {
     });
   }
 
+  const attributes = {
+    exclude: includePhotos ? [] : ['photo'],
+    include: [
+      [
+        sequelize.literal("CASE WHEN photo IS NOT NULL AND photo != '' THEN 1 ELSE 0 END"),
+        'hasPhoto'
+      ]
+    ]
+  };
+
   const students = await Student.findAll({
     where,
-    attributes: {
-      exclude: ['photo'],
-      include: [
-        [
-          sequelize.literal("CASE WHEN photo IS NOT NULL AND photo != '' THEN 1 ELSE 0 END"),
-          'hasPhoto'
-        ]
-      ]
-    },
+    attributes,
     raw: true,
     order: [
       ['school', 'ASC'],
@@ -368,5 +394,5 @@ export const exportStudentsToExcel = asyncHandler(async (req, res) => {
     'Export students complete'
   );
 
-  return sendWorkbook(res, students, filename, metadata);
+  return sendWorkbook(res, students, filename, metadata, includePhotos);
 });

@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer-core';
 import path from 'path';
 import fs from 'fs';
 
-const SCREENSHOT_DIR = 'C:/Users/ashis/.gemini/antigravity/brain/05b5f847-c0d2-48f5-bd0a-27b28ae84258/screenshots';
+const SCREENSHOT_DIR = path.resolve('e2e_evidence/screenshots/dean_leaves');
 fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
 
 const FRONTEND_URL = 'http://localhost:5173';

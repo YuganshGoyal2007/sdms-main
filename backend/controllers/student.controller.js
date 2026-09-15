@@ -4,7 +4,7 @@ import Coordinator from "../models/coordinator.model.js";
 import ChangeLog from "../models/changeLog.model.js";
 import Notification from "../models/notification.model.js";
 import sequelize from "../lib/db.js";
-import { removeSpaces } from "../services/whitespace.service.js";
+import { removeSpaces, normalizeIdentifier } from "../services/whitespace.service.js";
 import XLSX from 'xlsx';
 import { buildSemesters, buildYearCGPA, COLUMN_ORDER, PROGRAM_CONFIG } from "../services/upload.service.js";
 import { parseExcelDate } from "../services/parsing.service.js";
@@ -12,9 +12,23 @@ import { reformatExcel } from "../services/excelReformat.service.js";
 import { Op, fn, col, where as seqWhere } from 'sequelize';
 import { getChairpersonAssignments } from './chairperson.controller.js';
 import Faculty from "../models/faculty.model.js";
+import sharp from 'sharp';
 import FacultyAssignment from "../models/facultyAssignment.model.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
 import logger from "../lib/logger.js";
+
+const normalizePhotoValue = async (photo) => {
+  if (!photo) return null;
+  const trimmed = String(photo).trim();
+  const base64Data = trimmed.startsWith('data:image/') ? trimmed.split(',')[1] : trimmed.replace(/\s+/g, '');
+  if (!base64Data) return null;
+  try {
+    const pngBuffer = await sharp(Buffer.from(base64Data, 'base64')).png().toBuffer();
+    return `data:image/png;base64,${pngBuffer.toString('base64')}`;
+  } catch (err) {
+    return `data:image/jpeg;base64,${base64Data}`;
+  }
+};
 
 export const getCoordinatorAssignedClasses = async (user) => {
   if (!user || user.role !== 'coordinator') return [];
@@ -169,12 +183,12 @@ export const addStudent = asyncHandler(async (req, res) => {
     const targetStatus = status || 'active';
 
     if (targetStatus === 'active') {
-      const existingRoll = await Student.findOne({ where: { rollNo: removeSpaces(rollNo.toLowerCase()), status: 'active' } });
+      const existingRoll = await Student.findOne({ where: { rollNo: normalizeIdentifier(rollNo), status: 'active' } });
       if (existingRoll) {
         return res.status(409).json({ success: false, message: 'Active student with this Roll number already exists' });
       }
 
-      const existingEnroll = await Student.findOne({ where: { enrollmentNo: removeSpaces(enrollmentNo.toLowerCase()), status: 'active' } });
+      const existingEnroll = await Student.findOne({ where: { enrollmentNo: normalizeIdentifier(enrollmentNo), status: 'active' } });
       if (existingEnroll) {
         return res.status(409).json({ success: false, message: 'Active student with this Enrollment number already exists' });
       }
@@ -207,8 +221,8 @@ export const addStudent = asyncHandler(async (req, res) => {
     }
 
     const student = await Student.create({
-      rollNo: rollNo.toLowerCase(),
-      enrollmentNo: enrollmentNo.toLowerCase(),
+      rollNo: normalizeIdentifier(rollNo),
+      enrollmentNo: normalizeIdentifier(enrollmentNo),
       fullName,
       school,
       department,
@@ -330,8 +344,8 @@ export const updateStudent = asyncHandler(async (req, res) => {
       }
     }
 
-    const cleanedRoll = rollNo ? removeSpaces(rollNo.toLowerCase()) : undefined;
-    const cleanedEnroll = enrollmentNo ? removeSpaces(enrollmentNo.toLowerCase()) : undefined;
+    const cleanedRoll = rollNo ? normalizeIdentifier(rollNo) : undefined;
+    const cleanedEnroll = enrollmentNo ? normalizeIdentifier(enrollmentNo) : undefined;
     const cleanedEmail = email ? removeSpaces(email.toLowerCase()) : undefined;
     const cleanedMobile = mobile ? mobile.replace(/\s/g, "") : undefined;
 
@@ -441,7 +455,7 @@ export const updateStudent = asyncHandler(async (req, res) => {
       ...(placementDOJ !== undefined && { placementDOJ }),
       ...(placementDOE !== undefined && { placementDOE }),
       ...(placementType !== undefined && { placementType }),
-      ...(photo && { photo }),
+      ...(photo && { photo: await normalizePhotoValue(photo) }),
       updatedBy: req.user.id
     };
 
@@ -477,12 +491,7 @@ export const updateStudent = asyncHandler(async (req, res) => {
     });
 });
 
-const normalizePhotoValue = (photo) => {
-  if (!photo) return null;
-  const trimmed = String(photo).trim();
-  if (trimmed.startsWith('data:image/')) return trimmed;
-  return `data:image/jpeg;base64,${trimmed.replace(/\s+/g, '')}`;
-};
+
 
 export const updateStudentPhoto = asyncHandler(async (req, res) => {
     const { rollNo } = req.params;
@@ -492,7 +501,7 @@ export const updateStudentPhoto = asyncHandler(async (req, res) => {
       return res.status(400).json({ success: false, message: 'Photo data is required' });
     }
 
-    const normalizedPhoto = normalizePhotoValue(photo);
+    const normalizedPhoto = await normalizePhotoValue(photo);
     if (!normalizedPhoto) {
       return res.status(400).json({ success: false, message: 'Invalid photo data' });
     }
@@ -553,16 +562,13 @@ export const getStudentCount = asyncHandler(async (req, res) => {
 export const getStudentProfile = asyncHandler(async (req, res) => {
     const { rollNo } = req.params;
 
-    const lookupKey = removeSpaces(String(rollNo || '').trim());
+    const lookupKey = normalizeIdentifier(String(rollNo || '').trim());
 
     const student = await Student.findOne({
       where: {
         [Op.or]: [
-          { rollNo: lookupKey.toLowerCase() },
-          { rollNo: lookupKey.toUpperCase() },
+          { rollNo: lookupKey },
           { enrollmentNo: lookupKey },
-          { enrollmentNo: lookupKey.toLowerCase() },
-          { enrollmentNo: lookupKey.toUpperCase() },
         ]
       },
       include: [
@@ -1078,8 +1084,8 @@ const createStudentDocument = (doc, school, department, program, batch, speciali
 
   return {
     userId: null,
-    rollNo: doc.rollNo ? removeSpaces(String(doc.rollNo).toLowerCase()) : null,
-    enrollmentNo: doc.enrollmentNo ? removeSpaces(String(doc.enrollmentNo).toLowerCase()) : null,
+    rollNo: doc.rollNo ? normalizeIdentifier(doc.rollNo) : null,
+    enrollmentNo: doc.enrollmentNo ? normalizeIdentifier(doc.enrollmentNo) : null,
     fullName: doc.fullName ? String(doc.fullName).trim() : null,
     fatherName: doc.fatherName ? String(doc.fatherName).trim() : "",
     motherName: doc.motherName ? String(doc.motherName).trim() : "",
@@ -1228,7 +1234,13 @@ const processStudentRows = async (rows, school, department, program, batch, spec
     try {
       const existing = await Student.findOne({ where: { rollNo: studentDoc.rollNo } });
       if (existing) {
-        await existing.update(studentDoc);
+        const updateData = {};
+        for (const [key, value] of Object.entries(studentDoc)) {
+          if (value !== null && value !== undefined && value !== '') {
+            updateData[key] = value;
+          }
+        }
+        await existing.update(updateData);
       } else {
         await Student.create(studentDoc);
       }
@@ -1286,7 +1298,13 @@ const processStudentObjects = async (rows, school, department, program, batch, s
     try {
       const existing = await Student.findOne({ where: { rollNo: studentDoc.rollNo } });
       if (existing) {
-        await existing.update(studentDoc);
+        const updateData = {};
+        for (const [key, value] of Object.entries(studentDoc)) {
+          if (value !== null && value !== undefined && value !== '') {
+            updateData[key] = value;
+          }
+        }
+        await existing.update(updateData);
       } else {
         await Student.create(studentDoc);
       }

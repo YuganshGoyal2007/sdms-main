@@ -448,11 +448,26 @@ const AddStudentForm: React.FC = () => {
             {/* BASIC INFO */}
             <Section title="Basic Information">
                 <div className="flex flex-col md:flex-row gap-6">
-                    <div className="md:w-1/4 flex justify-center items-start">
+                    <div className="md:w-1/4 flex flex-col justify-start items-center gap-3">
                         <img
-                            src={user}
-                            alt='Full Name'
+                            src={form.photo || user}
+                            alt={form.fullName || 'Student'}
                             className="w-52 h-52 object-cover rounded-none bg-white border border-gray-300"
+                        />
+                        <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                        setForm(prev => ({ ...prev, photo: reader.result as string }));
+                                    };
+                                    reader.readAsDataURL(file);
+                                }
+                            }} 
+                            className="text-xs max-w-[200px]" 
                         />
                     </div>
                     <div className="md:w-full bg-white p-5 rounded-none border border-gray-200 space-y-4">

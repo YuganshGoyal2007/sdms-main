@@ -49,13 +49,18 @@ async function runDualApprovalLeaveSuite() {
     const faculty = await login('test_faculty@gbu.ac.in', 'TestPass@123');
     console.log('✓ Faculty authenticated (test_faculty@gbu.ac.in)');
 
-    // 2. Fetch Active Leave Types
+    // 2. Fetch Active Leave Types & pick one with available balance
     console.log('\n[Step 2] Fetching Leave Types...');
     const typesRes = await request('/leaves/types', { headers: hod.headers });
     if (!typesRes.data.leaveTypes?.length) {
       throw new Error('No active leave types found.');
     }
-    const leaveType = typesRes.data.leaveTypes[0];
+    const coordBalRes = await request('/leaves/my/balance', { headers: coord.headers });
+    const coordBalances = coordBalRes.data.balances || [];
+    const available = coordBalances.find(b => b.remainingDays >= 2);
+    const leaveType = available 
+      ? typesRes.data.leaveTypes.find(t => t.id === available.id) || typesRes.data.leaveTypes[0]
+      : typesRes.data.leaveTypes.find(t => t.code === 'DL') || typesRes.data.leaveTypes[0];
     console.log(`✓ Active Leave Type selected: ${leaveType.name} (Code: ${leaveType.code}, ID: ${leaveType.id})`);
 
     // 3. Coordinator Applies with Remarks
