@@ -113,39 +113,63 @@ const parseWorksheetAnchors = (drawingObj, relMap) => {
 
 const parseDrawingAnchors = (files) => {
   const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_' });
-  const sheetKey = Object.keys(files).find((key) => /^xl\/worksheets\/sheet.*\.xml$/i.test(key));
-  if (!sheetKey) return [];
+  const allAnchors = [];
 
-  const sheetRelsKey = 'xl/worksheets/_rels/' + path.basename(sheetKey) + '.rels';
-  const sheetRelsXml = files[sheetRelsKey];
-  if (!sheetRelsXml) return [];
+  // Find all sheet relationship files
+  const sheetRelsKeys = Object.keys(files).filter((key) => /^xl\/worksheets\/_rels\/.*\.rels$/i.test(key));
+  const drawingPaths = new Set();
 
-  const sheetRels = parser.parse(sheetRelsXml);
-  const relationships = sheetRels?.Relationships?.Relationship || [];
-  const drawingRel = Array.isArray(relationships)
-    ? relationships.find((r) => r['@_Type']?.includes('/drawing'))
-    : relationships['@_Type']?.includes('/drawing') ? relationships : null;
-  if (!drawingRel) return [];
-
-  const drawingTarget = drawingRel['@_Target'].replace(/^\.\./, 'xl');
-  const drawingPath = drawingTarget.startsWith('xl/') ? drawingTarget : 'xl/' + drawingTarget;
-  const drawingXml = files[drawingPath];
-  if (!drawingXml) return [];
-
-  const drawingRelsPath = 'xl/drawings/_rels/' + path.basename(drawingPath) + '.rels';
-  const drawingRelsXml = files[drawingRelsPath];
-  const drawingRels = drawingRelsXml ? parser.parse(drawingRelsXml) : null;
-  const rels = drawingRels?.Relationships?.Relationship || [];
-  const relMap = {};
-  if (rels) {
-    if (Array.isArray(rels)) {
-      rels.forEach((rel) => { relMap[rel['@_Id']] = rel['@_Target']; });
-    } else {
-      relMap[rels['@_Id']] = rels['@_Target'];
+  sheetRelsKeys.forEach((sheetRelsKey) => {
+    const sheetRelsXml = files[sheetRelsKey];
+    if (!sheetRelsXml) return;
+    try {
+      const sheetRels = parser.parse(sheetRelsXml);
+      const relationships = sheetRels?.Relationships?.Relationship || [];
+      const relList = Array.isArray(relationships) ? relationships : [relationships];
+      relList.forEach((r) => {
+        if (r && r['@_Type']?.includes('/drawing') && r['@_Target']) {
+          const target = r['@_Target'].replace(/^\.\./, 'xl');
+          const cleanPath = target.startsWith('xl/') ? target : 'xl/' + target;
+          drawingPaths.add(cleanPath);
+        }
+      });
+    } catch (err) {
+      // ignore parse errors
     }
-  }
+  });
 
-  return parseWorksheetAnchors(parser.parse(drawingXml), relMap);
+  // Also include any drawing files directly found in xl/drawings/
+  Object.keys(files).forEach((key) => {
+    if (/^xl\/drawings\/drawing\d+\.xml$/i.test(key)) {
+      drawingPaths.add(key);
+    }
+  });
+
+  drawingPaths.forEach((drawingPath) => {
+    const drawingXml = files[drawingPath];
+    if (!drawingXml) return;
+
+    const drawingRelsPath = 'xl/drawings/_rels/' + path.basename(drawingPath) + '.rels';
+    const drawingRelsXml = files[drawingRelsPath];
+    const drawingRels = drawingRelsXml ? parser.parse(drawingRelsXml) : null;
+    const rels = drawingRels?.Relationships?.Relationship || [];
+    const relMap = {};
+    (Array.isArray(rels) ? rels : [rels]).forEach((rel) => {
+      if (rel && rel['@_Id']) {
+        relMap[rel['@_Id']] = rel['@_Target'];
+      }
+    });
+
+    try {
+      const parsedDrawing = parser.parse(drawingXml);
+      const parsedAnchors = parseWorksheetAnchors(parsedDrawing, relMap);
+      allAnchors.push(...parsedAnchors);
+    } catch (err) {
+      // ignore parse errors
+    }
+  });
+
+  return allAnchors;
 };
 
 const parseVMLAnchors = (files) => {
@@ -215,6 +239,8 @@ const findNearestAnchor = (anchors, rowIndex, colIndex) => {
   let bestScore = Number.POSITIVE_INFINITY;
   anchors.forEach((anchor) => {
     const rowDelta = Math.abs(anchor.row - rowIndex);
+    // Only accept anchors that are on the same row or adjacent row (rowDelta <= 1)
+    if (rowDelta > 1) return;
     const colDelta = colIndex >= 0 ? Math.abs(anchor.col - colIndex) : 0;
     const score = rowDelta * 10 + colDelta;
     if (score < bestScore) {
@@ -268,8 +294,8 @@ export const uploadStudentPhotos = async (buffer) => {
   }
 
   const processRow = async (row, rowNumber) => {
-    if (!row || row.length === 0) {
-      errors.push({ row: rowNumber, error: 'Empty row' });
+    // Gracefully ignore truly empty rows
+    if (!row || !Array.isArray(row) || row.every((c) => c === null || c === undefined || String(c).trim() === '')) {
       return;
     }
 
@@ -285,7 +311,7 @@ export const uploadStudentPhotos = async (buffer) => {
       }
     }
     if (!rollNo) {
-      errors.push({ row: rowNumber, error: 'Missing roll number' });
+      // Row has content but no recognizable roll number
       return;
     }
 
