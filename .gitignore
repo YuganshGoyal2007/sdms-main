@@ -20,6 +20,9 @@
 *.sql.gz
 *.sql.bak
 *.dump
+*.xlsx
+*.xls
+~$*.xlsx
 *.db
 *.sqlite
 *.sqlite3
@@ -84,6 +87,8 @@ backend/logs/
 *.pid
 *.seed
 *.pid.lock
+database backup zip/
+*.zip
 
 # ─── Local dev / IDE noise ───────────────────────────
 .DS_Store

@@ -3,7 +3,7 @@
     "autocommit": "ON",
     "character_set_database": "utf8mb4",
     "character_set_server": "utf8mb4",
-    "collation_database": "utf8mb4_unicode_ci",
+    "collation_database": "utf8mb4_0900_ai_ci",
     "collation_server": "utf8mb4_0900_ai_ci",
     "foreign_key_checks": "ON",
     "innodb_buffer_pool_size": "134217728",
@@ -12,7 +12,7 @@
     "max_connections": "151",
     "sql_mode": "IGNORE_SPACE,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION",
     "transaction_isolation": "REPEATABLE-READ",
-    "version": "8.0.45",
+    "version": "8.4.11",
     "version_comment": "MySQL Community Server - GPL",
     "wait_timeout": "28800"
   },
@@ -20,18 +20,18 @@
     {
       "TABLE_NAME": "attendance_records",
       "ENGINE": "InnoDB",
-      "TABLE_COLLATION": "utf8mb4_unicode_ci",
-      "TABLE_ROWS": "26",
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "73",
       "DATA_LENGTH": "16384",
-      "INDEX_LENGTH": "65536"
+      "INDEX_LENGTH": "32768"
     },
     {
       "TABLE_NAME": "attendance_sessions",
       "ENGINE": "InnoDB",
-      "TABLE_COLLATION": "utf8mb4_unicode_ci",
-      "TABLE_ROWS": "2",
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "1",
       "DATA_LENGTH": "16384",
-      "INDEX_LENGTH": "114688"
+      "INDEX_LENGTH": "0"
     },
     {
       "TABLE_NAME": "chairpeople",
@@ -45,7 +45,7 @@
       "TABLE_NAME": "chairpersonclasses",
       "ENGINE": "InnoDB",
       "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
-      "TABLE_ROWS": "35",
+      "TABLE_ROWS": "36",
       "DATA_LENGTH": "16384",
       "INDEX_LENGTH": "0"
     },
@@ -53,8 +53,8 @@
       "TABLE_NAME": "changelogs",
       "ENGINE": "InnoDB",
       "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
-      "TABLE_ROWS": "91",
-      "DATA_LENGTH": "12075008",
+      "TABLE_ROWS": "1127",
+      "DATA_LENGTH": "132661248",
       "INDEX_LENGTH": "0"
     },
     {
@@ -69,25 +69,49 @@
       "TABLE_NAME": "faculties",
       "ENGINE": "InnoDB",
       "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
-      "TABLE_ROWS": "2",
+      "TABLE_ROWS": "97",
       "DATA_LENGTH": "16384",
-      "INDEX_LENGTH": "49152"
+      "INDEX_LENGTH": "65536"
     },
     {
       "TABLE_NAME": "faculty_assignments",
       "ENGINE": "InnoDB",
-      "TABLE_COLLATION": "utf8mb4_unicode_ci",
-      "TABLE_ROWS": "7",
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "330",
+      "DATA_LENGTH": "65536",
+      "INDEX_LENGTH": "0"
+    },
+    {
+      "TABLE_NAME": "faculty_leave_applications",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "28",
       "DATA_LENGTH": "16384",
-      "INDEX_LENGTH": "98304"
+      "INDEX_LENGTH": "81920"
+    },
+    {
+      "TABLE_NAME": "fee_records",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "6317",
+      "DATA_LENGTH": "1589248",
+      "INDEX_LENGTH": "540672"
     },
     {
       "TABLE_NAME": "leave_applications",
+      "ENGINE": null,
+      "TABLE_COLLATION": null,
+      "TABLE_ROWS": null,
+      "DATA_LENGTH": null,
+      "INDEX_LENGTH": null
+    },
+    {
+      "TABLE_NAME": "leave_types",
       "ENGINE": "InnoDB",
       "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
-      "TABLE_ROWS": "1",
+      "TABLE_ROWS": "5",
       "DATA_LENGTH": "16384",
-      "INDEX_LENGTH": "49152"
+      "INDEX_LENGTH": "32768"
     },
     {
       "TABLE_NAME": "messages",
@@ -98,11 +122,27 @@
       "INDEX_LENGTH": "0"
     },
     {
+      "TABLE_NAME": "no_dues_applications",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "36",
+      "DATA_LENGTH": "16384",
+      "INDEX_LENGTH": "98304"
+    },
+    {
+      "TABLE_NAME": "no_dues_stages",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "265",
+      "DATA_LENGTH": "65536",
+      "INDEX_LENGTH": "65536"
+    },
+    {
       "TABLE_NAME": "notifications",
       "ENGINE": "InnoDB",
       "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
-      "TABLE_ROWS": "64",
-      "DATA_LENGTH": "9977856",
+      "TABLE_ROWS": "507",
+      "DATA_LENGTH": "122175488",
       "INDEX_LENGTH": "49152"
     },
     {
@@ -116,112 +156,66 @@
     {
       "TABLE_NAME": "students",
       "ENGINE": "InnoDB",
-      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
-      "TABLE_ROWS": "1685",
-      "DATA_LENGTH": "278413312",
-      "INDEX_LENGTH": "278528"
+      "TABLE_COLLATION": "utf8mb4_unicode_ci",
+      "TABLE_ROWS": "1978",
+      "DATA_LENGTH": "288899072",
+      "INDEX_LENGTH": "311296"
     },
     {
       "TABLE_NAME": "subjects",
       "ENGINE": "InnoDB",
-      "TABLE_COLLATION": "utf8mb4_unicode_ci",
-      "TABLE_ROWS": "5",
-      "DATA_LENGTH": "16384",
-      "INDEX_LENGTH": "32768"
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "140",
+      "DATA_LENGTH": "49152",
+      "INDEX_LENGTH": "0"
+    },
+    {
+      "TABLE_NAME": "timetable_snapshots",
+      "ENGINE": "InnoDB",
+      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
+      "TABLE_ROWS": "16",
+      "DATA_LENGTH": "114688",
+      "INDEX_LENGTH": "49152"
     },
     {
       "TABLE_NAME": "timetables",
       "ENGINE": "InnoDB",
       "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
-      "TABLE_ROWS": "41",
-      "DATA_LENGTH": "196608",
+      "TABLE_ROWS": "15",
+      "DATA_LENGTH": "98304",
       "INDEX_LENGTH": "65536"
     },
     {
       "TABLE_NAME": "timetablesections",
       "ENGINE": "InnoDB",
       "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
-      "TABLE_ROWS": "41",
+      "TABLE_ROWS": "51",
       "DATA_LENGTH": "16384",
       "INDEX_LENGTH": "16384"
     },
     {
       "TABLE_NAME": "users",
       "ENGINE": "InnoDB",
-      "TABLE_COLLATION": "utf8mb4_0900_ai_ci",
-      "TABLE_ROWS": "50",
-      "DATA_LENGTH": "16384",
+      "TABLE_COLLATION": "utf8mb4_unicode_ci",
+      "TABLE_ROWS": "139",
+      "DATA_LENGTH": "49152",
       "INDEX_LENGTH": "819200"
     }
   ],
   "foreignKeys": [
     {
-      "TABLE_NAME": "attendance_records",
-      "COLUMN_NAME": "sessionId",
-      "CONSTRAINT_NAME": "fk_ar_session",
-      "REFERENCED_TABLE_NAME": "attendance_sessions",
-      "REFERENCED_COLUMN_NAME": "id",
-      "UPDATE_RULE": "NO ACTION",
-      "DELETE_RULE": "CASCADE"
-    },
-    {
-      "TABLE_NAME": "attendance_records",
-      "COLUMN_NAME": "studentId",
-      "CONSTRAINT_NAME": "fk_ar_student",
-      "REFERENCED_TABLE_NAME": "students",
-      "REFERENCED_COLUMN_NAME": "id",
-      "UPDATE_RULE": "NO ACTION",
-      "DELETE_RULE": "CASCADE"
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "COLUMN_NAME": "createdBy",
-      "CONSTRAINT_NAME": "fk_as_creator",
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_1",
       "REFERENCED_TABLE_NAME": "users",
       "REFERENCED_COLUMN_NAME": "id",
-      "UPDATE_RULE": "NO ACTION",
-      "DELETE_RULE": "RESTRICT"
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "COLUMN_NAME": "facultyId",
-      "CONSTRAINT_NAME": "fk_as_faculty",
-      "REFERENCED_TABLE_NAME": "users",
-      "REFERENCED_COLUMN_NAME": "id",
-      "UPDATE_RULE": "NO ACTION",
-      "DELETE_RULE": "RESTRICT"
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "COLUMN_NAME": "lockedBy",
-      "CONSTRAINT_NAME": "fk_as_locker",
-      "REFERENCED_TABLE_NAME": "users",
-      "REFERENCED_COLUMN_NAME": "id",
-      "UPDATE_RULE": "NO ACTION",
-      "DELETE_RULE": "SET NULL"
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "COLUMN_NAME": "subjectId",
-      "CONSTRAINT_NAME": "fk_as_subject",
-      "REFERENCED_TABLE_NAME": "subjects",
-      "REFERENCED_COLUMN_NAME": "id",
-      "UPDATE_RULE": "NO ACTION",
-      "DELETE_RULE": "RESTRICT"
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "COLUMN_NAME": "unlockedBy",
-      "CONSTRAINT_NAME": "fk_as_unlocker",
-      "REFERENCED_TABLE_NAME": "users",
-      "REFERENCED_COLUMN_NAME": "id",
-      "UPDATE_RULE": "NO ACTION",
+      "UPDATE_RULE": "CASCADE",
       "DELETE_RULE": "SET NULL"
     },
     {
       "TABLE_NAME": "coordinators",
       "COLUMN_NAME": "userId",
-      "CONSTRAINT_NAME": "coordinators_ibfk_1",
+      "CONSTRAINT_NAME": "coordinators_ibfk_10",
       "REFERENCED_TABLE_NAME": "users",
       "REFERENCED_COLUMN_NAME": "id",
       "UPDATE_RULE": "CASCADE",
@@ -246,36 +240,684 @@
       "DELETE_RULE": "SET NULL"
     },
     {
-      "TABLE_NAME": "faculty_assignments",
-      "COLUMN_NAME": "createdBy",
-      "CONSTRAINT_NAME": "fk_fa_creator",
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_13",
       "REFERENCED_TABLE_NAME": "users",
       "REFERENCED_COLUMN_NAME": "id",
-      "UPDATE_RULE": "NO ACTION",
+      "UPDATE_RULE": "CASCADE",
       "DELETE_RULE": "SET NULL"
     },
     {
-      "TABLE_NAME": "faculty_assignments",
-      "COLUMN_NAME": "subjectId",
-      "CONSTRAINT_NAME": "fk_fa_subject",
-      "REFERENCED_TABLE_NAME": "subjects",
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_14",
+      "REFERENCED_TABLE_NAME": "users",
       "REFERENCED_COLUMN_NAME": "id",
-      "UPDATE_RULE": "NO ACTION",
-      "DELETE_RULE": "CASCADE"
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
     },
     {
-      "TABLE_NAME": "faculty_assignments",
-      "COLUMN_NAME": "facultyId",
-      "CONSTRAINT_NAME": "fk_fa_user",
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_15",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_16",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_17",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_18",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_19",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_2",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_20",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_21",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_22",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_23",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_24",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_25",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_26",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_27",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_28",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_29",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_3",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_30",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_31",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_32",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_33",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_34",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_35",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_36",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_37",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_38",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_39",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_4",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_40",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_41",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_42",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_43",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_44",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_45",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_46",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_47",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_48",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_49",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_5",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_50",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_51",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_52",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_53",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_54",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_55",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_56",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_57",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_58",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_59",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_6",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_60",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_61",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_62",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_63",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_64",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_65",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_66",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_67",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_68",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_69",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_7",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_70",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_71",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_72",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "coordinators_ibfk_73",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_74",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_75",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_8",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "coordinators_ibfk_9",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "faculties",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "faculties_ibfk_1",
       "REFERENCED_TABLE_NAME": "users",
       "REFERENCED_COLUMN_NAME": "id",
       "UPDATE_RULE": "NO ACTION",
-      "DELETE_RULE": "CASCADE"
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "faculties",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "faculties_ibfk_2",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "NO ACTION",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "fee_records",
+      "COLUMN_NAME": "studentId",
+      "CONSTRAINT_NAME": "fee_records_ibfk_1",
+      "REFERENCED_TABLE_NAME": "students",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
     },
     {
       "TABLE_NAME": "students",
       "COLUMN_NAME": "userId",
       "CONSTRAINT_NAME": "students_ibfk_1",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_10",
       "REFERENCED_TABLE_NAME": "users",
       "REFERENCED_COLUMN_NAME": "id",
       "UPDATE_RULE": "CASCADE",
@@ -298,36 +940,870 @@
       "REFERENCED_COLUMN_NAME": "id",
       "UPDATE_RULE": "CASCADE",
       "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_13",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_14",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_15",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_16",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_17",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_18",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_19",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_2",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_20",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_21",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_22",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_23",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_24",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_25",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_26",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_27",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_28",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_29",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_3",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_30",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_31",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_32",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_33",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_34",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_35",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_36",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_37",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_38",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_39",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_4",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_40",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_41",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_42",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_43",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_44",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_45",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_46",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_47",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_48",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_49",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_5",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_50",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_51",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_52",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_53",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_54",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_55",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_56",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_57",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_58",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_59",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_6",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_60",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_61",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_62",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_63",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_64",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_65",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_66",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_67",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_68",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_69",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_7",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_70",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_71",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_72",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_73",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_74",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_75",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_76",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_77",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_78",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_79",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_8",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_80",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_81",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_82",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_83",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "createdBy",
+      "CONSTRAINT_NAME": "students_ibfk_84",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "NO ACTION"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_85",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_86",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_87",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_88",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_89",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "updatedBy",
+      "CONSTRAINT_NAME": "students_ibfk_9",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_90",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_91",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_92",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_93",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_94",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_95",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_96",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_97",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_98",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
+    },
+    {
+      "TABLE_NAME": "students",
+      "COLUMN_NAME": "userId",
+      "CONSTRAINT_NAME": "students_ibfk_99",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "SET NULL"
     }
   ],
   "indexes": [
     {
       "TABLE_NAME": "attendance_records",
-      "INDEX_NAME": "idx_ar_rollNo",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "rollNo",
-      "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "attendance_records",
-      "INDEX_NAME": "idx_ar_student",
+      "INDEX_NAME": "attendance_records_student_id",
       "NON_UNIQUE": 1,
       "COLUMN_NAME": "studentId",
       "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "attendance_records",
-      "INDEX_NAME": "idx_student_session",
-      "NON_UNIQUE": 0,
-      "COLUMN_NAME": "studentId",
-      "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "attendance_records",
-      "INDEX_NAME": "idx_student_session",
-      "NON_UNIQUE": 0,
-      "COLUMN_NAME": "sessionId",
-      "SEQ_IN_INDEX": 2
     },
     {
       "TABLE_NAME": "attendance_records",
@@ -338,101 +1814,17 @@
     },
     {
       "TABLE_NAME": "attendance_records",
-      "INDEX_NAME": "uniq_record_per_session_student",
+      "INDEX_NAME": "uniq_session_student",
       "NON_UNIQUE": 0,
       "COLUMN_NAME": "sessionId",
       "SEQ_IN_INDEX": 1
     },
     {
       "TABLE_NAME": "attendance_records",
-      "INDEX_NAME": "uniq_record_per_session_student",
+      "INDEX_NAME": "uniq_session_student",
       "NON_UNIQUE": 0,
       "COLUMN_NAME": "studentId",
       "SEQ_IN_INDEX": 2
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "INDEX_NAME": "fk_as_creator",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "createdBy",
-      "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "INDEX_NAME": "fk_as_locker",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "lockedBy",
-      "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "INDEX_NAME": "fk_as_unlocker",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "unlockedBy",
-      "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "INDEX_NAME": "idx_as_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "school",
-      "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "INDEX_NAME": "idx_as_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "department",
-      "SEQ_IN_INDEX": 2
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "INDEX_NAME": "idx_as_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "program",
-      "SEQ_IN_INDEX": 3
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "INDEX_NAME": "idx_as_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "batch",
-      "SEQ_IN_INDEX": 4
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "INDEX_NAME": "idx_as_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "specialization",
-      "SEQ_IN_INDEX": 5
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "INDEX_NAME": "idx_as_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "date",
-      "SEQ_IN_INDEX": 6
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "INDEX_NAME": "idx_as_owner",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "facultyId",
-      "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "INDEX_NAME": "idx_as_owner",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "date",
-      "SEQ_IN_INDEX": 2
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "INDEX_NAME": "idx_as_status",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "status",
-      "SEQ_IN_INDEX": 1
     },
     {
       "TABLE_NAME": "attendance_sessions",
@@ -440,31 +1832,24 @@
       "NON_UNIQUE": 0,
       "COLUMN_NAME": "id",
       "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "INDEX_NAME": "uniq_session_per_slot",
-      "NON_UNIQUE": 0,
-      "COLUMN_NAME": "subjectId",
-      "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "INDEX_NAME": "uniq_session_per_slot",
-      "NON_UNIQUE": 0,
-      "COLUMN_NAME": "date",
-      "SEQ_IN_INDEX": 2
-    },
-    {
-      "TABLE_NAME": "attendance_sessions",
-      "INDEX_NAME": "uniq_session_per_slot",
-      "NON_UNIQUE": 0,
-      "COLUMN_NAME": "sessionType",
-      "SEQ_IN_INDEX": 3
     },
     {
       "TABLE_NAME": "chairpeople",
       "INDEX_NAME": "chairpersonId",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "chairpersonId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "chairpeople",
+      "INDEX_NAME": "chairpersonId_2",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "chairpersonId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "chairpeople",
+      "INDEX_NAME": "chairpersonId_3",
       "NON_UNIQUE": 0,
       "COLUMN_NAME": "chairpersonId",
       "SEQ_IN_INDEX": 1
@@ -478,52 +1863,24 @@
     },
     {
       "TABLE_NAME": "chairpeople",
+      "INDEX_NAME": "email_2",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "chairpeople",
+      "INDEX_NAME": "email_3",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "chairpeople",
       "INDEX_NAME": "PRIMARY",
       "NON_UNIQUE": 0,
       "COLUMN_NAME": "id",
       "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "chairpersonclasses",
-      "INDEX_NAME": "idx_cpc_chairpersonId",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "chairpersonId",
-      "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "chairpersonclasses",
-      "INDEX_NAME": "idx_cpc_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "school",
-      "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "chairpersonclasses",
-      "INDEX_NAME": "idx_cpc_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "department",
-      "SEQ_IN_INDEX": 2
-    },
-    {
-      "TABLE_NAME": "chairpersonclasses",
-      "INDEX_NAME": "idx_cpc_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "program",
-      "SEQ_IN_INDEX": 3
-    },
-    {
-      "TABLE_NAME": "chairpersonclasses",
-      "INDEX_NAME": "idx_cpc_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "batch",
-      "SEQ_IN_INDEX": 4
-    },
-    {
-      "TABLE_NAME": "chairpersonclasses",
-      "INDEX_NAME": "idx_cpc_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "specialization",
-      "SEQ_IN_INDEX": 5
     },
     {
       "TABLE_NAME": "chairpersonclasses",
@@ -534,37 +1891,16 @@
     },
     {
       "TABLE_NAME": "changelogs",
-      "INDEX_NAME": "idx_changelogs_entity",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "entity",
-      "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "changelogs",
-      "INDEX_NAME": "idx_changelogs_entity",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "entityId",
-      "SEQ_IN_INDEX": 2
-    },
-    {
-      "TABLE_NAME": "changelogs",
-      "INDEX_NAME": "idx_changelogs_user_created",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "userId",
-      "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "changelogs",
-      "INDEX_NAME": "idx_changelogs_user_created",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "createdAt",
-      "SEQ_IN_INDEX": 2
-    },
-    {
-      "TABLE_NAME": "changelogs",
       "INDEX_NAME": "PRIMARY",
       "NON_UNIQUE": 0,
       "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "coordinators_email",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
       "SEQ_IN_INDEX": 1
     },
     {
@@ -577,6 +1913,188 @@
     {
       "TABLE_NAME": "coordinators",
       "INDEX_NAME": "email",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_10",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_11",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_12",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_13",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_14",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_15",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_16",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_17",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_18",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_19",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_2",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_20",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_21",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_22",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_23",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_24",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_25",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_26",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_27",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_3",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_4",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_5",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_6",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_7",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_8",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "coordinators",
+      "INDEX_NAME": "email_9",
       "NON_UNIQUE": 0,
       "COLUMN_NAME": "email",
       "SEQ_IN_INDEX": 1
@@ -604,103 +2122,40 @@
     },
     {
       "TABLE_NAME": "faculties",
-      "INDEX_NAME": "faculties_email_unique",
+      "INDEX_NAME": "createdBy",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "createdBy",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "faculties",
+      "INDEX_NAME": "email",
       "NON_UNIQUE": 0,
       "COLUMN_NAME": "email",
       "SEQ_IN_INDEX": 1
     },
     {
       "TABLE_NAME": "faculties",
-      "INDEX_NAME": "faculties_facultyId_unique",
+      "INDEX_NAME": "facultyId",
       "NON_UNIQUE": 0,
       "COLUMN_NAME": "facultyId",
       "SEQ_IN_INDEX": 1
     },
     {
       "TABLE_NAME": "faculties",
-      "INDEX_NAME": "faculties_userId_unique",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "faculties",
+      "INDEX_NAME": "userId",
       "NON_UNIQUE": 0,
       "COLUMN_NAME": "userId",
       "SEQ_IN_INDEX": 1
     },
     {
-      "TABLE_NAME": "faculties",
-      "INDEX_NAME": "PRIMARY",
-      "NON_UNIQUE": 0,
-      "COLUMN_NAME": "id",
-      "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "fk_fa_creator",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "createdBy",
-      "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "idx_class_lookup",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "school",
-      "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "idx_class_lookup",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "department",
-      "SEQ_IN_INDEX": 2
-    },
-    {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "idx_class_lookup",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "program",
-      "SEQ_IN_INDEX": 3
-    },
-    {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "idx_class_lookup",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "batch",
-      "SEQ_IN_INDEX": 4
-    },
-    {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "idx_class_lookup",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "specialization",
-      "SEQ_IN_INDEX": 5
-    },
-    {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "idx_class_lookup",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "semester",
-      "SEQ_IN_INDEX": 6
-    },
-    {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "idx_fa_faculty",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "facultyId",
-      "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "idx_fa_faculty",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "isActive",
-      "SEQ_IN_INDEX": 2
-    },
-    {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "idx_fa_subject",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "subjectId",
-      "SEQ_IN_INDEX": 1
-    },
-    {
       "TABLE_NAME": "faculty_assignments",
       "INDEX_NAME": "PRIMARY",
       "NON_UNIQUE": 0,
@@ -708,112 +2163,91 @@
       "SEQ_IN_INDEX": 1
     },
     {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "uniq_fa_active",
-      "NON_UNIQUE": 0,
-      "COLUMN_NAME": "facultyId",
+      "TABLE_NAME": "faculty_leave_applications",
+      "INDEX_NAME": "faculty_leave_applications_dean_status",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "deanStatus",
       "SEQ_IN_INDEX": 1
     },
     {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "uniq_fa_active",
-      "NON_UNIQUE": 0,
-      "COLUMN_NAME": "subjectId",
-      "SEQ_IN_INDEX": 2
-    },
-    {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "uniq_fa_active",
-      "NON_UNIQUE": 0,
-      "COLUMN_NAME": "school",
-      "SEQ_IN_INDEX": 3
-    },
-    {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "uniq_fa_active",
-      "NON_UNIQUE": 0,
-      "COLUMN_NAME": "department",
-      "SEQ_IN_INDEX": 4
-    },
-    {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "uniq_fa_active",
-      "NON_UNIQUE": 0,
-      "COLUMN_NAME": "program",
-      "SEQ_IN_INDEX": 5
-    },
-    {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "uniq_fa_active",
-      "NON_UNIQUE": 0,
-      "COLUMN_NAME": "batch",
-      "SEQ_IN_INDEX": 6
-    },
-    {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "uniq_fa_active",
-      "NON_UNIQUE": 0,
-      "COLUMN_NAME": "specialization",
-      "SEQ_IN_INDEX": 7
-    },
-    {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "uniq_fa_active",
-      "NON_UNIQUE": 0,
-      "COLUMN_NAME": "semester",
-      "SEQ_IN_INDEX": 8
-    },
-    {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "uniq_fa_active",
-      "NON_UNIQUE": 0,
-      "COLUMN_NAME": "academicYear",
-      "SEQ_IN_INDEX": 9
-    },
-    {
-      "TABLE_NAME": "faculty_assignments",
-      "INDEX_NAME": "uniq_fa_active",
-      "NON_UNIQUE": 0,
-      "COLUMN_NAME": "teacherRole",
-      "SEQ_IN_INDEX": 10
-    },
-    {
-      "TABLE_NAME": "leave_applications",
-      "INDEX_NAME": "idx_leave_dates",
+      "TABLE_NAME": "faculty_leave_applications",
+      "INDEX_NAME": "faculty_leave_applications_hod_status",
       "NON_UNIQUE": 1,
-      "COLUMN_NAME": "fromDate",
+      "COLUMN_NAME": "hodStatus",
       "SEQ_IN_INDEX": 1
     },
     {
-      "TABLE_NAME": "leave_applications",
-      "INDEX_NAME": "idx_leave_dates",
+      "TABLE_NAME": "faculty_leave_applications",
+      "INDEX_NAME": "faculty_leave_applications_leave_type_id",
       "NON_UNIQUE": 1,
-      "COLUMN_NAME": "toDate",
-      "SEQ_IN_INDEX": 2
+      "COLUMN_NAME": "leaveTypeId",
+      "SEQ_IN_INDEX": 1
     },
     {
-      "TABLE_NAME": "leave_applications",
-      "INDEX_NAME": "idx_leave_status",
+      "TABLE_NAME": "faculty_leave_applications",
+      "INDEX_NAME": "faculty_leave_applications_status",
       "NON_UNIQUE": 1,
       "COLUMN_NAME": "status",
       "SEQ_IN_INDEX": 1
     },
     {
-      "TABLE_NAME": "leave_applications",
-      "INDEX_NAME": "idx_leave_student_status",
+      "TABLE_NAME": "faculty_leave_applications",
+      "INDEX_NAME": "faculty_leave_applications_user_id",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "userId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "faculty_leave_applications",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "fee_records",
+      "INDEX_NAME": "fee_records_roll_no",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "rollNo",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "fee_records",
+      "INDEX_NAME": "fee_records_status",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "status",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "fee_records",
+      "INDEX_NAME": "fee_records_student_id",
       "NON_UNIQUE": 1,
       "COLUMN_NAME": "studentId",
       "SEQ_IN_INDEX": 1
     },
     {
-      "TABLE_NAME": "leave_applications",
-      "INDEX_NAME": "idx_leave_student_status",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "status",
-      "SEQ_IN_INDEX": 2
+      "TABLE_NAME": "fee_records",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
     },
     {
-      "TABLE_NAME": "leave_applications",
+      "TABLE_NAME": "leave_types",
+      "INDEX_NAME": "code",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "code",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "leave_types",
+      "INDEX_NAME": "name",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "name",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "leave_types",
       "INDEX_NAME": "PRIMARY",
       "NON_UNIQUE": 0,
       "COLUMN_NAME": "id",
@@ -821,34 +2255,90 @@
     },
     {
       "TABLE_NAME": "messages",
-      "INDEX_NAME": "idx_messages_receiver_created",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "receiverId",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
       "SEQ_IN_INDEX": 1
     },
     {
-      "TABLE_NAME": "messages",
-      "INDEX_NAME": "idx_messages_receiver_created",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "createdAt",
-      "SEQ_IN_INDEX": 2
-    },
-    {
-      "TABLE_NAME": "messages",
-      "INDEX_NAME": "idx_messages_sender_created",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "senderId",
+      "TABLE_NAME": "no_dues_applications",
+      "INDEX_NAME": "certificateNumber",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "certificateNumber",
       "SEQ_IN_INDEX": 1
     },
     {
-      "TABLE_NAME": "messages",
-      "INDEX_NAME": "idx_messages_sender_created",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "createdAt",
-      "SEQ_IN_INDEX": 2
+      "TABLE_NAME": "no_dues_applications",
+      "INDEX_NAME": "displayId",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "displayId",
+      "SEQ_IN_INDEX": 1
     },
     {
-      "TABLE_NAME": "messages",
+      "TABLE_NAME": "no_dues_applications",
+      "INDEX_NAME": "no_dues_applications_display_id",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "displayId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "no_dues_applications",
+      "INDEX_NAME": "no_dues_applications_roll_no",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "rollNo",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "no_dues_applications",
+      "INDEX_NAME": "no_dues_applications_status",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "status",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "no_dues_applications",
+      "INDEX_NAME": "no_dues_applications_student_id",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "studentId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "no_dues_applications",
+      "INDEX_NAME": "PRIMARY",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "no_dues_stages",
+      "INDEX_NAME": "no_dues_stages_application_id",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "applicationId",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "no_dues_stages",
+      "INDEX_NAME": "no_dues_stages_sequence_order",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "sequenceOrder",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "no_dues_stages",
+      "INDEX_NAME": "no_dues_stages_stage_code",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "stageCode",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "no_dues_stages",
+      "INDEX_NAME": "no_dues_stages_status",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "status",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "no_dues_stages",
       "INDEX_NAME": "PRIMARY",
       "NON_UNIQUE": 0,
       "COLUMN_NAME": "id",
@@ -905,76 +2395,6 @@
     },
     {
       "TABLE_NAME": "students",
-      "INDEX_NAME": "idx_roll_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "rollNo",
-      "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "students",
-      "INDEX_NAME": "idx_roll_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "school",
-      "SEQ_IN_INDEX": 2
-    },
-    {
-      "TABLE_NAME": "students",
-      "INDEX_NAME": "idx_roll_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "department",
-      "SEQ_IN_INDEX": 3
-    },
-    {
-      "TABLE_NAME": "students",
-      "INDEX_NAME": "idx_roll_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "program",
-      "SEQ_IN_INDEX": 4
-    },
-    {
-      "TABLE_NAME": "students",
-      "INDEX_NAME": "idx_roll_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "batch",
-      "SEQ_IN_INDEX": 5
-    },
-    {
-      "TABLE_NAME": "students",
-      "INDEX_NAME": "idx_students_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "school",
-      "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "students",
-      "INDEX_NAME": "idx_students_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "department",
-      "SEQ_IN_INDEX": 2
-    },
-    {
-      "TABLE_NAME": "students",
-      "INDEX_NAME": "idx_students_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "program",
-      "SEQ_IN_INDEX": 3
-    },
-    {
-      "TABLE_NAME": "students",
-      "INDEX_NAME": "idx_students_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "batch",
-      "SEQ_IN_INDEX": 4
-    },
-    {
-      "TABLE_NAME": "students",
-      "INDEX_NAME": "idx_students_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "specialization",
-      "SEQ_IN_INDEX": 5
-    },
-    {
-      "TABLE_NAME": "students",
       "INDEX_NAME": "PRIMARY",
       "NON_UNIQUE": 0,
       "COLUMN_NAME": "id",
@@ -1003,101 +2423,80 @@
     },
     {
       "TABLE_NAME": "subjects",
-      "INDEX_NAME": "idx_subjects_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "school",
-      "SEQ_IN_INDEX": 1
-    },
-    {
-      "TABLE_NAME": "subjects",
-      "INDEX_NAME": "idx_subjects_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "department",
-      "SEQ_IN_INDEX": 2
-    },
-    {
-      "TABLE_NAME": "subjects",
-      "INDEX_NAME": "idx_subjects_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "program",
-      "SEQ_IN_INDEX": 3
-    },
-    {
-      "TABLE_NAME": "subjects",
-      "INDEX_NAME": "idx_subjects_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "batch",
-      "SEQ_IN_INDEX": 4
-    },
-    {
-      "TABLE_NAME": "subjects",
-      "INDEX_NAME": "idx_subjects_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "specialization",
-      "SEQ_IN_INDEX": 5
-    },
-    {
-      "TABLE_NAME": "subjects",
-      "INDEX_NAME": "idx_subjects_class",
-      "NON_UNIQUE": 1,
-      "COLUMN_NAME": "semester",
-      "SEQ_IN_INDEX": 6
-    },
-    {
-      "TABLE_NAME": "subjects",
       "INDEX_NAME": "PRIMARY",
       "NON_UNIQUE": 0,
       "COLUMN_NAME": "id",
       "SEQ_IN_INDEX": 1
     },
     {
-      "TABLE_NAME": "subjects",
-      "INDEX_NAME": "uniq_subject_per_class_code",
-      "NON_UNIQUE": 0,
+      "TABLE_NAME": "timetable_snapshots",
+      "INDEX_NAME": "idx_tt_snap_class",
+      "NON_UNIQUE": 1,
       "COLUMN_NAME": "school",
       "SEQ_IN_INDEX": 1
     },
     {
-      "TABLE_NAME": "subjects",
-      "INDEX_NAME": "uniq_subject_per_class_code",
-      "NON_UNIQUE": 0,
+      "TABLE_NAME": "timetable_snapshots",
+      "INDEX_NAME": "idx_tt_snap_class",
+      "NON_UNIQUE": 1,
       "COLUMN_NAME": "department",
       "SEQ_IN_INDEX": 2
     },
     {
-      "TABLE_NAME": "subjects",
-      "INDEX_NAME": "uniq_subject_per_class_code",
-      "NON_UNIQUE": 0,
+      "TABLE_NAME": "timetable_snapshots",
+      "INDEX_NAME": "idx_tt_snap_class",
+      "NON_UNIQUE": 1,
       "COLUMN_NAME": "program",
       "SEQ_IN_INDEX": 3
     },
     {
-      "TABLE_NAME": "subjects",
-      "INDEX_NAME": "uniq_subject_per_class_code",
-      "NON_UNIQUE": 0,
+      "TABLE_NAME": "timetable_snapshots",
+      "INDEX_NAME": "idx_tt_snap_class",
+      "NON_UNIQUE": 1,
       "COLUMN_NAME": "batch",
       "SEQ_IN_INDEX": 4
     },
     {
-      "TABLE_NAME": "subjects",
-      "INDEX_NAME": "uniq_subject_per_class_code",
-      "NON_UNIQUE": 0,
+      "TABLE_NAME": "timetable_snapshots",
+      "INDEX_NAME": "idx_tt_snap_class",
+      "NON_UNIQUE": 1,
       "COLUMN_NAME": "specialization",
       "SEQ_IN_INDEX": 5
     },
     {
-      "TABLE_NAME": "subjects",
-      "INDEX_NAME": "uniq_subject_per_class_code",
-      "NON_UNIQUE": 0,
-      "COLUMN_NAME": "semester",
-      "SEQ_IN_INDEX": 6
+      "TABLE_NAME": "timetable_snapshots",
+      "INDEX_NAME": "idx_tt_snap_term",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "academicYear",
+      "SEQ_IN_INDEX": 1
     },
     {
-      "TABLE_NAME": "subjects",
-      "INDEX_NAME": "uniq_subject_per_class_code",
+      "TABLE_NAME": "timetable_snapshots",
+      "INDEX_NAME": "idx_tt_snap_term",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "semesterTerm",
+      "SEQ_IN_INDEX": 2
+    },
+    {
+      "TABLE_NAME": "timetable_snapshots",
+      "INDEX_NAME": "idx_tt_snap_term",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "snapshotType",
+      "SEQ_IN_INDEX": 3
+    },
+    {
+      "TABLE_NAME": "timetable_snapshots",
+      "INDEX_NAME": "idx_tt_snap_time",
+      "NON_UNIQUE": 1,
+      "COLUMN_NAME": "capturedAt",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "timetable_snapshots",
+      "INDEX_NAME": "PRIMARY",
       "NON_UNIQUE": 0,
-      "COLUMN_NAME": "code",
-      "SEQ_IN_INDEX": 7
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": 1
     },
     {
       "TABLE_NAME": "timetables",
@@ -1231,9 +2630,1073 @@
       "NON_UNIQUE": 0,
       "COLUMN_NAME": "username",
       "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_10",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_11",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_12",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_13",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_14",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_15",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_16",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_17",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_18",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_19",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_2",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_20",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_21",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_22",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_23",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_24",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_25",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_26",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_27",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_28",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_29",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_3",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_30",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_31",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_32",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_33",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_34",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_35",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_36",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_37",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_38",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_39",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_4",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_40",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_41",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_42",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_43",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_44",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_45",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_46",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_47",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_48",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_49",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_5",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_6",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_7",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_8",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "username_9",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "users_username",
+      "NON_UNIQUE": 0,
+      "COLUMN_NAME": "username",
+      "SEQ_IN_INDEX": 1
     }
   ],
-  "duplicateIndexes": [],
+  "duplicateIndexes": [
+    {
+      "table": "chairpeople",
+      "duplicateIndex": "chairpersonId_2",
+      "originalIndex": "chairpersonId",
+      "columns": [
+        "chairpersonId"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "chairpeople",
+      "duplicateIndex": "chairpersonId_3",
+      "originalIndex": "chairpersonId",
+      "columns": [
+        "chairpersonId"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "chairpeople",
+      "duplicateIndex": "email_2",
+      "originalIndex": "email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "chairpeople",
+      "duplicateIndex": "email_3",
+      "originalIndex": "email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_10",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_11",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_12",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_13",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_14",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_15",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_16",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_17",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_18",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_19",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_2",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_20",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_21",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_22",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_23",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_24",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_25",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_26",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_27",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_3",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_4",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_5",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_6",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_7",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_8",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "coordinators",
+      "duplicateIndex": "email_9",
+      "originalIndex": "coordinators_email",
+      "columns": [
+        "email"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_10",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_11",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_12",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_13",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_14",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_15",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_16",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_17",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_18",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_19",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_2",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_20",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_21",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_22",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_23",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_24",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_25",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_26",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_27",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_28",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_29",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_3",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_30",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_31",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_32",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_33",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_34",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_35",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_36",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_37",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_38",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_39",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_4",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_40",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_41",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_42",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_43",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_44",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_45",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_46",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_47",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_48",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_49",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_5",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_6",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_7",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_8",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "username_9",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    },
+    {
+      "table": "users",
+      "duplicateIndex": "users_username",
+      "originalIndex": "username",
+      "columns": [
+        "username"
+      ],
+      "isUnique": true
+    }
+  ],
   "sequelizeConfig": {
     "dialect": "mysql",
     "pool": {

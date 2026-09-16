@@ -269,20 +269,35 @@ export const sendMessage = asyncHandler(async (req, res) => {
 
 export const getInbox = asyncHandler(async (req, res) => {
     const me = req.user;
-    const where = {
-        [Op.or]: [
-            { toUserId: me.id },
-            { toUserId: null, toRole: me.role },
-        ],
-    };
 
-    const messages = await Notification.findAll({
-        where,
-        attributes: ['id', 'toUserId', 'toRole', 'message', 'read', 'createdAt', 'data', 'scope', 'classKey'],
-        order: [['createdAt', 'DESC']],
-        limit: 100,
-        raw: true,
-    });
+    // Execute indexed personal and broadcast queries concurrently (avoids MySQL filesort / sort memory crashes)
+    const [personal, broadcast] = await Promise.all([
+        Notification.findAll({
+            where: { toUserId: me.id },
+            attributes: ['id', 'toUserId', 'toRole', 'message', 'read', 'createdAt', 'data', 'scope', 'classKey'],
+            order: [['id', 'DESC']],
+            limit: 100,
+            raw: true,
+        }),
+        Notification.findAll({
+            where: { toUserId: null, toRole: me.role },
+            attributes: ['id', 'toUserId', 'toRole', 'message', 'read', 'createdAt', 'data', 'scope', 'classKey'],
+            order: [['id', 'DESC']],
+            limit: 100,
+            raw: true,
+        }),
+    ]);
+
+    // Merge and deduplicate by id, sort DESC, cap at 100
+    const seen = new Set();
+    const messages = [...personal, ...broadcast]
+        .filter(m => {
+            if (seen.has(m.id)) return false;
+            seen.add(m.id);
+            return true;
+        })
+        .sort((a, b) => b.id - a.id)
+        .slice(0, 100);
 
     return res.status(200).json({ success: true, messages });
 });
@@ -293,7 +308,7 @@ export const getSent = asyncHandler(async (req, res) => {
     const messages = await Notification.findAll({
         where: literal(`JSON_EXTRACT(data, '$.fromUserId') = ${sequelize.escape(req.user.id)}`),
         attributes: ['id', 'toUserId', 'toRole', 'message', 'createdAt', 'data', 'scope'],
-        order: [['createdAt', 'DESC']],
+        order: [['id', 'DESC']],
         limit: 100,
         raw: true,
     });

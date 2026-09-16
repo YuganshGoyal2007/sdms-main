@@ -449,26 +449,50 @@ const AddStudentForm: React.FC = () => {
             <Section title="Basic Information">
                 <div className="flex flex-col md:flex-row gap-6">
                     <div className="md:w-1/4 flex flex-col justify-start items-center gap-3">
-                        <img
-                            src={form.photo || user}
-                            alt={form.fullName || 'Student'}
-                            className="w-52 h-52 object-cover rounded-none bg-white border border-gray-300"
-                        />
-                        <input 
-                            type="file" 
-                            accept="image/*" 
-                            onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => {
-                                        setForm(prev => ({ ...prev, photo: reader.result as string }));
-                                    };
-                                    reader.readAsDataURL(file);
-                                }
-                            }} 
-                            className="text-xs max-w-[200px]" 
-                        />
+                        <div className="relative group">
+                            <img
+                                src={form.photo || user}
+                                alt={form.fullName || 'Student Photo'}
+                                className="w-52 h-52 object-cover rounded-md bg-white border-2 border-gray-300 shadow-sm"
+                                onError={(e) => { (e.target as HTMLImageElement).src = user; }}
+                            />
+                            {form.photo && (
+                                <button
+                                    type="button"
+                                    onClick={() => setForm(prev => ({ ...prev, photo: '' }))}
+                                    className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded shadow hover:bg-red-700"
+                                    title="Remove photo"
+                                >
+                                    Remove
+                                </button>
+                            )}
+                        </div>
+                        <div className="flex flex-col items-center gap-1 w-full max-w-[210px]">
+                            <label htmlFor="studentFormPhoto" className="w-full text-center text-xs py-2 px-3 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded cursor-pointer font-medium text-gray-700">
+                                {form.photo ? "Change Photo" : "Upload Photo"}
+                            </label>
+                            <input 
+                                id="studentFormPhoto"
+                                type="file" 
+                                accept="image/*" 
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        if (file.size > 5 * 1024 * 1024) {
+                                            alert("Photo file must be under 5MB");
+                                            return;
+                                        }
+                                        const reader = new FileReader();
+                                        reader.onloadend = () => {
+                                            setForm(prev => ({ ...prev, photo: reader.result as string }));
+                                        };
+                                        reader.readAsDataURL(file);
+                                    }
+                                }} 
+                                className="hidden" 
+                            />
+                            <span className="text-[11px] text-gray-500">JPG, PNG, WEBP (Max 5MB)</span>
+                        </div>
                     </div>
                     <div className="md:w-full bg-white p-5 rounded-none border border-gray-200 space-y-4">
                         <Grid>
@@ -571,6 +595,9 @@ const AddStudentForm: React.FC = () => {
                     <Select required name="status" label="Status" value={form.status || 'active'} onChange={handleChange}>
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
+                        <option value="present">Present</option>
+                        <option value="withdrawn">Withdrawn</option>
+                        <option value="withdrawal">Withdrawal</option>
                     </Select>
                     <Select required name="enrollmentStatus" label="Enrollment Status" value={form.enrollmentStatus} onChange={handleChange}>
                         <option value="">Select</option>

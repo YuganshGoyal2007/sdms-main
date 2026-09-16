@@ -1,9 +1,9 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { ClipboardCheck } from 'lucide-react';
+import { ClipboardCheck, AlertTriangle } from 'lucide-react';
 import type { StudentProps, StudentAttendanceSummaryResponse } from '../../types/types';
 import user from '../../assets/images/user.png';
-import { deleteStudent, getStudentProfile, updateStudentPhoto } from '../../lib/user.api';
+import { deleteStudent, getStudentProfile, updateStudentPhoto, updateStudent } from '../../lib/user.api';
 import { getStudentAttendanceSummary } from '../../lib/attendance.api';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../context/app/store';
@@ -108,19 +108,45 @@ const StudentDetailComponent = () => {
         });
     };
 
-    const handleDelete = async () => {
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleDelete = () => {
+        setShowDeleteModal(true);
+    };
+
+    const handleConfirmDelete = async () => {
         try {
-            if (window.confirm("Are you sure you want to delete this student?")) {
-                const data = await deleteStudent(student?.rollNo);
-                if (data) {
-                    alert(`Student (Roll No - ${rollNo?.toLocaleUpperCase()}) deleted successfully!`);
-                    navigate(-1)
-                }
+            setIsDeleting(true);
+            const data = await deleteStudent(student?.rollNo);
+            if (data) {
+                alert(`Student (Roll No - ${rollNo?.toLocaleUpperCase()}) deleted successfully!`);
+                navigate(-1);
             }
         } catch (error: any) {
-            if (error.status === 404) {
+            if (error?.status === 404 || error?.response?.status === 404) {
                 alert('Student not found');
+            } else {
+                alert(error?.response?.data?.message || 'Failed to delete student');
             }
+        } finally {
+            setIsDeleting(false);
+            setShowDeleteModal(false);
+        }
+    };
+
+    const handleWithdrawInstead = async () => {
+        try {
+            setIsDeleting(true);
+            if (!student?.rollNo) return;
+            await updateStudent(student.rollNo, { status: 'withdrawn' });
+            alert(`Student status updated to Withdrawn.`);
+            setStudent(prev => prev ? { ...prev, status: 'withdrawn' } : null);
+            setShowDeleteModal(false);
+        } catch (error: any) {
+            alert(error?.response?.data?.message || 'Failed to update student status');
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -547,6 +573,64 @@ const StudentDetailComponent = () => {
                     </div>
                 </div>
             </div>
+
+            {/* DELETE STUDENT WARNING MODAL */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-6 border border-gray-200 space-y-4">
+                        <div className="flex items-center gap-3 text-red-600">
+                            <div className="p-3 bg-red-100 rounded-full shrink-0">
+                                <AlertTriangle className="w-8 h-8 text-red-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">Warning: Permanent Student Deletion</h3>
+                                <p className="text-xs text-red-600 font-semibold">Critical Administrative Action</p>
+                            </div>
+                        </div>
+
+                        <div className="p-4 bg-red-50 rounded-md border border-red-200 text-sm text-gray-800 space-y-2">
+                            <p>
+                                Are you sure you want to permanently delete student <strong>{student?.fullName}</strong> (Roll No: <strong>{student?.rollNo?.toUpperCase()}</strong>)?
+                            </p>
+                            <p className="text-xs text-red-700 font-medium">
+                                ⚠️ This will permanently remove their academic records, enrollment details, and logs from the database. This action CANNOT be undone!
+                            </p>
+                        </div>
+
+                        <div className="p-3 bg-amber-50 rounded-md border border-amber-200 text-xs text-amber-900 space-y-1">
+                            <p className="font-semibold">💡 Recommended Alternative:</p>
+                            <p>If the student has left, transferred, or dropped out, you can set their status to <strong>Withdrawn</strong> or <strong>Inactive</strong> instead of permanently deleting their academic history.</p>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row justify-end gap-2 pt-3 border-t border-gray-100">
+                            <button
+                                type="button"
+                                onClick={() => setShowDeleteModal(false)}
+                                disabled={isDeleting}
+                                className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-medium cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleWithdrawInstead}
+                                disabled={isDeleting}
+                                className="px-4 py-2 text-sm bg-amber-600 hover:bg-amber-700 text-white rounded font-medium cursor-pointer"
+                            >
+                                Set to Withdrawn Instead
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmDelete}
+                                disabled={isDeleting}
+                                className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded font-medium cursor-pointer disabled:opacity-50"
+                            >
+                                {isDeleting ? "Deleting..." : "Permanently Delete"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
