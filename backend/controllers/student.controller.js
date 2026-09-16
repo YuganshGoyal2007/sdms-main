@@ -4,7 +4,7 @@ import Coordinator from "../models/coordinator.model.js";
 import ChangeLog from "../models/changeLog.model.js";
 import Notification from "../models/notification.model.js";
 import sequelize from "../lib/db.js";
-import { removeSpaces, normalizeIdentifier } from "../services/whitespace.service.js";
+import { removeSpaces, normalizeIdentifier, formatCanonicalRollNo, detectAndCorrectSwappedIdentifiers } from "../services/whitespace.service.js";
 import XLSX from 'xlsx';
 import { buildSemesters, buildYearCGPA, COLUMN_ORDER, PROGRAM_CONFIG } from "../services/upload.service.js";
 import { parseExcelDate } from "../services/parsing.service.js";
@@ -1093,10 +1093,15 @@ const createStudentDocument = (doc, school, department, program, batch, speciali
     }
   }
 
+  const { rollNo: cleanRoll, enrollmentNo: cleanEnroll, wasSwapped } = detectAndCorrectSwappedIdentifiers(doc.rollNo, doc.enrollmentNo);
+  if (wasSwapped) {
+    logger.warn({ originalRoll: doc.rollNo, originalEnroll: doc.enrollmentNo, correctedRoll: cleanRoll, correctedEnroll: cleanEnroll }, 'Auto-corrected swapped Roll No and Enrollment No');
+  }
+
   return {
     userId: null,
-    rollNo: doc.rollNo ? normalizeIdentifier(doc.rollNo) : null,
-    enrollmentNo: doc.enrollmentNo ? normalizeIdentifier(doc.enrollmentNo) : null,
+    rollNo: cleanRoll || null,
+    enrollmentNo: cleanEnroll || null,
     fullName: doc.fullName ? String(doc.fullName).trim() : null,
     fatherName: doc.fatherName ? String(doc.fatherName).trim() : "",
     motherName: doc.motherName ? String(doc.motherName).trim() : "",
@@ -1231,7 +1236,8 @@ const processStudentRows = async (rows, school, department, program, batch, spec
       if (existing) {
         const updateData = {};
         for (const [key, value] of Object.entries(studentDoc)) {
-          if (key === 'userId' || key === 'createdBy') continue;
+          if (key === 'userId' || key === 'createdBy' || key === 'createdAt') continue;
+          if (key === 'photo' && !value) continue;
           if (key === 'semesters') {
             if (hasSemesterInput) {
               const mergedSems = Array.isArray(existing.semesters) ? JSON.parse(JSON.stringify(existing.semesters)) : buildSemesters(semesters);
@@ -1360,7 +1366,8 @@ const processStudentObjects = async (rows, school, department, program, batch, s
       if (existing) {
         const updateData = {};
         for (const [key, value] of Object.entries(studentDoc)) {
-          if (key === 'userId' || key === 'createdBy') continue;
+          if (key === 'userId' || key === 'createdBy' || key === 'createdAt') continue;
+          if (key === 'photo' && !value) continue;
           if (key === 'semesters') {
             if (hasSemesterInput) {
               const mergedSems = Array.isArray(existing.semesters) ? JSON.parse(JSON.stringify(existing.semesters)) : buildSemesters(semesters);

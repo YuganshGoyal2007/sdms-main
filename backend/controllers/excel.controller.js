@@ -6,7 +6,7 @@ import { reformatExcel } from '../services/excelReformat.service.js';
 import { uploadStudentPhotos } from '../services/photoUpload.service.js';
 import Student from '../models/student.model.js';
 import Coordinator from '../models/coordinator.model.js';
-import { removeSpaces, normalizeIdentifier } from '../services/whitespace.service.js';
+import { removeSpaces, normalizeIdentifier, formatCanonicalRollNo, detectAndCorrectSwappedIdentifiers, toTitleCase } from '../services/whitespace.service.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
 import sharp from 'sharp';
 import logger from '../lib/logger.js';
@@ -144,34 +144,37 @@ const exactClassMatch = (student, assignment) =>
 const buildExportRow = (student, withPhoto = false) => {
   const raw = typeof student.toJSON === 'function' ? student.toJSON() : student;
 
+  // Auto-detect and swap if rollNo and enrollmentNo were swapped in database
+  const { rollNo: cleanRoll, enrollmentNo: cleanEnroll } = detectAndCorrectSwappedIdentifiers(raw.rollNo, raw.enrollmentNo);
+
   const row = {
-    'Roll No': raw.rollNo,
-    'Enrollment No': raw.enrollmentNo,
-    'Full Name': raw.fullName,
-    'School': raw.school,
-    'Department': raw.department,
-    'Program': raw.program,
-    'Batch': raw.batch,
-    'Specialization': raw.specialization,
-    "Father's Name": raw.fatherName,
-    "Mother's Name": raw.motherName,
-    'Gender': raw.gender,
+    'Roll No': cleanRoll || '',
+    'Enrollment No': cleanEnroll || '',
+    'Full Name': toTitleCase(raw.fullName),
+    'School': (raw.school || '').toUpperCase(),
+    'Department': (raw.department || '').toUpperCase(),
+    'Program': raw.program || '',
+    'Batch': raw.batch || '',
+    'Specialization': raw.specialization || '',
+    "Father's Name": toTitleCase(raw.fatherName),
+    "Mother's Name": toTitleCase(raw.motherName),
+    'Gender': raw.gender || '',
     'Date of Birth': raw.dob ? new Date(raw.dob).toISOString().slice(0, 10) : '',
-    'Category': raw.category,
-    'Aadhaar / National ID': raw.nationalId,
-    'Mobile': raw.mobile,
-    'Email': raw.email,
-    'Address': raw.address,
-    'Hosteller': raw.hosteller,
-    'Enrollment Status': raw.enrollmentStatus,
-    'Admission Type': raw.admissionType,
-    'Admission Year': raw.admissionYear,
-    '12th Compartment': raw.twelfthCompartment,
-    'Internship Status': raw.internshipStatus,
-    'Placement Status': raw.placementStatus,
-    'Status': raw.status,
-    'Created At': raw.createdAt ? new Date(raw.createdAt).toISOString() : '',
-    'Updated At': raw.updatedAt ? new Date(raw.updatedAt).toISOString() : '',
+    'Category': raw.category || '',
+    'Aadhaar / National ID': raw.nationalId || '',
+    'Mobile': raw.mobile || '',
+    'Email': (raw.email || '').toLowerCase(),
+    'Address': raw.address || '',
+    'Hosteller': raw.hosteller || 'No',
+    'Enrollment Status': raw.enrollmentStatus || 'Enrolled',
+    'Admission Type': raw.admissionType || 'Regular',
+    'Admission Year': raw.admissionYear || '',
+    '12th Compartment': raw.twelfthCompartment || 'No',
+    'Internship Status': raw.internshipStatus || 'Inactive',
+    'Placement Status': raw.placementStatus || 'Not Placed',
+    'Status': raw.status || 'Active',
+    'Created At': raw.createdAt ? new Date(raw.createdAt).toISOString().slice(0, 19).replace('T', ' ') : '',
+    'Updated At': raw.updatedAt ? new Date(raw.updatedAt).toISOString().slice(0, 19).replace('T', ' ') : '',
     'Photo Available': raw.hasPhoto ? 'Yes' : (raw.photo ? 'Yes' : 'No')
   };
 
@@ -215,9 +218,14 @@ const sendWorkbook = (res, students, filename, metadata = {}, withPhoto = false)
   const workbook = XLSX.utils.book_new();
   const worksheet = XLSX.utils.json_to_sheet(rows.length ? rows : [{}]);
 
-  worksheet['!cols'] = Object.keys(rows[0] || {}).map((key) => ({
-    wch: Math.min(Math.max(key.length + 2, 12), 32)
-  }));
+  worksheet['!cols'] = Object.keys(rows[0] || {}).map((key) => {
+    let maxLen = key.length;
+    for (let r = 0; r < Math.min(rows.length, 500); r++) {
+      const val = String(rows[r][key] ?? '');
+      if (val.length > maxLen) maxLen = val.length;
+    }
+    return { wch: Math.min(Math.max(maxLen + 3, 12), 40) };
+  });
 
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Student Records');
 
@@ -382,6 +390,25 @@ export const exportStudentsToExcel = asyncHandler(async (req, res) => {
       ['specialization', 'ASC'],
       ['rollNo', 'ASC']
     ]
+  });
+
+  // Natural sequential sorting by canonical roll number within class
+  students.sort((a, b) => {
+    const schoolComp = (a.school || '').localeCompare(b.school || '');
+    if (schoolComp !== 0) return schoolComp;
+    const deptComp = (a.department || '').localeCompare(b.department || '');
+    if (deptComp !== 0) return deptComp;
+    const progComp = (a.program || '').localeCompare(b.program || '');
+    if (progComp !== 0) return progComp;
+    const batchComp = (a.batch || '').localeCompare(b.batch || '');
+    if (batchComp !== 0) return batchComp;
+    const specComp = (a.specialization || '').localeCompare(b.specialization || '');
+    if (specComp !== 0) return specComp;
+
+    // Secondary sort: canonical roll number using natural numeric collation
+    const rollA = detectAndCorrectSwappedIdentifiers(a.rollNo, a.enrollmentNo).rollNo || '';
+    const rollB = detectAndCorrectSwappedIdentifiers(b.rollNo, b.enrollmentNo).rollNo || '';
+    return rollA.localeCompare(rollB, undefined, { numeric: true, sensitivity: 'base' });
   });
 
   // Descriptive, clean filename reflecting the exact export tier
