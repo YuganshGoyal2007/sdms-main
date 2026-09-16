@@ -26,7 +26,7 @@ import {
 import { useSelector } from "react-redux";
 import type { RootState } from "../../context/app/store";
 
-const sortOptions = ["Roll No", "Name", "Category", "Enrollment Status", "Admission Type"];
+const sortOptions = ["Roll No", "Name", "Status", "Category", "Enrollment Status", "Admission Type"];
 
 const CategoryDomain = () => {
     const [students, setStudents] = useState<StudentProps[]>([]);
@@ -35,6 +35,7 @@ const CategoryDomain = () => {
     const [menu] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [sortField, setSortField] = useState("Roll No");
+    const [statusFilter, setStatusFilter] = useState<string>("all");
     const [exporting, setExporting] = useState(false);
 
     const [accessDenied, setAccessDenied] = useState(false);
@@ -181,10 +182,28 @@ const CategoryDomain = () => {
         }
     };
 
+    const statusCounts = useMemo(() => {
+        const counts = { all: students.length, active: 0, inactive: 0, withdrawn: 0 };
+        for (const s of students) {
+            const st = ((s as any).status || "active").toLowerCase();
+            if (st === "active" || st === "present") counts.active++;
+            else if (st === "withdrawn" || st === "withdrawal") counts.withdrawn++;
+            else if (st === "inactive") counts.inactive++;
+            else counts.active++;
+        }
+        return counts;
+    }, [students]);
+
     const filteredAndSortedStudents = useMemo(
         () =>
             [...students]
                 .filter((student) => {
+                    if (statusFilter !== "all") {
+                        const st = ((student as any).status || "active").toLowerCase();
+                        if (statusFilter === "active" && st !== "active" && st !== "present") return false;
+                        if (statusFilter === "inactive" && st !== "inactive") return false;
+                        if (statusFilter === "withdrawn" && st !== "withdrawn" && st !== "withdrawal") return false;
+                    }
                     const query = searchQuery.toLowerCase().trim();
                     if (!query) return true;
                     return (
@@ -195,12 +214,13 @@ const CategoryDomain = () => {
                 })
                 .sort((a, b) => {
                     if (sortField === "Name") return a.fullName.localeCompare(b.fullName, undefined, { sensitivity: "base" });
+                    if (sortField === "Status") return (((a as any).status || "active")).localeCompare(((b as any).status || "active"), undefined, { sensitivity: "base" });
                     if (sortField === "Category") return a.category.localeCompare(b.category, undefined, { sensitivity: "base" });
                     if (sortField === "Enrollment Status") return (a.enrollmentStatus || "").localeCompare(b.enrollmentStatus || "", undefined, { sensitivity: "base" });
                     if (sortField === "Admission Type") return (a.admissionType || "").localeCompare(b.admissionType || "", undefined, { sensitivity: "base" });
                     return a.rollNo.localeCompare(b.rollNo, undefined, { numeric: true, sensitivity: "base" });
                 }),
-        [students, searchQuery, sortField]
+        [students, searchQuery, sortField, statusFilter]
     );
 
     // Selection handlers
@@ -399,6 +419,58 @@ const CategoryDomain = () => {
                                     </div>
                                 )}
 
+                                {/* Status Filter Section */}
+                                <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1">
+                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider mr-1">Status:</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setStatusFilter("all")}
+                                        className={`px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition border ${
+                                            statusFilter === "all"
+                                                ? "bg-[#7b3b5a] text-white border-[#7b3b5a] shadow-xs font-semibold"
+                                                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                                        }`}
+                                    >
+                                        All ({statusCounts.all})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setStatusFilter("active")}
+                                        className={`px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition border flex items-center gap-1.5 ${
+                                            statusFilter === "active"
+                                                ? "bg-emerald-700 text-white border-emerald-700 shadow-xs font-semibold"
+                                                : "bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-50"
+                                        }`}
+                                    >
+                                        <span className={`w-2 h-2 rounded-full ${statusFilter === "active" ? "bg-white" : "bg-emerald-500"}`} />
+                                        Active ({statusCounts.active})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setStatusFilter("inactive")}
+                                        className={`px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition border flex items-center gap-1.5 ${
+                                            statusFilter === "inactive"
+                                                ? "bg-gray-700 text-white border-gray-700 shadow-xs font-semibold"
+                                                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                                        }`}
+                                    >
+                                        <span className={`w-2 h-2 rounded-full ${statusFilter === "inactive" ? "bg-white" : "bg-gray-400"}`} />
+                                        Inactive ({statusCounts.inactive})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setStatusFilter("withdrawn")}
+                                        className={`px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition border flex items-center gap-1.5 ${
+                                            statusFilter === "withdrawn"
+                                                ? "bg-amber-600 text-white border-amber-600 shadow-xs font-semibold"
+                                                : "bg-white text-amber-800 border-amber-300 hover:bg-amber-50"
+                                        }`}
+                                    >
+                                        <span className={`w-2 h-2 rounded-full ${statusFilter === "withdrawn" ? "bg-white" : "bg-amber-500"}`} />
+                                        Withdrawn ({statusCounts.withdrawn})
+                                    </button>
+                                </div>
+
                                 {/* Search + sort row */}
                                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                                     <div className="flex items-center gap-2 bg-white border border-[#d9d9d9] rounded h-11 px-3 sm:w-96">
@@ -438,6 +510,7 @@ const CategoryDomain = () => {
                                                         <th className="px-3 whitespace-nowrap text-left pl-4">Full Name</th>
                                                         <th className="px-3 whitespace-nowrap text-left pl-4">Father's Name</th>
                                                         <th className="px-3 whitespace-nowrap">Category</th>
+                                                        <th className="px-3 whitespace-nowrap">Status</th>
                                                         <th className="px-3 whitespace-nowrap">Enrollment Status</th>
                                                         <th className="px-3 whitespace-nowrap">Admission Type</th>
                                                         <th className="px-3 whitespace-nowrap w-28">Action</th>
@@ -447,7 +520,7 @@ const CategoryDomain = () => {
                                                     {isLoading ? (
                                                         Array.from({ length: 10 }).map((_, index) => (
                                                             <tr key={index} className="bg-[#f8f9fa] border-t border-[#d9d9d9] h-16 animate-pulse">
-                                                                {Array.from({ length: 10 }, (_, i) => (
+                                                                {Array.from({ length: 11 }, (_, i) => (
                                                                     <td key={i} className="px-3">
                                                                         <div className="h-7 w-16 mx-auto bg-gray-300 rounded" />
                                                                     </td>
@@ -492,6 +565,31 @@ const CategoryDomain = () => {
                                                                     <td className="px-3 whitespace-nowrap text-left pl-4 font-medium text-gray-900">{item.fullName}</td>
                                                                     <td className="px-3 whitespace-nowrap text-left pl-4 text-gray-700">{item.fatherName}</td>
                                                                     <td className="px-3 whitespace-nowrap">{item.category}</td>
+                                                                    <td className="px-3 whitespace-nowrap">
+                                                                        {(() => {
+                                                                            const rawStatus = (item.status || "active").toLowerCase();
+                                                                            const isAct = rawStatus === "active";
+                                                                            const isPres = rawStatus === "present";
+                                                                            const isWdn = rawStatus === "withdrawn" || rawStatus === "withdrawal";
+                                                                            
+                                                                            const label = isPres ? "Present" : isWdn ? "Withdrawn" : isAct ? "Active" : "Inactive";
+                                                                            const badgeClass = isAct
+                                                                                ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                                                                                : isPres
+                                                                                ? "bg-blue-50 text-blue-700 border-blue-300"
+                                                                                : isWdn
+                                                                                ? "bg-amber-50 text-amber-800 border-amber-300"
+                                                                                : "bg-red-50 text-red-700 border-red-300";
+                                                                            const dotClass = isAct ? "bg-emerald-500" : isPres ? "bg-blue-500" : isWdn ? "bg-amber-500" : "bg-red-500";
+
+                                                                            return (
+                                                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border shadow-2xs ${badgeClass}`}>
+                                                                                    <span className={`w-1.5 h-1.5 rounded-full ${dotClass}`} />
+                                                                                    {label}
+                                                                                </span>
+                                                                            );
+                                                                        })()}
+                                                                    </td>
                                                                     <td className="px-3 whitespace-nowrap">{item.enrollmentStatus}</td>
                                                                     <td className="px-3 whitespace-nowrap">{item.admissionType}</td>
                                                                     <td className="px-3 whitespace-nowrap">
@@ -524,8 +622,8 @@ const CategoryDomain = () => {
                                                         })
                                                     ) : (
                                                         <tr className="border-t border-[#d9d9d9] h-16">
-                                                            <td colSpan={10} className="text-center align-middle text-gray-600 py-6">
-                                                                {students.length > 0 ? "No students match your search query" : "No student found in the selected course"}
+                                                            <td colSpan={11} className="text-center align-middle text-gray-600 py-6">
+                                                                {students.length > 0 ? "No students match your search or status filter" : "No student found in the selected course"}
                                                             </td>
                                                         </tr>
                                                     )}
@@ -598,6 +696,9 @@ const CategoryDomain = () => {
                                     >
                                         <option value="active">Active</option>
                                         <option value="inactive">Inactive</option>
+                                        <option value="present">Present</option>
+                                        <option value="withdrawn">Withdrawn</option>
+                                        <option value="withdrawal">Withdrawal</option>
                                     </select>
                                 </div>
 
