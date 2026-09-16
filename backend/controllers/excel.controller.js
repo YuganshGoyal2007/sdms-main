@@ -31,7 +31,13 @@ export const reformatExcelFile = asyncHandler(async (req, res) => {
     'Reformatting Excel file'
   );
 
-  const reformattedBuffer = reformatExcel(req.file.buffer);
+  let reformattedBuffer;
+  try {
+    reformattedBuffer = reformatExcel(req.file.buffer);
+  } catch (err) {
+    logger.warn({ err: { name: err.name, message: err.message } }, 'Excel reformatting failed');
+    return res.status(400).json({ success: false, message: err.message || 'Unable to reformat Excel file' });
+  }
 
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.setHeader('Content-Disposition', 'attachment; filename="reformatted.xlsx"');
@@ -58,20 +64,29 @@ export const uploadStudentPhotosController = asyncHandler(async (req, res) => {
   let updatedCount = 0;
   for (const result of results) {
     const normalizedRollNo = normalizeIdentifier(result.rollNo);
+    if (!normalizedRollNo) {
+      errors.push({ rollNo: result.rollNo || 'Unknown', error: 'Invalid or missing roll number' });
+      continue;
+    }
+
     let photoData = result.photoData;
-    if (photoData) {
-      try {
-        const base64Data = photoData.split(',')[1] || photoData;
-        const pngBuffer = await sharp(Buffer.from(base64Data, 'base64')).png().toBuffer();
-        photoData = 'data:image/png;base64,' + pngBuffer.toString('base64');
-      } catch (err) {
-        logger.warn({ err: err.message }, 'Failed to convert photo to PNG');
-      }
+    if (!photoData) {
+      errors.push({ rollNo: result.rollNo, error: 'No photo data extracted for this student' });
+      continue;
+    }
+
+    let convertedPhoto = photoData;
+    try {
+      const base64Data = photoData.split(',')[1] || photoData;
+      const pngBuffer = await sharp(Buffer.from(base64Data, 'base64')).png().toBuffer();
+      convertedPhoto = 'data:image/png;base64,' + pngBuffer.toString('base64');
+    } catch (err) {
+      logger.warn({ rollNo: result.rollNo, err: err.message }, 'Failed to convert photo to PNG, using original');
     }
 
     try {
       const [updated] = await Student.update(
-        { photo: photoData },
+        { photo: convertedPhoto },
         { 
           where: { 
             [Op.or]: [
@@ -84,7 +99,7 @@ export const uploadStudentPhotosController = asyncHandler(async (req, res) => {
       if (updated > 0) {
         updatedCount += 1;
       } else {
-        errors.push({ rollNo: result.rollNo, error: 'Student not found for this roll number' });
+        errors.push({ rollNo: result.rollNo, error: 'Student not found for this roll/enrollment number' });
       }
     } catch (err) {
       logger.warn({ rollNo: result.rollNo, err: { name: err.name, message: err.message } }, 'Photo update failed for student');

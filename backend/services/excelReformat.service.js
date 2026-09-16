@@ -29,8 +29,8 @@ const normalizeHeader = (value) =>
     .replace(/[^a-z0-9]/g, "");
 
 const headerAliases = {
-  rollNo: ["rollno", "rollnumber", "roll", "rollnum", "rollnumber", "rn", "registrationnumber", "registrationno", "regno", "regnumber", "rollid", "rollidnumber", "srno", "srnumber", "sno"],
-  enrollmentNo: ["enrollmentno", "enrollmentnumber", "enroll", "enrollment", "enrollno", "enrollnumber", "registrationnumber", "registrationno", "regno", "regnumber", "admissionnumber", "admissionno", "studentid", "studentidnumber", "studentidno", "id", "idnumber", "idno", "admissionid", "studentregistration", "studentregistrationnumber", "registrationid"],
+  rollNo: ["rollno", "rollnumber", "roll", "rollnum", "rollnumber", "rn", "registrationnumber", "registrationno", "regno", "regnumber", "rollid", "rollidnumber"],
+  enrollmentNo: ["enrollmentno", "enrollmentnumber", "enroll", "enrollment", "enrollno", "enrollnumber", "enno", "enrolmentno", "enrolmentnumber", "enrlno", "registrationnumber", "registrationno", "regno", "regnumber", "admissionnumber", "admissionno", "studentid", "studentidnumber", "studentidno", "id", "idnumber", "idno", "admissionid", "studentregistration", "studentregistrationnumber", "registrationid"],
   fullName: ["fullname", "name", "studentname", "nameofstudent", "candidate", "fullnamet", "student", "studentfullname", "nameofthestudent", "stdname"],
   fatherName: ["fathername", "father", "fathersname", "fathersname"],
   motherName: ["mothername", "mother", "mothersname", "mothersname"],
@@ -45,7 +45,7 @@ const headerAliases = {
   admissionType: ["admissiontype", "admission", "admissioncategory", "admissionstatus"],
   admissionYear: ["admissionyear", "yearofadmission", "admissionyr"],
   enrollmentStatus: ["enrollmentstatus", "status", "studentstatus"],
-  twelfthCompartment: ["twelfthcompartment", "twelvethcompartment", "12thcompartment", "compartment"],
+  twelfthCompartment: ["twelfthcompartment", "twelvethcompartment", "12thcompartment", "compartment", "12thcom", "12thcomp", "12com"],
   internshipStatus: ["internshipstatus", "internship"],
   placementStatus: ["placementstatus", "placement"],
 };
@@ -73,6 +73,8 @@ const matchHeaderField = (normalizedHeader) => {
   if (
     normalizedHeader.includes("enrol") ||
     normalizedHeader.includes("enroll") ||
+    normalizedHeader.startsWith("enno") ||
+    normalizedHeader === "enno" ||
     normalizedHeader === "registrationno" ||
     normalizedHeader === "registrationnumber" ||
     normalizedHeader === "registrationid" ||
@@ -109,8 +111,8 @@ const matchHeaderField = (normalizedHeader) => {
   if (normalizedHeader.includes("admission") && normalizedHeader.includes("type")) return "admissionType";
   if (normalizedHeader.includes("admission") && normalizedHeader.includes("year")) return "admissionYear";
 
-  // Dynamic Regex for Semester Registration (e.g. "1 Sem Registration" -> "1semregistration")
-  const semRegMatch = normalizedHeader.match(/^(\d+|i|ii|iii|iv|v|vi|vii|viii)(st|nd|rd|th)?sem(?:ester)?reg(?:istration)?/);
+  // Dynamic Regex for Semester Registration (e.g. "1 Sem Registration" -> "1semregistration", "2nd Sem Registartion" -> "2ndsemregistartion")
+  const semRegMatch = normalizedHeader.match(/^(\d+|i|ii|iii|iv|v|vi|vii|viii)(st|nd|rd|th)?sem(?:ester)?reg.*/);
   if (semRegMatch) {
     let num = parseInt(semRegMatch[1]);
     if (isNaN(num)) {
@@ -121,7 +123,7 @@ const matchHeaderField = (normalizedHeader) => {
   }
 
   // Dynamic Regex for Year CGPA (e.g. "1st Year CGPA" -> "1styearcgpa", "Ist Year CGPA" -> "istyearcgpa")
-  const yearCGPAMatch = normalizedHeader.match(/^(\d+|ist|iind|iiird|ivth|i|ii|iii|iv|v)(st|nd|rd|th)?yearcgpa/);
+  const yearCGPAMatch = normalizedHeader.match(/^(\d+|ist|iind|iiird|ivth|i|ii|iii|iv|v)(st|nd|rd|th)?year[sc]?gpa/);
   if (yearCGPAMatch) {
     let num = parseInt(yearCGPAMatch[1]);
     if (isNaN(num)) {
@@ -131,8 +133,8 @@ const matchHeaderField = (normalizedHeader) => {
     return `yearCGPA_${num}`;
   }
   
-  // Dynamic Regex for Semester SGPA/CGPA (e.g. "1 Sem SGPA" -> "1semsgpa")
-  const semSGPAMatch = normalizedHeader.match(/^(\d+|i|ii|iii|iv|v|vi|vii|viii)(st|nd|rd|th)?sem(?:ester)?s?gpa/);
+  // Dynamic Regex for Semester SGPA/CGPA (e.g. "1 Sem SGPA" -> "1semsgpa", "1st Sem CGPA" -> "1stsemcgpa")
+  const semSGPAMatch = normalizedHeader.match(/^(\d+|i|ii|iii|iv|v|vi|vii|viii)(st|nd|rd|th)?sem(?:ester)?[sc]?gpa/);
   if (semSGPAMatch) {
     let num = parseInt(semSGPAMatch[1]);
     if (isNaN(num)) {

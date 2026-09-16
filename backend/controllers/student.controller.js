@@ -193,14 +193,18 @@ export const addStudent = asyncHandler(async (req, res) => {
         return res.status(409).json({ success: false, message: 'Active student with this Enrollment number already exists' });
       }
 
-      const existingMobile = await Student.findOne({ where: { mobile: mobile, status: 'active' } });
-      if (existingMobile) {
-        return res.status(409).json({ success: false, message: 'Active student with this Phone number already exists' });
+      if (mobile) {
+        const existingMobile = await Student.findOne({ where: { mobile: mobile, status: 'active' } });
+        if (existingMobile) {
+          return res.status(409).json({ success: false, message: 'Active student with this Phone number already exists' });
+        }
       }
 
-      const existingEmail = await Student.findOne({ where: { email: removeSpaces(email.toLowerCase()), status: 'active' } });
-      if (existingEmail) {
-        return res.status(409).json({ success: false, message: 'Active student with this Email already exists' });
+      if (email) {
+        const existingEmail = await Student.findOne({ where: { email: removeSpaces(String(email).toLowerCase()), status: 'active' } });
+        if (existingEmail) {
+          return res.status(409).json({ success: false, message: 'Active student with this Email already exists' });
+        }
       }
     }
 
@@ -235,8 +239,8 @@ export const addStudent = asyncHandler(async (req, res) => {
       dob,
       category,
       nationalId,
-      mobile: mobile.replace(/\s/g, ''),
-      email: email.toLowerCase(),
+      mobile: mobile ? String(mobile).replace(/\s/g, '') : '',
+      email: email ? String(email).toLowerCase() : null,
       address,
       hosteller,
       admissionType,
@@ -922,9 +926,9 @@ const createHeaderMatchers = () => {
       .replace(/[^a-z0-9]/g, "");
 
   const headerAliases = {
-      rollNo: ["rollno", "rollnumber", "roll", "rollnum", "rollnumber", "rn", "registrationnumber", "registrationno", "regno", "regnumber", "rollid", "rollidnumber", "srno", "srnumber", "sno"],
-      enrollmentNo: ["enrollmentno", "enrollmentnumber", "enroll", "enrollment", "enrollno", "enrollnumber", "registrationnumber", "registrationno", "regno", "regnumber", "admissionnumber", "admissionno", "studentid", "studentidnumber", "studentidno", "id", "idnumber", "idno", "admissionid", "studentregistration", "studentregistrationnumber", "registrationid"],
-      fullName: ["fullname", "name", "studentname", "nameofstudent", "candidate", "fullnamet", "student", "studentfullname", "nameofthestudent", "stdname", "nameofthestudent"],
+      rollNo: ["rollno", "rollnumber", "roll", "rollnum", "rollnumber", "rn", "registrationnumber", "registrationno", "regno", "regnumber", "rollid", "rollidnumber"],
+      enrollmentNo: ["enrollmentno", "enrollmentnumber", "enroll", "enrollment", "enrollno", "enrollnumber", "enno", "enrolmentno", "enrolmentnumber", "enrlno", "registrationnumber", "registrationno", "regno", "regnumber", "admissionnumber", "admissionno", "studentid", "studentidnumber", "studentidno", "id", "idnumber", "idno", "admissionid", "studentregistration", "studentregistrationnumber", "registrationid"],
+      fullName: ["fullname", "name", "studentname", "nameofstudent", "candidate", "fullnamet", "student", "studentfullname", "nameofthestudent", "stdname"],
       fatherName: ["fathername", "father", "father'sname", "fathersname"],
       motherName: ["mothername", "mother", "mother'sname", "mothersname"],
     dob: ["dob", "dateofbirth", "birthdate", "birthday"],
@@ -937,7 +941,7 @@ const createHeaderMatchers = () => {
     admissionType: ["admissiontype", "admission", "admissioncategory", "admissionstatus"],
     admissionYear: ["admissionyear", "yearofadmission", "admissionyr"],
     enrollmentStatus: ["enrollmentstatus", "status", "studentstatus"],
-    twelfthCompartment: ["twelfthcompartment", "twelvethcompartment", "12thcompartment", "compartment"],
+    twelfthCompartment: ["twelfthcompartment", "twelvethcompartment", "12thcompartment", "compartment", "12thcom", "12thcomp", "12com"],
     internshipStatus: ["internshipstatus", "internship"],
     placementStatus: ["placementstatus", "placement"],
   };
@@ -965,6 +969,8 @@ const createHeaderMatchers = () => {
     if (
       normalizedHeader.includes("enrol") ||
       normalizedHeader.includes("enroll") ||
+      normalizedHeader.startsWith("enno") ||
+      normalizedHeader === "enno" ||
       normalizedHeader === "registrationno" ||
       normalizedHeader === "registrationnumber" ||
       normalizedHeader === "registrationid" ||
@@ -1001,8 +1007,8 @@ const createHeaderMatchers = () => {
     if (normalizedHeader.includes("admission") && normalizedHeader.includes("type")) return "admissionType";
     if (normalizedHeader.includes("admission") && normalizedHeader.includes("year")) return "admissionYear";
 
-    // Dynamic Regex for Semester Registration (e.g. "1 Sem Registration" -> "1semregistration")
-    const semRegMatch = normalizedHeader.match(/^(\d+|i|ii|iii|iv|v|vi|vii|viii)(st|nd|rd|th)?sem(?:ester)?reg(?:istration)?/);
+    // Dynamic Regex for Semester Registration (e.g. "1 Sem Registration" -> "1semregistration", "2nd Sem Registartion" -> "2ndsemregistartion")
+    const semRegMatch = normalizedHeader.match(/^(\d+|i|ii|iii|iv|v|vi|vii|viii)(st|nd|rd|th)?sem(?:ester)?reg.*/);
     if (semRegMatch) {
       let num = parseInt(semRegMatch[1]);
       if (isNaN(num)) {
@@ -1013,7 +1019,7 @@ const createHeaderMatchers = () => {
     }
 
     // Dynamic Regex for Year CGPA (e.g. "1st Year CGPA" -> "1styearcgpa", "Ist Year CGPA" -> "istyearcgpa")
-    const yearCGPAMatch = normalizedHeader.match(/^(\d+|ist|iind|iiird|ivth|i|ii|iii|iv|v)(st|nd|rd|th)?yearcgpa/);
+    const yearCGPAMatch = normalizedHeader.match(/^(\d+|ist|iind|iiird|ivth|i|ii|iii|iv|v)(st|nd|rd|th)?year[sc]?gpa/);
     if (yearCGPAMatch) {
       let num = parseInt(yearCGPAMatch[1]);
       if (isNaN(num)) {
@@ -1023,8 +1029,8 @@ const createHeaderMatchers = () => {
       return `yearCGPA_${num}`;
     }
     
-    // Dynamic Regex for Semester SGPA/CGPA (e.g. "1 Sem SGPA" -> "1semsgpa")
-    const semSGPAMatch = normalizedHeader.match(/^(\d+|i|ii|iii|iv|v|vi|vii|viii)(st|nd|rd|th)?sem(?:ester)?s?gpa/);
+    // Dynamic Regex for Semester SGPA/CGPA (e.g. "1 Sem SGPA" -> "1semsgpa", "1st Sem CGPA" -> "1stsemcgpa")
+    const semSGPAMatch = normalizedHeader.match(/^(\d+|i|ii|iii|iv|v|vi|vii|viii)(st|nd|rd|th)?sem(?:ester)?[sc]?gpa/);
     if (semSGPAMatch) {
       let num = parseInt(semSGPAMatch[1]);
       if (isNaN(num)) {
@@ -1064,21 +1070,26 @@ const sanitizeNumericString = (value) => {
 
 const createStudentDocument = (doc, school, department, program, batch, specialization, years, semesters, userId) => {
   const semestersArray = buildSemesters(semesters);
+  let hasSemesterInput = false;
   for (let i = 0; i < semesters; i++) {
     const semNum = i + 1;
-    if (doc[`semRegistration_${semNum}`] !== undefined) {
-      semestersArray[i].registered = String(doc[`semRegistration_${semNum}`]).trim() || "Pending";
+    if (doc[`semRegistration_${semNum}`] !== undefined && doc[`semRegistration_${semNum}`] !== null && String(doc[`semRegistration_${semNum}`]).trim() !== "") {
+      semestersArray[i].registered = String(doc[`semRegistration_${semNum}`]).trim();
+      hasSemesterInput = true;
     }
-    if (doc[`semSGPA_${semNum}`] !== undefined) {
-      semestersArray[i].sgpa = doc[`semSGPA_${semNum}`] || null;
+    if (doc[`semSGPA_${semNum}`] !== undefined && doc[`semSGPA_${semNum}`] !== null && doc[`semSGPA_${semNum}`] !== "") {
+      semestersArray[i].sgpa = doc[`semSGPA_${semNum}`];
+      hasSemesterInput = true;
     }
   }
 
   const cgpaArray = buildYearCGPA(years);
+  let hasCGPAInput = false;
   for (let i = 0; i < years; i++) {
     const yearNum = i + 1;
-    if (doc[`yearCGPA_${yearNum}`] !== undefined) {
-      cgpaArray[i].cgpa = doc[`yearCGPA_${yearNum}`] || null;
+    if (doc[`yearCGPA_${yearNum}`] !== undefined && doc[`yearCGPA_${yearNum}`] !== null && doc[`yearCGPA_${yearNum}`] !== "") {
+      cgpaArray[i].cgpa = doc[`yearCGPA_${yearNum}`];
+      hasCGPAInput = true;
     }
   }
 
@@ -1112,6 +1123,8 @@ const createStudentDocument = (doc, school, department, program, batch, speciali
     semesters: semestersArray,
     yearCGPA: cgpaArray,
     createdBy: userId,
+    _hasSemesterInput: hasSemesterInput,
+    _hasCGPAInput: hasCGPAInput,
   };
 };
 
@@ -1126,84 +1139,37 @@ const isRowEmpty = (row) => {
 };
 
 const processStudentRows = async (rows, school, department, program, batch, specialization, years, semesters, userId) => {
-  const { normalizeHeader, matchHeaderField } = createHeaderMatchers();
-  const requiredFields = ["rollNo", "enrollmentNo", "fullName"];
+  const { matchHeaderField } = createHeaderMatchers();
+  const headerRowIndex = rows.findIndex((row) => {
+    if (!Array.isArray(row)) return false;
+    const recognizedCount = row.filter((cell) => matchHeaderField(normalizeHeader(cell))).length;
+    return recognizedCount >= 3;
+  });
 
-  const findHeaderRow = () => {
-    let bestCandidate = null;
-    let bestScore = -1;
+  if (headerRowIndex === -1) {
+    return {
+      error: "Unable to detect header row. Please make sure the file contains appropriate headers.",
+    };
+  }
 
-    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
-      const row = rows[rowIndex];
-      if (!Array.isArray(row)) continue;
-
-      const mapping = {};
-      let recognizedCount = 0;
-      let requiredMatchCount = 0;
-
-      row.forEach((cell, index) => {
-        const normalizedHeader = normalizeHeader(cell);
-        const field = matchHeaderField(normalizedHeader);
-        if (!field) return;
-
-        mapping[index] = field;
-        recognizedCount += 1;
-        if (requiredFields.includes(field)) {
-          requiredMatchCount += 1;
-        }
-      });
-
-      if (requiredMatchCount === requiredFields.length && recognizedCount >= 3) {
-        return { rowIndex, mapping };
-      }
-
-      const score = requiredMatchCount * 10 + recognizedCount;
-      if (recognizedCount >= 3 && requiredMatchCount >= 2 && score > bestScore) {
-        bestScore = score;
-        bestCandidate = { rowIndex, mapping };
-      }
+  const headerRow = rows[headerRowIndex];
+  const headerMapping = {};
+  headerRow.forEach((cell, index) => {
+    const field = matchHeaderField(normalizeHeader(cell));
+    if (field) {
+      headerMapping[index] = field;
     }
+  });
 
-    return bestCandidate;
-  };
-
-  const headerInfo = findHeaderRow();
-  if (!headerInfo) {
-    const headerRow = rows.find(row => Array.isArray(row) && row.some(cell => cell !== null && cell !== undefined));
-    const normalizedHeaderRow = headerRow ? headerRow.map(value => normalizeHeader(value)) : [];
-    return {
-      error: true,
-      message: "Could not detect header row. Please use the sample sheet format or place the column names in the first non-empty row.",
-      headerRow: headerRow ? headerRow.map(value => String(value || "").trim()) : [],
-      normalizedHeaderRow,
-    };
-  }
-
-  const { rowIndex: headerRowIndex, mapping: headerMapping } = headerInfo;
-  const dataRows = rows.slice(headerRowIndex + 1).filter(row => !isRowEmpty(row));
-
-  if (dataRows.length === 0) {
-    return { error: true, message: "No student data rows found in the Excel file." };
-  }
-
-  const foundHeaders = Object.values(headerMapping);
-  if (!requiredFields.every((field) => foundHeaders.includes(field))) {
-    const headerRowValues = rows[headerRowIndex] || [];
-    return {
-      error: true,
-      message: "Excel headers do not contain the required fields. Please include Roll No, Enrollment No and Full Name.",
-      foundHeaders,
-      headerRow: headerRowValues.map((value) => String(value || "").trim()),
-    };
-  }
-
+  const dataRows = rows.slice(headerRowIndex + 1);
   let inserted = 0;
   const errors = [];
 
   for (let i = 0; i < dataRows.length; i++) {
     const row = dataRows[i];
-    const doc = {};
+    if (isRowEmpty(row)) continue;
 
+    const doc = {};
     COLUMN_ORDER.forEach((field) => {
       doc[field] = null;
     });
@@ -1216,32 +1182,97 @@ const processStudentRows = async (rows, school, department, program, batch, spec
     const rawEmail = doc.email ? String(doc.email).trim() : null;
     const studentDoc = createStudentDocument(doc, school, department, program, batch, specialization, years, semesters, userId);
 
-    if (!studentDoc.rollNo || !studentDoc.enrollmentNo || !studentDoc.fullName) {
+    if (!studentDoc.rollNo) {
       errors.push({
         row: headerRowIndex + i + 2,
-        error: 'Missing required student fields in the excel row',
-        parsed: {
-          rollNo: studentDoc.rollNo,
-          enrollmentNo: studentDoc.enrollmentNo,
-          fullName: studentDoc.fullName,
-        },
+        error: 'Missing roll number in the excel row',
         rawEmail,
         parsedEmail: studentDoc.email,
+        rawRow: row,
       });
       continue;
     }
 
     try {
       const existing = await Student.findOne({ where: { rollNo: studentDoc.rollNo } });
+
+      // Fallback for missing enrollment number: preserve existing or fallback to rollNo
+      if (!studentDoc.enrollmentNo) {
+        studentDoc.enrollmentNo = (existing && existing.enrollmentNo) ? existing.enrollmentNo : studentDoc.rollNo;
+      } else if (!existing) {
+        const enrollConflict = await Student.findOne({ where: { enrollmentNo: studentDoc.enrollmentNo } });
+        if (enrollConflict && enrollConflict.rollNo !== studentDoc.rollNo) {
+          logger.warn({ rollNo: studentDoc.rollNo, enrollmentNo: studentDoc.enrollmentNo, conflictWith: enrollConflict.rollNo }, 'Enrollment number collision detected with another student, falling back to roll number');
+          studentDoc.enrollmentNo = studentDoc.rollNo;
+        }
+      }
+
+      // Fallback for missing fullName: preserve existing
+      if (!studentDoc.fullName) {
+        if (existing && existing.fullName) {
+          studentDoc.fullName = existing.fullName;
+        } else {
+          errors.push({
+            row: headerRowIndex + i + 2,
+            error: 'Missing student full name in the excel row',
+            rawEmail,
+            parsedEmail: studentDoc.email,
+            rawRow: row,
+          });
+          continue;
+        }
+      }
+
+      const hasSemesterInput = studentDoc._hasSemesterInput;
+      const hasCGPAInput = studentDoc._hasCGPAInput;
+      delete studentDoc._hasSemesterInput;
+      delete studentDoc._hasCGPAInput;
+
       if (existing) {
         const updateData = {};
         for (const [key, value] of Object.entries(studentDoc)) {
+          if (key === 'userId' || key === 'createdBy') continue;
+          if (key === 'semesters') {
+            if (hasSemesterInput) {
+              const mergedSems = Array.isArray(existing.semesters) ? JSON.parse(JSON.stringify(existing.semesters)) : buildSemesters(semesters);
+              for (let sIdx = 0; sIdx < value.length; sIdx++) {
+                if (!mergedSems[sIdx]) {
+                  mergedSems[sIdx] = value[sIdx];
+                } else {
+                  if (value[sIdx].registered && value[sIdx].registered !== 'Pending') {
+                    mergedSems[sIdx].registered = value[sIdx].registered;
+                  }
+                  if (value[sIdx].sgpa !== null && value[sIdx].sgpa !== undefined) {
+                    mergedSems[sIdx].sgpa = value[sIdx].sgpa;
+                  }
+                }
+              }
+              updateData.semesters = mergedSems;
+            }
+            continue;
+          }
+          if (key === 'yearCGPA') {
+            if (hasCGPAInput) {
+              const mergedCGPA = Array.isArray(existing.yearCGPA) ? JSON.parse(JSON.stringify(existing.yearCGPA)) : buildYearCGPA(years);
+              for (let yIdx = 0; yIdx < value.length; yIdx++) {
+                if (!mergedCGPA[yIdx]) {
+                  mergedCGPA[yIdx] = value[yIdx];
+                } else if (value[yIdx].cgpa !== null && value[yIdx].cgpa !== undefined) {
+                  mergedCGPA[yIdx].cgpa = value[yIdx].cgpa;
+                }
+              }
+              updateData.yearCGPA = mergedCGPA;
+            }
+            continue;
+          }
           if (value !== null && value !== undefined && value !== '') {
             updateData[key] = value;
           }
         }
         await existing.update(updateData);
       } else {
+        delete studentDoc._hasSemesterInput;
+        delete studentDoc._hasCGPAInput;
         await Student.create(studentDoc);
       }
       inserted++;
@@ -1251,6 +1282,7 @@ const processStudentRows = async (rows, school, department, program, batch, spec
         error: err.errors ? err.errors.map(e => e.message).join(', ') : err.message,
         rawEmail,
         parsedEmail: studentDoc.email,
+        rawRow: row,
       });
     }
   }
@@ -1279,15 +1311,10 @@ const processStudentObjects = async (rows, school, department, program, batch, s
     const rawEmail = doc.email ? String(doc.email).trim() : null;
     const studentDoc = createStudentDocument(doc, school, department, program, batch, specialization, years, semesters, userId);
 
-    if (!studentDoc.rollNo || !studentDoc.enrollmentNo || !studentDoc.fullName) {
+    if (!studentDoc.rollNo) {
       errors.push({
         row: i + 2,
-        error: 'Missing required student fields in the excel row',
-        parsed: {
-          rollNo: studentDoc.rollNo,
-          enrollmentNo: studentDoc.enrollmentNo,
-          fullName: studentDoc.fullName,
-        },
+        error: 'Missing roll number in the excel row',
         rawEmail,
         parsedEmail: studentDoc.email,
         rawRow: row,
@@ -1297,15 +1324,84 @@ const processStudentObjects = async (rows, school, department, program, batch, s
 
     try {
       const existing = await Student.findOne({ where: { rollNo: studentDoc.rollNo } });
+
+      // Fallback for missing enrollment number: preserve existing or fallback to rollNo
+      if (!studentDoc.enrollmentNo) {
+        studentDoc.enrollmentNo = (existing && existing.enrollmentNo) ? existing.enrollmentNo : studentDoc.rollNo;
+      } else if (!existing) {
+        const enrollConflict = await Student.findOne({ where: { enrollmentNo: studentDoc.enrollmentNo } });
+        if (enrollConflict && enrollConflict.rollNo !== studentDoc.rollNo) {
+          logger.warn({ rollNo: studentDoc.rollNo, enrollmentNo: studentDoc.enrollmentNo, conflictWith: enrollConflict.rollNo }, 'Enrollment number collision detected with another student, falling back to roll number');
+          studentDoc.enrollmentNo = studentDoc.rollNo;
+        }
+      }
+
+      // Fallback for missing fullName: preserve existing
+      if (!studentDoc.fullName) {
+        if (existing && existing.fullName) {
+          studentDoc.fullName = existing.fullName;
+        } else {
+          errors.push({
+            row: i + 2,
+            error: 'Missing student full name in the excel row',
+            rawEmail,
+            parsedEmail: studentDoc.email,
+            rawRow: row,
+          });
+          continue;
+        }
+      }
+
+      const hasSemesterInput = studentDoc._hasSemesterInput;
+      const hasCGPAInput = studentDoc._hasCGPAInput;
+      delete studentDoc._hasSemesterInput;
+      delete studentDoc._hasCGPAInput;
+
       if (existing) {
         const updateData = {};
         for (const [key, value] of Object.entries(studentDoc)) {
+          if (key === 'userId' || key === 'createdBy') continue;
+          if (key === 'semesters') {
+            if (hasSemesterInput) {
+              const mergedSems = Array.isArray(existing.semesters) ? JSON.parse(JSON.stringify(existing.semesters)) : buildSemesters(semesters);
+              for (let sIdx = 0; sIdx < value.length; sIdx++) {
+                if (!mergedSems[sIdx]) {
+                  mergedSems[sIdx] = value[sIdx];
+                } else {
+                  if (value[sIdx].registered && value[sIdx].registered !== 'Pending') {
+                    mergedSems[sIdx].registered = value[sIdx].registered;
+                  }
+                  if (value[sIdx].sgpa !== null && value[sIdx].sgpa !== undefined) {
+                    mergedSems[sIdx].sgpa = value[sIdx].sgpa;
+                  }
+                }
+              }
+              updateData.semesters = mergedSems;
+            }
+            continue;
+          }
+          if (key === 'yearCGPA') {
+            if (hasCGPAInput) {
+              const mergedCGPA = Array.isArray(existing.yearCGPA) ? JSON.parse(JSON.stringify(existing.yearCGPA)) : buildYearCGPA(years);
+              for (let yIdx = 0; yIdx < value.length; yIdx++) {
+                if (!mergedCGPA[yIdx]) {
+                  mergedCGPA[yIdx] = value[yIdx];
+                } else if (value[yIdx].cgpa !== null && value[yIdx].cgpa !== undefined) {
+                  mergedCGPA[yIdx].cgpa = value[yIdx].cgpa;
+                }
+              }
+              updateData.yearCGPA = mergedCGPA;
+            }
+            continue;
+          }
           if (value !== null && value !== undefined && value !== '') {
             updateData[key] = value;
           }
         }
         await existing.update(updateData);
       } else {
+        delete studentDoc._hasSemesterInput;
+        delete studentDoc._hasCGPAInput;
         await Student.create(studentDoc);
       }
       inserted++;

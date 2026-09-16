@@ -279,7 +279,11 @@ export const uploadStudentPhotos = async (buffer) => {
   const headerRowIdx = detectHeaderRow(data, 10);
   const headerRow = data[headerRowIdx] || [];
   const normalizedHeaders = headerRow.map((h) => normalizeHeader(h));
-  let rollNoIndex = normalizedHeaders.findIndex((h) => ['roll', 'enroll', 'registration', 'studentid', 'usn', 'id'].some((token) => h.includes(token)));
+  let rollNoIndex = normalizedHeaders.findIndex((h) => {
+    if (!h) return false;
+    if (h.includes('email') || h.includes('national') || h.includes('aadhar') || h.includes('paid')) return false;
+    return ['roll', 'enroll', 'enno', 'registration', 'studentid', 'usn'].some((token) => h.includes(token)) || h === 'id' || h === 'idno';
+  });
   const imageIndex = normalizedHeaders.findIndex((h) => ['image', 'photo', 'picture', 'url', 'path', 'link'].some((token) => h.includes(token)));
 
   const files = extractFilesFromXlsx(buffer);
@@ -291,6 +295,7 @@ export const uploadStudentPhotos = async (buffer) => {
   const hasEmbeddedImages = anchors.length > 0;
   if (!hasImageColumn && !hasEmbeddedImages) {
     errors.push({ row: null, error: 'No image column or embedded images found in the sheet' });
+    return { results, errors };
   }
 
   const processRow = async (row, rowNumber) => {
