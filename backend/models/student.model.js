@@ -198,6 +198,17 @@ const Student = sequelize.define('Student', {
   },
 }, {
   timestamps: true,
+  indexes: [
+    { name: 'idx_students_fullname', fields: ['fullName'] },
+    { name: 'idx_students_status', fields: ['status'] },
+    { name: 'idx_students_class', fields: [
+      { name: 'school', length: 50 },
+      { name: 'department', length: 50 },
+      { name: 'program', length: 50 },
+      { name: 'batch', length: 20 },
+      { name: 'specialization', length: 50 },
+    ]},
+  ],
 });
 
 // Associations
