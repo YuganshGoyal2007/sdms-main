@@ -23,8 +23,12 @@ const normalizePhotoValue = async (photo) => {
   const base64Data = trimmed.startsWith('data:image/') ? trimmed.split(',')[1] : trimmed.replace(/\s+/g, '');
   if (!base64Data) return null;
   try {
-    const pngBuffer = await sharp(Buffer.from(base64Data, 'base64')).png().toBuffer();
-    return `data:image/png;base64,${pngBuffer.toString('base64')}`;
+    const imgBuffer = Buffer.from(base64Data, 'base64');
+    const compressedBuffer = await sharp(imgBuffer)
+      .resize({ width: 400, height: 500, fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 80, progressive: true })
+      .toBuffer();
+    return `data:image/jpeg;base64,${compressedBuffer.toString('base64')}`;
   } catch (err) {
     return `data:image/jpeg;base64,${base64Data}`;
   }

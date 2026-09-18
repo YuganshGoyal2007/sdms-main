@@ -171,11 +171,52 @@ const MarkAttendance = () => {
 
   const handleStatusChange = (studentId: number, status: AttendanceStatus) => {
     if (isReadOnly) return;
-    setStatuses((prev) => ({ ...prev, [studentId]: prev[studentId] === status ? undefined : status }));
+    setStatuses((prev) => {
+      const current = prev[studentId];
+      const next: Record<number, AttendanceStatus | undefined> = { ...prev };
+
+      // If user is clicking the same status to toggle/untick it
+      if (current === status) {
+        if (status === 'present') {
+          // Unticking present automatically marks student as absent
+          next[studentId] = 'absent';
+        } else if (status === 'absent') {
+          // Unticking absent marks student as present
+          next[studentId] = 'present';
+        } else {
+          // Unticking excused reverts to absent
+          next[studentId] = 'absent';
+        }
+      } else {
+        next[studentId] = status;
+      }
+
+      // If any student is marked, auto-fill all unmarked roster students as 'absent'
+      roster.forEach((s) => {
+        if (!next[s.studentId]) {
+          next[s.studentId] = 'absent';
+        }
+      });
+
+      return next;
+    });
   };
   const handleRemarkChange = (studentId: number, remark: string) => {
     if (isReadOnly) return;
     setRemarks((prev) => ({ ...prev, [studentId]: remark }));
+  };
+
+  const fillUnmarkedAbsent = () => {
+    if (isReadOnly) return;
+    setStatuses((prev) => {
+      const next: Record<number, AttendanceStatus | undefined> = { ...prev };
+      roster.forEach((s) => {
+        if (!next[s.studentId]) {
+          next[s.studentId] = 'absent';
+        }
+      });
+      return next;
+    });
   };
 
   const ensureSession = async (): Promise<AttendanceSession | null> => {
@@ -212,17 +253,14 @@ const MarkAttendance = () => {
   };
 
   const buildPayload = (): UpsertRecord[] => {
-    return roster
-      .map((r) => {
-        const st = statuses[r.studentId];
-        if (!st) return null;
-        return {
-          studentId: r.studentId,
-          status: st,
-          ...(remarks[r.studentId] ? { remarks: remarks[r.studentId] } : {}),
-        };
-      })
-      .filter((x): x is UpsertRecord => x !== null);
+    return roster.map((r) => {
+      const st = statuses[r.studentId] || 'absent';
+      return {
+        studentId: r.studentId,
+        status: st,
+        ...(remarks[r.studentId] ? { remarks: remarks[r.studentId] } : {}),
+      };
+    });
   };
 
   const handleSaveDraft = async () => {
@@ -258,17 +296,11 @@ const MarkAttendance = () => {
     if (isReadOnly) return;
     const records = buildPayload();
     if (records.length === 0) {
-      toast.error('Mark at least one student before submitting.');
+      toast.error('No students in roster to submit.');
       return;
     }
-    if (records.length < roster.length) {
-      const ok = window.confirm(
-        `${roster.length - records.length} student(s) are unmarked. Submit anyway? They will be treated as unmarked.`
-      );
-      if (!ok) return;
-    }
     const ok = window.confirm(
-      'Once submitted, this attendance cannot be edited by teaching staff. Continue?'
+      `Submit and lock attendance?\nSummary: ${counts.present} Present, ${counts.absent} Absent, ${counts.excused} Excused.\nOnce submitted, this session cannot be edited by teaching staff.`
     );
     if (!ok) return;
 
@@ -449,6 +481,14 @@ const MarkAttendance = () => {
               >
                 <X size={12} />
                 Mark All Absent
+              </button>
+              <button
+                onClick={fillUnmarkedAbsent}
+                disabled={isReadOnly}
+                className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-amber-300 text-amber-700 hover:bg-amber-50 disabled:opacity-50"
+              >
+                <AlertCircle size={12} />
+                Fill Unmarked as Absent
               </button>
               <button
                 onClick={() => setAll(null)}

@@ -498,7 +498,45 @@ export const submitSession = asyncHandler(async (req, res) => {
     return res.status(409).json({ success: false, message: 'Session is already locked.' });
   }
 
-  // Validate: at least one record must exist
+  // Ensure every active student in this class has an attendance record (default missing to absent)
+  const classStudents = await Student.findAll({
+    where: {
+      school: session.school,
+      department: session.department,
+      program: session.program,
+      batch: session.batch,
+      [Op.and]: [
+        sequelize.where(
+          sequelize.fn('REPLACE', sequelize.fn('LOWER', sequelize.col('specialization')), ' ', ''),
+          String(session.specialization || '').toLowerCase().replace(/\s+/g, '')
+        ),
+      ],
+    },
+    attributes: ['id', 'rollNo'],
+  });
+
+  const existingRecords = await AttendanceRecord.findAll({
+    where: { sessionId: id },
+    attributes: ['studentId'],
+    raw: true,
+  });
+  const recordedStudentIds = new Set(existingRecords.map((r) => r.studentId));
+
+  const missingStudents = classStudents.filter((s) => !recordedStudentIds.has(s.id));
+  if (missingStudents.length > 0) {
+    const now = new Date();
+    await AttendanceRecord.bulkCreate(
+      missingStudents.map((s) => ({
+        sessionId: id,
+        studentId: s.id,
+        rollNo: s.rollNo,
+        status: 'absent',
+        markedAt: now,
+      })),
+      { ignoreDuplicates: true }
+    );
+  }
+
   const recordCount = await AttendanceRecord.count({ where: { sessionId: id } });
   if (recordCount === 0) {
     return res.status(422).json({ success: false, message: 'Cannot submit a session with no attendance records.' });

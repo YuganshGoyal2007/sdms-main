@@ -78,10 +78,14 @@ export const uploadStudentPhotosController = asyncHandler(async (req, res) => {
     let convertedPhoto = photoData;
     try {
       const base64Data = photoData.split(',')[1] || photoData;
-      const pngBuffer = await sharp(Buffer.from(base64Data, 'base64')).png().toBuffer();
-      convertedPhoto = 'data:image/png;base64,' + pngBuffer.toString('base64');
+      const imgBuffer = Buffer.from(base64Data, 'base64');
+      const compressedBuffer = await sharp(imgBuffer)
+        .resize({ width: 400, height: 500, fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 80, progressive: true })
+        .toBuffer();
+      convertedPhoto = 'data:image/jpeg;base64,' + compressedBuffer.toString('base64');
     } catch (err) {
-      logger.warn({ rollNo: result.rollNo, err: err.message }, 'Failed to convert photo to PNG, using original');
+      logger.warn({ rollNo: result.rollNo, err: err.message }, 'Failed to compress photo with sharp, using original');
     }
 
     try {

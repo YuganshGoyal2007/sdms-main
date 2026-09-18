@@ -30,13 +30,13 @@ const excelFileFilter = (req, file, cb) => {
 
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024, files: 1 },
+    limits: { fileSize: 50 * 1024 * 1024, files: 1 },
     fileFilter: excelFileFilter,
 });
 
 const uploadLarge = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 50 * 1024 * 1024, files: 1 },
+    limits: { fileSize: 150 * 1024 * 1024, files: 1 },
     fileFilter: excelFileFilter,
 });
 

@@ -475,7 +475,7 @@ const AdminModals: React.FC<AdminModalsProps> = ({
                         <form onSubmit={handleUploadStudentPhotos} className="space-y-4">
                             <div>
                                 <label className="text-sm font-medium text-gray-700">Excel file with Roll No and Photo Data <span className="text-red-500">*</span></label>
-                                <p className="text-xs text-gray-500 mt-1">Upload a sheet containing roll numbers and image values (base64 or file path as supported by backend).</p>
+                                <p className="text-xs text-gray-500 mt-1">Upload an Excel sheet containing roll numbers and photo data. Supports files up to 150MB with automatic image compression &amp; optimization.</p>
                                 <div
                                     onDragOver={(e) => e.preventDefault()}
                                     onDrop={(e) => { e.preventDefault(); const file = e.dataTransfer.files?.[0]; if (file) handlePhotoFileChange(file); }}

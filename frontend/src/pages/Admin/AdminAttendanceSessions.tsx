@@ -137,7 +137,31 @@ const AdminAttendanceSessions = () => {
   };
 
   const handleStatusChange = (studentId: number, status: AttendanceStatus) => {
-    setStatuses((prev) => ({ ...prev, [studentId]: status }));
+    setStatuses((prev) => {
+      const current = prev[studentId];
+      const next: Record<number, AttendanceStatus | undefined> = { ...prev };
+
+      if (current === status) {
+        if (status === 'present') {
+          next[studentId] = 'absent';
+        } else if (status === 'absent') {
+          next[studentId] = 'present';
+        } else {
+          next[studentId] = 'absent';
+        }
+      } else {
+        next[studentId] = status;
+      }
+
+      // If any student is marked, auto-fill all unmarked roster students as 'absent'
+      roster.forEach((s) => {
+        if (!next[s.studentId]) {
+          next[s.studentId] = 'absent';
+        }
+      });
+
+      return next;
+    });
   };
 
   const handleRemarkChange = (studentId: number, remark: string) => {
@@ -154,6 +178,18 @@ const AdminAttendanceSessions = () => {
     });
   };
 
+  const fillUnmarkedAbsent = () => {
+    setStatuses((prev) => {
+      const next: Record<number, AttendanceStatus | undefined> = { ...prev };
+      roster.forEach((s) => {
+        if (!next[s.studentId]) {
+          next[s.studentId] = 'absent';
+        }
+      });
+      return next;
+    });
+  };
+
   const clearAll = () => {
     setStatuses({});
     setRemarks({});
@@ -163,17 +199,11 @@ const AdminAttendanceSessions = () => {
     if (!activeSession) return;
     setSavingRecords(true);
     try {
-      const payload: UpsertRecord[] = [];
-      roster.forEach((st) => {
-        const stStatus = statuses[st.studentId];
-        if (stStatus) {
-          payload.push({
-            studentId: st.studentId,
-            status: stStatus,
-            remarks: remarks[st.studentId]?.trim() || undefined,
-          });
-        }
-      });
+      const payload: UpsertRecord[] = roster.map((st) => ({
+        studentId: st.studentId,
+        status: statuses[st.studentId] || 'absent',
+        remarks: remarks[st.studentId]?.trim() || undefined,
+      }));
 
       const res = await upsertRecords(activeSession.id, payload);
       if (res.success) {
@@ -513,6 +543,13 @@ const AdminAttendanceSessions = () => {
                         className="text-xs px-2.5 py-1.5 rounded bg-amber-500 text-white font-medium hover:bg-amber-600 transition-colors cursor-pointer"
                       >
                         All Excused
+                      </button>
+                      <button
+                        type="button"
+                        onClick={fillUnmarkedAbsent}
+                        className="text-xs px-2.5 py-1.5 rounded bg-gray-100 text-gray-700 border border-gray-300 font-medium hover:bg-gray-200 transition-colors cursor-pointer"
+                      >
+                        Fill Unmarked Absent
                       </button>
                       <button
                         type="button"

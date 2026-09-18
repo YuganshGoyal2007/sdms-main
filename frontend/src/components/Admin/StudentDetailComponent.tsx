@@ -7,6 +7,7 @@ import { deleteStudent, getStudentProfile, updateStudentPhoto, updateStudent } f
 import { getStudentAttendanceSummary } from '../../lib/attendance.api';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../context/app/store';
+import { compressImageFile } from '../../utils/imageCompressor';
 
 const StudentDetailComponent = () => {
 
@@ -50,19 +51,7 @@ const StudentDetailComponent = () => {
         return [];
     }, [student?.yearCGPA]);
 
-    const fileToDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-            const result = reader.result;
-            if (typeof result === 'string') {
-                resolve(result);
-            } else {
-                reject(new Error('Unable to convert file to data URL'));
-            }
-        };
-        reader.onerror = () => reject(new Error('File reading failed'));
-        reader.readAsDataURL(file);
-    });
+
 
     const handlePhotoUploadChange = (file: File) => {
         setPhotoUploadFile(file);
@@ -76,7 +65,7 @@ const StudentDetailComponent = () => {
 
         try {
             setIsUpdatingPhoto(true);
-            const photoData = await fileToDataUrl(photoUploadFile);
+            const photoData = await compressImageFile(photoUploadFile);
             await updateStudentPhoto(student.rollNo, photoData);
             alert('Student photo updated successfully.');
             setPhotoUploadFile(null);

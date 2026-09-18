@@ -80,8 +80,7 @@ const PhotoUploadModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     </button>
                 </div>
                 <p className="text-xs text-gray-500 mb-3">
-                    Upload an Excel file with <strong>Roll No</strong> and <strong>Photo</strong> columns. Photos can be base64 data URIs,
-                    file paths, or HTTP(S) URLs — the backend will resolve them.
+                    Upload an Excel file with <strong>Roll No</strong> and <strong>Photo</strong> columns. Supports files up to 150MB with automatic image compression and optimization.
                 </p>
                 <form onSubmit={handleSubmit} className="space-y-3">
                     <div
