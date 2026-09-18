@@ -595,8 +595,7 @@ const AddStudentForm: React.FC = () => {
                     <Select required name="status" label="Status" value={form.status || 'active'} onChange={handleChange}>
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
-                        <option value="present">Present</option>
-                        <option value="withdrawn">Withdrawn</option>
+                        <option value="pass out">Pass Out</option>
                         <option value="withdrawal">Withdrawal</option>
                     </Select>
                     <Select required name="enrollmentStatus" label="Enrollment Status" value={form.enrollmentStatus} onChange={handleChange}>

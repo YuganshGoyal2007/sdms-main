@@ -183,12 +183,13 @@ const CategoryDomain = () => {
     };
 
     const statusCounts = useMemo(() => {
-        const counts = { all: students.length, active: 0, inactive: 0, withdrawn: 0 };
+        const counts = { all: students.length, active: 0, inactive: 0, passout: 0, withdrawal: 0 };
         for (const s of students) {
             const st = ((s as any).status || "active").toLowerCase();
-            if (st === "active" || st === "present") counts.active++;
-            else if (st === "withdrawn" || st === "withdrawal") counts.withdrawn++;
+            if (st === "active") counts.active++;
             else if (st === "inactive") counts.inactive++;
+            else if (st === "pass out" || st === "passout" || st === "present") counts.passout++;
+            else if (st === "withdrawal" || st === "withdrawn") counts.withdrawal++;
             else counts.active++;
         }
         return counts;
@@ -200,9 +201,10 @@ const CategoryDomain = () => {
                 .filter((student) => {
                     if (statusFilter !== "all") {
                         const st = ((student as any).status || "active").toLowerCase();
-                        if (statusFilter === "active" && st !== "active" && st !== "present") return false;
+                        if (statusFilter === "active" && st !== "active") return false;
                         if (statusFilter === "inactive" && st !== "inactive") return false;
-                        if (statusFilter === "withdrawn" && st !== "withdrawn" && st !== "withdrawal") return false;
+                        if (statusFilter === "passout" && st !== "pass out" && st !== "passout" && st !== "present") return false;
+                        if (statusFilter === "withdrawal" && st !== "withdrawal" && st !== "withdrawn") return false;
                     }
                     const query = searchQuery.toLowerCase().trim();
                     if (!query) return true;
@@ -459,15 +461,27 @@ const CategoryDomain = () => {
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setStatusFilter("withdrawn")}
+                                        onClick={() => setStatusFilter("passout")}
                                         className={`px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition border flex items-center gap-1.5 ${
-                                            statusFilter === "withdrawn"
+                                            statusFilter === "passout"
+                                                ? "bg-indigo-700 text-white border-indigo-700 shadow-xs font-semibold"
+                                                : "bg-white text-indigo-700 border-indigo-300 hover:bg-indigo-50"
+                                        }`}
+                                    >
+                                        <span className={`w-2 h-2 rounded-full ${statusFilter === "passout" ? "bg-white" : "bg-indigo-500"}`} />
+                                        Pass Out ({statusCounts.passout})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setStatusFilter("withdrawal")}
+                                        className={`px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition border flex items-center gap-1.5 ${
+                                            statusFilter === "withdrawal"
                                                 ? "bg-amber-600 text-white border-amber-600 shadow-xs font-semibold"
                                                 : "bg-white text-amber-800 border-amber-300 hover:bg-amber-50"
                                         }`}
                                     >
-                                        <span className={`w-2 h-2 rounded-full ${statusFilter === "withdrawn" ? "bg-white" : "bg-amber-500"}`} />
-                                        Withdrawn ({statusCounts.withdrawn})
+                                        <span className={`w-2 h-2 rounded-full ${statusFilter === "withdrawal" ? "bg-white" : "bg-amber-500"}`} />
+                                        Withdrawal ({statusCounts.withdrawal})
                                     </button>
                                 </div>
 
@@ -569,18 +583,18 @@ const CategoryDomain = () => {
                                                                         {(() => {
                                                                             const rawStatus = (item.status || "active").toLowerCase();
                                                                             const isAct = rawStatus === "active";
-                                                                            const isPres = rawStatus === "present";
-                                                                            const isWdn = rawStatus === "withdrawn" || rawStatus === "withdrawal";
+                                                                            const isPassOut = rawStatus === "pass out" || rawStatus === "passout" || rawStatus === "present";
+                                                                            const isWdn = rawStatus === "withdrawal" || rawStatus === "withdrawn";
                                                                             
-                                                                            const label = isPres ? "Present" : isWdn ? "Withdrawn" : isAct ? "Active" : "Inactive";
+                                                                            const label = isPassOut ? "Pass Out" : isWdn ? "Withdrawal" : isAct ? "Active" : "Inactive";
                                                                             const badgeClass = isAct
                                                                                 ? "bg-emerald-50 text-emerald-700 border-emerald-300"
-                                                                                : isPres
-                                                                                ? "bg-blue-50 text-blue-700 border-blue-300"
+                                                                                : isPassOut
+                                                                                ? "bg-indigo-50 text-indigo-700 border-indigo-300"
                                                                                 : isWdn
                                                                                 ? "bg-amber-50 text-amber-800 border-amber-300"
                                                                                 : "bg-red-50 text-red-700 border-red-300";
-                                                                            const dotClass = isAct ? "bg-emerald-500" : isPres ? "bg-blue-500" : isWdn ? "bg-amber-500" : "bg-red-500";
+                                                                            const dotClass = isAct ? "bg-emerald-500" : isPassOut ? "bg-indigo-500" : isWdn ? "bg-amber-500" : "bg-red-500";
 
                                                                             return (
                                                                                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border shadow-2xs ${badgeClass}`}>
@@ -696,8 +710,7 @@ const CategoryDomain = () => {
                                     >
                                         <option value="active">Active</option>
                                         <option value="inactive">Inactive</option>
-                                        <option value="present">Present</option>
-                                        <option value="withdrawn">Withdrawn</option>
+                                        <option value="pass out">Pass Out</option>
                                         <option value="withdrawal">Withdrawal</option>
                                     </select>
                                 </div>

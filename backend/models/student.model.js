@@ -184,7 +184,7 @@ const Student = sequelize.define('Student', {
     allowNull: true,
   },
   status: {
-    type: DataTypes.ENUM('active', 'inactive', 'present', 'withdrawn', 'withdrawal'),
+    type: DataTypes.ENUM('active', 'inactive', 'pass out', 'withdrawal', 'present', 'withdrawn'),
     allowNull: false,
     defaultValue: 'active',
   },

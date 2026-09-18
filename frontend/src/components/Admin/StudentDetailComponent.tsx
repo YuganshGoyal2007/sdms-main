@@ -139,9 +139,9 @@ const StudentDetailComponent = () => {
         try {
             setIsDeleting(true);
             if (!student?.rollNo) return;
-            await updateStudent(student.rollNo, { status: 'withdrawn' });
-            alert(`Student status updated to Withdrawn.`);
-            setStudent(prev => prev ? { ...prev, status: 'withdrawn' } : null);
+            await updateStudent(student.rollNo, { status: 'withdrawal' });
+            alert(`Student status updated to Withdrawal.`);
+            setStudent(prev => prev ? { ...prev, status: 'withdrawal' } : null);
             setShowDeleteModal(false);
         } catch (error: any) {
             alert(error?.response?.data?.message || 'Failed to update student status');
@@ -599,7 +599,7 @@ const StudentDetailComponent = () => {
 
                         <div className="p-3 bg-amber-50 rounded-md border border-amber-200 text-xs text-amber-900 space-y-1">
                             <p className="font-semibold">💡 Recommended Alternative:</p>
-                            <p>If the student has left, transferred, or dropped out, you can set their status to <strong>Withdrawn</strong> or <strong>Inactive</strong> instead of permanently deleting their academic history.</p>
+                            <p>If the student has left, transferred, or dropped out, you can set their status to <strong>Withdrawal</strong> or <strong>Inactive</strong> instead of permanently deleting their academic history.</p>
                         </div>
 
                         <div className="flex flex-col sm:flex-row justify-end gap-2 pt-3 border-t border-gray-100">
@@ -617,7 +617,7 @@ const StudentDetailComponent = () => {
                                 disabled={isDeleting}
                                 className="px-4 py-2 text-sm bg-amber-600 hover:bg-amber-700 text-white rounded font-medium cursor-pointer"
                             >
-                                Set to Withdrawn Instead
+                                Set to Withdrawal Instead
                             </button>
                             <button
                                 type="button"
